@@ -6,35 +6,96 @@ class CaptureOverlay extends StatefulWidget {
   final String imagePath;
   final Function(String caption) onPost;
   final bool isVideo;
-  const CaptureOverlay({Key? key, required this.imagePath, this.isVideo = false, required this.onPost}) : super(key: key);
+
+  const CaptureOverlay({
+    Key? key,
+    required this.imagePath,
+    required this.onPost,
+    this.isVideo = false,
+  }) : super(key: key);
 
   @override
   State<CaptureOverlay> createState() => _CaptureOverlayState();
 }
 
 class _CaptureOverlayState extends State<CaptureOverlay> {
-  final TextEditingController _c = TextEditingController();
-
-  VideoPlayerController? _vCtrl;
+  final TextEditingController _captionController = TextEditingController();
+  VideoPlayerController? _videoController;
 
   @override
   void initState() {
     super.initState();
-    if (widget.isVideo) {
-      _vCtrl = VideoPlayerController.file(File(widget.imagePath))
-        ..initialize().then((_) {
-          setState(() {});
-          _vCtrl!.play();
-          _vCtrl!.setLooping(true);
-        });
-    }
+    if (widget.isVideo) _initializeVideo();
+  }
+
+  Future<void> _initializeVideo() async {
+    _videoController = VideoPlayerController.file(File(widget.imagePath));
+    await _videoController!.initialize();
+    _videoController!
+      ..setLooping(true)
+      ..play();
+    setState(() {});
   }
 
   @override
   void dispose() {
-    _vCtrl?.dispose();
+    _captionController.dispose();
+    _videoController?.dispose();
     super.dispose();
   }
+
+  Widget _buildMediaPreview() {
+    if (widget.isVideo) {
+      if (_videoController == null || !_videoController!.value.isInitialized) {
+        return const Center(child: CircularProgressIndicator());
+      }
+      return AspectRatio(
+        aspectRatio: _videoController!.value.aspectRatio,
+        child: VideoPlayer(_videoController!),
+      );
+    }
+
+    return AspectRatio(
+      aspectRatio: 3 / 4,
+      child: Image.file(
+        File(widget.imagePath),
+        fit: BoxFit.cover,
+      ),
+    );
+  }
+
+  Widget _buildCaptionInput() => TextField(
+        controller: _captionController,
+        style: const TextStyle(color: Colors.white),
+        maxLines: 3,
+        decoration: InputDecoration(
+          hintText: 'Viết caption...',
+          hintStyle: const TextStyle(color: Colors.white54),
+          filled: true,
+          fillColor: Colors.white10,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      );
+
+  Widget _buildActionButtons(BuildContext context) => Row(
+        children: [
+          Expanded(
+            child: OutlinedButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Huỷ'),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: ElevatedButton(
+              onPressed: () => widget.onPost(_captionController.text),
+              child: const Text('Đăng'),
+            ),
+          ),
+        ],
+      );
 
   @override
   Widget build(BuildContext context) {
@@ -43,7 +104,7 @@ class _CaptureOverlayState extends State<CaptureOverlay> {
       initialChildSize: 0.6,
       minChildSize: 0.4,
       maxChildSize: 0.95,
-      builder: (context, sc) {
+      builder: (context, scrollController) {
         return Container(
           decoration: const BoxDecoration(
             color: Colors.black87,
@@ -51,54 +112,21 @@ class _CaptureOverlayState extends State<CaptureOverlay> {
           ),
           padding: const EdgeInsets.all(16),
           child: ListView(
-            controller: sc,
+            controller: scrollController,
             children: [
-              Center(child: Container(height: 4, width: 60, color: Colors.white30)),
-              const SizedBox(height: 12),
-              AspectRatio(
-                aspectRatio: widget.isVideo
-                    ? _vCtrl!.value.aspectRatio 
-                    : 3 / 4,                   
-                child: widget.isVideo
-                    ? (_vCtrl != null && _vCtrl!.value.isInitialized
-                        ? VideoPlayer(_vCtrl!)
-                        : const Center(child: CircularProgressIndicator()))
-                    : Image.file(
-                        File(widget.imagePath),
-                        fit: BoxFit.cover,
-                      ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: _c,
-                style: const TextStyle(color: Colors.white),
-                decoration: InputDecoration(
-                  hintText: 'Viết caption...',
-                  hintStyle: TextStyle(color: Colors.white54),
-                  filled: true,
-                  fillColor: Colors.white10,
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              Center(
+                child: Container(
+                  height: 4,
+                  width: 60,
+                  color: Colors.white30,
                 ),
-                maxLines: 3,
               ),
               const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      child: const Text('Huỷ'),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () => widget.onPost(_c.text),
-                      child: const Text('Đăng'),
-                    ),
-                  ),
-                ],
-              ),
+              _buildMediaPreview(),
+              const SizedBox(height: 12),
+              _buildCaptionInput(),
+              const SizedBox(height: 12),
+              _buildActionButtons(context),
             ],
           ),
         );
