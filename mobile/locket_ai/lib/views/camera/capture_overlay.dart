@@ -1,11 +1,12 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:video_player/video_player.dart';
 
 class CaptureOverlay extends StatefulWidget {
   final String imagePath;
   final Function(String caption) onPost;
-
-  const CaptureOverlay({Key? key, required this.imagePath, required this.onPost}) : super(key: key);
+  final bool isVideo;
+  const CaptureOverlay({Key? key, required this.imagePath, this.isVideo = false, required this.onPost}) : super(key: key);
 
   @override
   State<CaptureOverlay> createState() => _CaptureOverlayState();
@@ -13,6 +14,27 @@ class CaptureOverlay extends StatefulWidget {
 
 class _CaptureOverlayState extends State<CaptureOverlay> {
   final TextEditingController _c = TextEditingController();
+
+  VideoPlayerController? _vCtrl;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.isVideo) {
+      _vCtrl = VideoPlayerController.file(File(widget.imagePath))
+        ..initialize().then((_) {
+          setState(() {});
+          _vCtrl!.play();
+          _vCtrl!.setLooping(true);
+        });
+    }
+  }
+
+  @override
+  void dispose() {
+    _vCtrl?.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -33,7 +55,19 @@ class _CaptureOverlayState extends State<CaptureOverlay> {
             children: [
               Center(child: Container(height: 4, width: 60, color: Colors.white30)),
               const SizedBox(height: 12),
-              AspectRatio(aspectRatio: 3/4, child: Image.file(File(widget.imagePath), fit: BoxFit.cover)),
+              AspectRatio(
+                aspectRatio: widget.isVideo
+                    ? _vCtrl!.value.aspectRatio 
+                    : 3 / 4,                   
+                child: widget.isVideo
+                    ? (_vCtrl != null && _vCtrl!.value.isInitialized
+                        ? VideoPlayer(_vCtrl!)
+                        : const Center(child: CircularProgressIndicator()))
+                    : Image.file(
+                        File(widget.imagePath),
+                        fit: BoxFit.cover,
+                      ),
+              ),
               const SizedBox(height: 12),
               TextField(
                 controller: _c,
