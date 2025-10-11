@@ -24,10 +24,10 @@ class _MainViewState extends State<MainView> {
     return PageView(
       controller: _hCtrl,
       scrollDirection: Axis.horizontal,
-      children: const [
-        SettingsView(),
-        CameraView(),
-        ChatListView(),
+      children: [
+        const SettingsView(),
+        CameraView(horizontalController: _hCtrl),
+        const ChatListView(),
       ],
     );
   }

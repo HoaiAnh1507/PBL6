@@ -11,9 +11,11 @@ import '../feed/feed_view.dart';
 import '../../core/services/camera_service.dart';
 import 'camera_preview.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:image_picker/image_picker.dart';
 
 class CameraView extends StatefulWidget {
-  const CameraView({Key? key}) : super(key: key);
+  final PageController? horizontalController;
+  const CameraView({Key? key, this.horizontalController}) : super(key: key);
 
   @override
   State<CameraView> createState() => _CameraViewState();
@@ -26,7 +28,6 @@ class _CameraViewState extends State<CameraView> {
   List<CameraDescription> _cams = [];
   bool _isPressed = false;
   bool _isRecording = false;
-  double _recordProgress = 0.0;
   Timer? _recordTimer;
   final int _maxDuration = 15;
 
@@ -37,19 +38,38 @@ class _CameraViewState extends State<CameraView> {
     _init();
   }
 
+  Future<void> _pickFromGallery() async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      if (!mounted) return;
+      showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        builder: (_) => CaptureOverlay(
+          imagePath: pickedFile.path,
+          onPost: (caption) {
+            Navigator.of(context).pop();
+            ScaffoldMessenger.of(context)
+                .showSnackBar(const SnackBar(content: Text('Đăng ảnh thành công (demo)')));
+          },
+        ),
+      );
+    }
+  }
+
   Future<void> _startRecording() async {
     if (_camCtrl == null || !_camCtrl!.value.isInitialized) return;
     try {
       await _camCtrl!.startVideoRecording();
       setState(() {
         _isRecording = true;
-        _recordProgress = 0.0;
       });
 
       const tick = Duration(milliseconds: 100);
       _recordTimer = Timer.periodic(tick, (timer) {
         final elapsed = timer.tick * tick.inMilliseconds / 1000; // giây
-        setState(() => _recordProgress = elapsed / _maxDuration);
         if (elapsed >= _maxDuration) {
           _stopRecording(); // Tự dừng khi đủ 15s
         }
@@ -68,7 +88,6 @@ class _CameraViewState extends State<CameraView> {
       final file = await _camCtrl!.stopVideoRecording();
       setState(() {
         _isRecording = false;
-        _recordProgress = 0.0;
       });
 
       if (!mounted) return;
@@ -96,6 +115,7 @@ class _CameraViewState extends State<CameraView> {
     await [
       Permission.camera,
       Permission.microphone,
+      Permission.photos,
     ].request();
 
     _cams = await CameraService.available();
@@ -154,7 +174,16 @@ class _CameraViewState extends State<CameraView> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const GradientCircleIcon(icon: Icons.account_circle_outlined, size: 30),
+                        GestureDetector(
+                          onTap: () {
+                            widget.horizontalController?.animateToPage(
+                              0,
+                              duration: const Duration(milliseconds: 400),
+                              curve: Curves.easeInOut,
+                            );
+                          },
+                          child: const GradientCircleIcon(icon: Icons.account_circle_outlined, size: 30),
+                        ),
 
                         // Friends group
                         GestureDetector(
@@ -250,7 +279,16 @@ class _CameraViewState extends State<CameraView> {
                           ),
                         ),
 
-                        const GradientCircleIcon(icon: Icons.maps_ugc_outlined, size: 30),
+                        GestureDetector(
+                          onTap: () {
+                            widget.horizontalController?.animateToPage(
+                              2, 
+                              duration: const Duration(milliseconds: 400),
+                              curve: Curves.easeInOut,
+                            );
+                          },
+                          child: const GradientCircleIcon(icon: Icons.maps_ugc_outlined, size: 30),
+                        ),
                       ],
                     ),
                   ),
@@ -285,14 +323,22 @@ class _CameraViewState extends State<CameraView> {
                       right: 20,
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(10),
-                        child: LinearProgressIndicator(
-                          value: _recordProgress.clamp(0.0, 1.0),
-                          minHeight: 6,
-                          backgroundColor: Colors.white24,
-                          valueColor: const AlwaysStoppedAnimation<Color>(Colors.pinkAccent),
+                        child: TweenAnimationBuilder<double>(
+                          tween: Tween(begin: 0.0, end: 1.0),
+                          duration: Duration(seconds: _maxDuration),
+                          onEnd: _stopRecording, 
+                          builder: (context, value, child) {
+                            return LinearProgressIndicator(
+                              value: value,
+                              minHeight: 6,
+                              backgroundColor: Colors.white24,
+                              valueColor: const AlwaysStoppedAnimation<Color>(Colors.pinkAccent),
+                            );
+                          },
                         ),
                       ),
                     ),
+
 
                   // Capture controls
                   Positioned(
@@ -302,7 +348,11 @@ class _CameraViewState extends State<CameraView> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
-                        const GradientIcon(icon: Icons.photo_library_outlined, size: 30),
+                        GestureDetector(
+                          onTap: _pickFromGallery,
+                          child: const GradientIcon(icon: Icons.photo_library_outlined, size: 30),
+                        ),
+
                         GestureDetector(
                           onTapDown: (_) async {
                             setState(() {
@@ -317,7 +367,7 @@ class _CameraViewState extends State<CameraView> {
                             setState(() => _isPressed = false);
 
                             if (_isRecording) {
-                              await _stopRecording(); //
+                              await _stopRecording(); 
                             } else {
                               _onCapturePressed();
                             }
