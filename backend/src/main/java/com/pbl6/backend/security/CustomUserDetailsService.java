@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class CustomUserDetailsService implements UserDetailsService {
@@ -21,18 +22,35 @@ public class CustomUserDetailsService implements UserDetailsService {
     private UserRepository userRepository;
     
     @Override
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
+    public UserDetails loadUserByUsername(String identifier) throws UsernameNotFoundException {
+        Optional<User> userOptional;
         
-        return new CustomUserPrincipal(user);
+        // Kiểm tra xem identifier có phải email không
+        if (identifier.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")) {
+            userOptional = userRepository.findByEmail(identifier);
+            if (userOptional.isEmpty()) {
+                throw new UsernameNotFoundException("Không tìm thấy tài khoản với email: " + identifier);
+            }
+        } else if (identifier.matches("^[+]?[0-9]{10,15}$")) {
+            // Kiểm tra xem có phải số điện thoại không (10-15 chữ số, có thể có dấu +)
+            userOptional = userRepository.findByPhoneNumber(identifier);
+            if (userOptional.isEmpty()) {
+                throw new UsernameNotFoundException("Không tìm thấy tài khoản với số điện thoại: " + identifier);
+            }
+        } else {
+            throw new UsernameNotFoundException("Vui lòng đăng nhập bằng email hoặc số điện thoại hợp lệ");
+        }
+        
+        // Trả về principal với "username" chính là login identifier (email/phone)
+        return new CustomUserPrincipal(userOptional.get(), identifier);
     }
-    
     public static class CustomUserPrincipal implements UserDetails {
         private User user;
+        private String principalIdentifier; // email hoặc số điện thoại được dùng để đăng nhập/token
         
-        public CustomUserPrincipal(User user) {
+        public CustomUserPrincipal(User user, String principalIdentifier) {
             this.user = user;
+            this.principalIdentifier = principalIdentifier;
         }
         
         @Override
@@ -49,7 +67,8 @@ public class CustomUserDetailsService implements UserDetailsService {
         
         @Override
         public String getUsername() {
-            return user.getUsername();
+            // Trả về cùng giá trị với JWT subject (email hoặc số điện thoại)
+            return principalIdentifier;
         }
         
         @Override
@@ -59,7 +78,7 @@ public class CustomUserDetailsService implements UserDetailsService {
         
         @Override
         public boolean isAccountNonLocked() {
-            return !"SUSPENDED".equals(user.getAccountStatus());
+            return user.getAccountStatus() != User.AccountStatus.SUSPENDED;
         }
         
         @Override
@@ -69,7 +88,7 @@ public class CustomUserDetailsService implements UserDetailsService {
         
         @Override
         public boolean isEnabled() {
-            return "ACTIVE".equals(user.getAccountStatus());
+            return user.getAccountStatus() == User.AccountStatus.ACTIVE;
         }
         
         public User getUser() {

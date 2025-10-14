@@ -23,6 +23,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     
     @Autowired
     private JwtUtil jwtUtil;
+
+    @Autowired
+    private TokenBlacklistService tokenBlacklistService;
     
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, 
@@ -36,6 +39,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         // JWT Token is in the form "Bearer token". Remove Bearer word and get only the Token
         if (requestTokenHeader != null && requestTokenHeader.startsWith("Bearer ")) {
             jwtToken = requestTokenHeader.substring(7);
+            // Reject if token has been blacklisted (logout)
+            if (tokenBlacklistService.isBlacklisted(jwtToken)) {
+                filterChain.doFilter(request, response);
+                return;
+            }
             try {
                 username = jwtUtil.extractUsername(jwtToken);
             } catch (Exception e) {

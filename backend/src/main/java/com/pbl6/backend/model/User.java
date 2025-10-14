@@ -9,6 +9,7 @@ import java.util.List;
 @Table(name = "Users", indexes = {
     @Index(name = "idx_user_username", columnList = "username"),
     @Index(name = "idx_user_phone_number", columnList = "phone_number"),
+    @Index(name = "idx_user_email", columnList = "email"),
     @Index(name = "idx_user_account_status", columnList = "account_status"),
     @Index(name = "idx_user_subscription_status", columnList = "subscription_status"),
     @Index(name = "idx_user_created_at", columnList = "created_at")
@@ -26,6 +27,9 @@ public class User {
     
     @Column(name = "username", length = 30, nullable = false, unique = true)
     private String username;
+    
+    @Column(name = "email", length = 100, nullable = false, unique = true)
+    private String email;
     
     @Column(name = "full_name", length = 100, nullable = false)
     private String fullName;
@@ -85,9 +89,10 @@ public class User {
     // Constructors
     public User() {}
     
-    public User(String phoneNumber, String username, String fullName, String passwordHash) {
+    public User(String phoneNumber, String username, String email, String fullName, String passwordHash) {
         this.phoneNumber = phoneNumber;
         this.username = username;
+        this.email = email;
         this.fullName = fullName;
         this.passwordHash = passwordHash;
     }
@@ -115,6 +120,14 @@ public class User {
     
     public void setUsername(String username) {
         this.username = username;
+    }
+    
+    public String getEmail() {
+        return email;
+    }
+    
+    public void setEmail(String email) {
+        this.email = email;
     }
     
     public String getFullName() {
