@@ -38,6 +38,9 @@ public interface UserRepository extends JpaRepository<User, String> {
     @Query("SELECT u FROM User u WHERE u.username LIKE %:username%")
     List<User> findByUsernameContaining(@Param("username") String username);
     
+    @Query("SELECT u FROM User u WHERE u.fullName LIKE %:q% OR u.username LIKE %:q% OR u.email LIKE %:q% OR u.phoneNumber LIKE %:q%")
+    List<User> searchByKeyword(@Param("q") String keyword);
+    
     @Query("SELECT COUNT(u) FROM User u WHERE u.subscriptionStatus = :status")
     long countBySubscriptionStatus(@Param("status") User.SubscriptionStatus status);
     
