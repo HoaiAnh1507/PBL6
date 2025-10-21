@@ -1,6 +1,6 @@
-import 'admin.dart';
-import 'user.dart';
-import 'post.dart';
+import 'admin_model.dart';
+import 'user_model.dart';
+import 'post_model.dart';
 
 enum ReportStatus { PENDING, RESOLVED, DISMISSED }
 

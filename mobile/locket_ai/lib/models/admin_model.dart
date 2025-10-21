@@ -1,6 +1,6 @@
 import 'package:equatable/equatable.dart';
-import 'package:locket_ai/models/admin_action_log.dart';
-import 'package:locket_ai/models/moderation_report.dart';
+import 'package:locket_ai/models/admin_action_log_model.dart';
+import 'package:locket_ai/models/moderation_report_model.dart';
 
 class Admin extends Equatable {
   final String? adminId;

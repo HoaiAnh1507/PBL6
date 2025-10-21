@@ -1,5 +1,5 @@
 import 'package:equatable/equatable.dart';
-import 'user.dart';
+import 'user_model.dart';
 
 enum MediaType { PHOTO, VIDEO }
 enum CaptionStatus { PENDING, COMPLETED, FAILED }

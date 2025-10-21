@@ -3,6 +3,7 @@ import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:locket_ai/models/user_model.dart';
 import 'package:locket_ai/views/camera/capture_preview_page.dart';
 import 'package:locket_ai/widgets/app_header.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -14,8 +15,8 @@ import '../feed/feed_view.dart';
 import 'camera_preview.dart';
 
 class CameraView extends StatefulWidget {
-  final PageController? horizontalController;
-  const CameraView({Key? key, this.horizontalController}) : super(key: key);
+  final PageController horizontalController;
+  const CameraView({Key? key, required this.horizontalController}) : super(key: key);
 
   @override
   State<CameraView> createState() => _CameraViewState();
@@ -197,7 +198,7 @@ class _CameraViewState extends State<CameraView>
   }
 
   void _navigateToPage(int index) {
-    widget.horizontalController?.animateToPage(
+    widget.horizontalController.animateToPage(
       index,
       duration: const Duration(milliseconds: 400),
       curve: Curves.easeInOut,
@@ -216,12 +217,26 @@ class _CameraViewState extends State<CameraView>
             : const Center(
                 child: CircularProgressIndicator(color: Colors.pinkAccent)),
         FeedView(
-          onScrollUpAtTop: () => _vCtrl.animateToPage(
+          currentUser: User(
+            userId: '0',
+            phoneNumber: '0900000000',
+            username: 'me',
+            email: 'me@example.com',
+            fullName: 'Tôi',
+            profilePictureUrl: 'https://i.pravatar.cc/150?img=5',
+            passwordHash: 'hashed_pw_me',
+            subscriptionStatus: SubscriptionStatus.FREE,
+            subscriptionExpiresAt: null,
+            accountStatus: AccountStatus.ACTIVE,
+            createdAt: DateTime.now(),
+            updatedAt: DateTime.now(),
+          ),
+          onScrollUpAtTop: () => widget.horizontalController.animateToPage(
             0,
             duration: const Duration(milliseconds: 300),
             curve: Curves.easeInOut,
-          ), posts: demoPosts,
-        ),
+          ),
+        )
       ],
     );
   }

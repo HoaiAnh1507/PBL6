@@ -1,4 +1,4 @@
-import 'admin.dart';
+import 'admin_model.dart';
 
 class AdminActionLog {
   final int? logId;

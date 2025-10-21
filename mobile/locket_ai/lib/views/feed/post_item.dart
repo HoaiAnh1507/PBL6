@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
-import '../../models/post.dart';
+import 'package:locket_ai/models/user_model.dart';
 import 'package:video_player/video_player.dart';
 import 'package:chewie/chewie.dart';
+import '../../models/post_model.dart';
 
 class PostItem extends StatefulWidget {
   final Post post;
-  const PostItem({Key? key, required this.post}) : super(key: key);
+  final User? currentUser;
+
+  const PostItem({Key? key, required this.post, this.currentUser}) : super(key: key);
 
   @override
   State<PostItem> createState() => _PostItemState();
@@ -18,17 +21,15 @@ class _PostItemState extends State<PostItem> {
   @override
   void initState() {
     super.initState();
-    if (widget.post.type == PostType.video) _initVideo();
+    if (widget.post.mediaType == MediaType.VIDEO) _initVideo();
   }
 
   Future<void> _initVideo() async {
     try {
-      final path = widget.post.filePath;
-      if (path.startsWith('http')) {
-        _v = VideoPlayerController.network(path);
-      } else {
-        _v = VideoPlayerController.asset(path);
-      }
+      final path = widget.post.mediaUrl;
+      _v = path.startsWith('http')
+          ? VideoPlayerController.network(path)
+          : VideoPlayerController.asset(path);
       await _v!.initialize();
       _v!.setLooping(true);
       _chewie = ChewieController(
@@ -51,15 +52,20 @@ class _PostItemState extends State<PostItem> {
 
   @override
   Widget build(BuildContext context) {
+    final post = widget.post;
+    final user = post.user;
     final screenWidth = MediaQuery.of(context).size.width;
-    final screenHeight = MediaQuery.of(context).size.height;
+
+    final caption = post.userEditedCaption?.isNotEmpty == true
+        ? post.userEditedCaption
+        : post.generatedCaption;
 
     return SizedBox(
       width: double.infinity,
       height: double.infinity,
       child: Stack(
         children: [
-          // Background image / video
+          // Ảnh hoặc video nền
           Positioned(
             top: 130,
             left: 7,
@@ -67,15 +73,15 @@ class _PostItemState extends State<PostItem> {
             child: ClipRRect(
               borderRadius: BorderRadius.circular(40),
               child: SizedBox(
-                width: screenWidth - 14, // trừ padding 2 bên
-                height: screenWidth, // giữ vuông như CameraPreview
+                width: screenWidth - 14,
+                height: screenWidth,
                 child: FittedBox(
                   fit: BoxFit.cover,
                   child: SizedBox(
                     width: screenWidth - 14,
-                    height: screenHeight * 0.8, // cùng chiều cao như camera
-                    child: widget.post.type == PostType.image
-                        ? Image.network(widget.post.filePath, fit: BoxFit.cover)
+                    height: MediaQuery.of(context).size.height * 0.8,
+                    child: post.mediaType == MediaType.PHOTO
+                        ? Image.network(post.mediaUrl, fit: BoxFit.cover)
                         : (_chewie != null
                             ? Chewie(controller: _chewie!)
                             : Container(color: Colors.black)),
@@ -85,7 +91,7 @@ class _PostItemState extends State<PostItem> {
             ),
           ),
 
-          // Overlay gradient
+          // Hiệu ứng mờ gradient overlay
           Positioned(
             top: 130,
             left: 7,
@@ -106,34 +112,43 @@ class _PostItemState extends State<PostItem> {
             ),
           ),
 
-          // Caption + author
+          // Hiển thị thông tin người đăng và caption
           Positioned(
             left: 27,
-            bottom: 40,
+            bottom: 80,
             right: 27,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  widget.post.author,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 18,
-                    shadows: [
-                      Shadow(
-                        blurRadius: 8,
-                        color: Colors.black54,
-                        offset: Offset(1, 1),
-                      )
-                    ],
-                  ),
+                // Avatar + tên người đăng
+                Row(
+                  children: [
+                    CircleAvatar(
+                      backgroundImage: NetworkImage(user.profilePictureUrl ?? 'https://i.pravatar.cc/150?img=1'),
+                      radius: 18,
+                    ),
+                    const SizedBox(width: 10),
+                    Text(
+                      user.fullName,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
+                        shadows: [
+                          Shadow(
+                            blurRadius: 8,
+                            color: Colors.black54,
+                            offset: Offset(1, 1),
+                          )
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 6),
-                if (widget.post.caption != null &&
-                    widget.post.caption!.isNotEmpty)
+                if (caption != null && caption.isNotEmpty)
                   Text(
-                    widget.post.caption!,
+                    caption,
                     style: TextStyle(
                       color: Colors.white.withOpacity(0.9),
                       fontSize: 16,

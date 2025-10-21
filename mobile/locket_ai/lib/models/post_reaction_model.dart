@@ -1,6 +1,6 @@
 import 'package:equatable/equatable.dart';
-import 'post.dart';
-import 'user.dart';
+import 'post_model.dart';
+import 'user_model.dart';
 
 class PostReaction extends Equatable {
   final String reactionId;

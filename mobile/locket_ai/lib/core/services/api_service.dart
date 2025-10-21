@@ -1,4 +1,4 @@
-import '../../models/post.dart';
+import '../../models/post_model.dart';
 
 class ApiService {
   static Future<List<Post>> fetchSamplePosts() async {

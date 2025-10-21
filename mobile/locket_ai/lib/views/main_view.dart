@@ -26,8 +26,8 @@ class _MainViewState extends State<MainView> {
       scrollDirection: Axis.horizontal,
       children: [
         const SettingsView(),
-        CameraView(horizontalController: _hCtrl),
-        const ChatListView(),
+        CameraView(horizontalController: _hCtrl), 
+        const ChatListView(currentUserId: ''),
       ],
     );
   }

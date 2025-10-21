@@ -1,6 +1,6 @@
 import 'package:equatable/equatable.dart';
-import 'post.dart';
-import 'user.dart';
+import 'post_model.dart';
+import 'user_model.dart';
 
 class PostRecipient extends Equatable {
   final String postRecipientId;

@@ -1,5 +1,5 @@
 import 'package:equatable/equatable.dart';
-import 'user.dart';
+import 'user_model.dart';
 
 enum FriendshipStatus { pending, accepted, blocked }
 

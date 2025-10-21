@@ -1,83 +1,81 @@
 import 'package:flutter/material.dart';
-import '../../models/post.dart';
-import '../feed/post_item.dart';
+import 'package:provider/provider.dart';
+import 'package:flutter/rendering.dart';
+import '../../viewmodels/feed_viewmodel.dart';
 import '../../core/constants/background.dart';
-
-List<Post> demoPosts = [
-  Post(
-    id: '1',
-    author: 'Alice',
-    caption: 'Chào buổi sáng!',
-    type: PostType.image,
-    filePath: 'https://images.unsplash.com/photo-1503023345310-bd7c1de61c7d?fit=crop&w=800&q=80', 
-    createdAt: DateTime.now(),
-  ),
-  Post(
-    id: '2',
-    author: 'Bob',
-    caption: 'Một khoảnh khắc đẹp',
-    type: PostType.video,
-    filePath: 'https://sample-videos.com/video123/mp4/720/big_buck_bunny_720p_1mb.mp4',
-    createdAt: DateTime.now(),
-  ),
-  Post(
-    id: '3',
-    author: 'Charlie',
-    caption: 'Thử nghiệm Locket clone!',
-    type: PostType.image,
-    filePath: 'https://images.unsplash.com/photo-1517816743773-6e0fd518b4a6?fit=crop&w=800&q=80',
-    createdAt: DateTime.now(),
-  ),
-];
+import '../feed/post_item.dart';
+import '../../models/user_model.dart';
 
 class FeedView extends StatefulWidget {
-  final List<Post> posts;
-  final VoidCallback? onScrollUpAtTop;
+  final User currentUser;
+  final Future<void> Function() onScrollUpAtTop;
 
-  const FeedView({Key? key, required this.posts, this.onScrollUpAtTop})
-      : super(key: key);
+  const FeedView({
+    Key? key,
+    required this.currentUser,
+    required this.onScrollUpAtTop,
+  }) : super(key: key);
 
   @override
   State<FeedView> createState() => _FeedViewState();
 }
 
 class _FeedViewState extends State<FeedView> {
+  final ScrollController _scrollCtrl = ScrollController();
   final PageController _pageCtrl = PageController();
 
-  List<Post> get _posts => widget.posts.isEmpty ? demoPosts : widget.posts;
+  @override
+  void initState() {
+    super.initState();
+
+    _scrollCtrl.addListener(() {
+      if (_scrollCtrl.position.pixels <= 0 &&
+          _scrollCtrl.position.userScrollDirection == ScrollDirection.forward) {
+        // 👇 Gọi callback khi người dùng kéo lên đầu danh sách
+        widget.onScrollUpAtTop();
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    if (_posts.isEmpty) {
-      return const Center(
-        child: Text(
-          'No posts yet',
-          style: TextStyle(color: Colors.white70, fontSize: 18),
-        ),
-      );
-    }
+    final vm = Provider.of<FeedViewModel>(context);
 
     return Stack(
       children: [
         const Positioned.fill(child: AnimatedGradientBackground()),
-        PageView.builder(
-          controller: _pageCtrl,
-          scrollDirection: Axis.vertical,
-          itemCount: widget.posts.length,
-          itemBuilder: (_, index) {
-            final post = widget.posts[index];
-            return SizedBox(
-              width: double.infinity,
-              height: double.infinity,
-              child: PostItem(post: post),
-            );
-          },
-          onPageChanged: (index) {
-            if (index == 0 && widget.onScrollUpAtTop != null) {
-              widget.onScrollUpAtTop!();
-            }
-          },
-        ),
+
+        if (vm.loading)
+          const Center(
+            child: CircularProgressIndicator(color: Colors.white70),
+          )
+        else if (vm.posts.isEmpty)
+          const Center(
+            child: Text(
+              'Không có bài viết nào',
+              style: TextStyle(color: Colors.white70, fontSize: 18),
+            ),
+          )
+        else
+          PageView.builder(
+            controller: _pageCtrl,
+            scrollDirection: Axis.vertical,
+            itemCount: vm.posts.length,
+            itemBuilder: (_, index) {
+              final post = vm.posts[index];
+              return SingleChildScrollView(
+                controller: _scrollCtrl,
+                child: SizedBox(
+                  width: double.infinity,
+                  height: MediaQuery.of(context).size.height,
+                  child: PostItem(
+                    post: post,
+                    currentUser: widget.currentUser,
+                  ),
+                ),
+              );
+            },
+          ),
       ],
     );
   }

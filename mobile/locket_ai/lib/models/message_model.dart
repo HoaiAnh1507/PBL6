@@ -1,7 +1,7 @@
 import 'package:equatable/equatable.dart';
-import 'conversation.dart';
-import 'user.dart';
-import 'post.dart';
+import 'conversation_model.dart';
+import 'user_model.dart';
+import 'post_model.dart';
 
 class Message extends Equatable {
   final String messageId;
