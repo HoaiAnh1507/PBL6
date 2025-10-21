@@ -31,8 +31,13 @@ class _PostItemState extends State<PostItem> {
       }
       await _v!.initialize();
       _v!.setLooping(true);
+      _chewie = ChewieController(
+        videoPlayerController: _v!,
+        autoPlay: true,
+        looping: true,
+        showControls: false,
+      );
       _v!.play();
-      _chewie = ChewieController(videoPlayerController: _v!, autoPlay: true, looping: true, showControls: false);
       if (mounted) setState(() {});
     } catch (_) {}
   }
@@ -46,29 +51,109 @@ class _PostItemState extends State<PostItem> {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      fit: StackFit.expand,
-      children: [
-        if (widget.post.type == PostType.image)
-          Image.network(widget.post.filePath, fit: BoxFit.cover)
-        else if (_chewie != null)
-          Chewie(controller: _chewie!)
-        else
-          Container(color: Colors.grey.shade900),
-        Positioned(
-          left: 16,
-          bottom: 60,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(widget.post.author, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 8),
-              if (widget.post.caption != null)
-                SizedBox(width: 300, child: Text(widget.post.caption!, style: const TextStyle(color: Colors.white70))),
-            ],
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+
+    return SizedBox(
+      width: double.infinity,
+      height: double.infinity,
+      child: Stack(
+        children: [
+          // Background image / video
+          Positioned(
+            top: 130,
+            left: 7,
+            right: 7,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(40),
+              child: SizedBox(
+                width: screenWidth - 14, // trừ padding 2 bên
+                height: screenWidth, // giữ vuông như CameraPreview
+                child: FittedBox(
+                  fit: BoxFit.cover,
+                  child: SizedBox(
+                    width: screenWidth - 14,
+                    height: screenHeight * 0.8, // cùng chiều cao như camera
+                    child: widget.post.type == PostType.image
+                        ? Image.network(widget.post.filePath, fit: BoxFit.cover)
+                        : (_chewie != null
+                            ? Chewie(controller: _chewie!)
+                            : Container(color: Colors.black)),
+                  ),
+                ),
+              ),
+            ),
           ),
-        ),
-      ],
+
+          // Overlay gradient
+          Positioned(
+            top: 130,
+            left: 7,
+            right: 7,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(40),
+              child: Container(
+                width: screenWidth - 14,
+                height: screenWidth,
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Colors.transparent, Colors.black54],
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+          // Caption + author
+          Positioned(
+            left: 27,
+            bottom: 40,
+            right: 27,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  widget.post.author,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                    shadows: [
+                      Shadow(
+                        blurRadius: 8,
+                        color: Colors.black54,
+                        offset: Offset(1, 1),
+                      )
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 6),
+                if (widget.post.caption != null &&
+                    widget.post.caption!.isNotEmpty)
+                  Text(
+                    widget.post.caption!,
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.9),
+                      fontSize: 16,
+                      height: 1.3,
+                      shadows: const [
+                        Shadow(
+                          blurRadius: 6,
+                          color: Colors.black45,
+                          offset: Offset(1, 1),
+                        )
+                      ],
+                    ),
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

@@ -3,6 +3,7 @@ import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:locket_ai/views/camera/capture_preview_page.dart';
 import 'package:locket_ai/widgets/app_header.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:locket_ai/core/constants/colors.dart';
@@ -10,7 +11,6 @@ import 'package:locket_ai/widgets/gradient_icon.dart';
 import '../../core/constants/background.dart';
 import '../../core/services/camera_service.dart';
 import '../feed/feed_view.dart';
-import 'capture_overlay.dart';
 import 'camera_preview.dart';
 
 class CameraView extends StatefulWidget {
@@ -21,7 +21,11 @@ class CameraView extends StatefulWidget {
   State<CameraView> createState() => _CameraViewState();
 }
 
-class _CameraViewState extends State<CameraView> {
+class _CameraViewState extends State<CameraView>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
   late final PageController _vCtrl;
   CameraController? _camCtrl;
   bool _cameraReady = false;
@@ -35,15 +39,21 @@ class _CameraViewState extends State<CameraView> {
   void initState() {
     super.initState();
     _vCtrl = PageController(initialPage: 0);
-    _init();
+    _initCamera();
   }
 
-  Future<void> _init() async {
+  Future<void> _initCamera() async {
+    if (_cameraReady) return; // tránh khởi tạo lại nhiều lần
+
     await [Permission.camera, Permission.microphone, Permission.photos].request();
 
     _cams = await CameraService.available();
     if (_cams.isNotEmpty) {
-      _camCtrl = CameraController(_cams.first, ResolutionPreset.high, enableAudio: true);
+      _camCtrl = CameraController(
+        _cams.first,
+        ResolutionPreset.high,
+        enableAudio: true,
+      );
       await _camCtrl!.initialize();
       if (mounted) setState(() => _cameraReady = true);
     }
@@ -58,17 +68,62 @@ class _CameraViewState extends State<CameraView> {
   }
 
   Future<void> _pickFromGallery() async {
-    final picked = await ImagePicker().pickImage(source: ImageSource.gallery);
-    if (picked == null || !mounted) return;
+    final picker = ImagePicker();
 
-    _showCaptureOverlay(picked.path, false);
+    final choice = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: Colors.black.withOpacity(0.9),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
+      ),
+      builder: (_) => Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              height: 5,
+              width: 40,
+              decoration: BoxDecoration(
+                color: Colors.white24,
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            const SizedBox(height: 20),
+            ListTile(
+              leading: const Icon(Icons.photo, color: Colors.white),
+              title: const Text("Chọn ảnh", style: TextStyle(color: Colors.white)),
+              onTap: () => Navigator.pop(context, "image"),
+            ),
+            ListTile(
+              leading: const Icon(Icons.video_library, color: Colors.white),
+              title: const Text("Chọn video", style: TextStyle(color: Colors.white)),
+              onTap: () => Navigator.pop(context, "video"),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (choice == null) return;
+
+    if (choice == "image") {
+      final picked = await picker.pickImage(source: ImageSource.gallery);
+      if (picked != null && mounted) {
+        _showCaptureOverlay(picked.path, false);
+      }
+    } else if (choice == "video") {
+      final picked = await picker.pickVideo(source: ImageSource.gallery);
+      if (picked != null && mounted) {
+        _showCaptureOverlay(picked.path, true);
+      }
+    }
   }
 
   Future<void> _onCapturePressed() async {
     if (_camCtrl == null || !_camCtrl!.value.isInitialized) return;
     final file = await _camCtrl!.takePicture();
     if (!mounted) return;
-
     _showCaptureOverlay(file.path, false);
   }
 
@@ -77,7 +132,6 @@ class _CameraViewState extends State<CameraView> {
     try {
       await _camCtrl!.startVideoRecording();
       setState(() => _isRecording = true);
-
       const tick = Duration(milliseconds: 100);
       _recordTimer = Timer.periodic(tick, (timer) {
         if (timer.tick * tick.inSeconds >= _maxDuration) _stopRecording();
@@ -93,7 +147,6 @@ class _CameraViewState extends State<CameraView> {
       _recordTimer?.cancel();
       final file = await _camCtrl!.stopVideoRecording();
       setState(() => _isRecording = false);
-
       if (!mounted) return;
       _showCaptureOverlay(file.path, true);
     } catch (e) {
@@ -101,29 +154,44 @@ class _CameraViewState extends State<CameraView> {
     }
   }
 
-  void _showCaptureOverlay(String path, bool isVideo) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => CaptureOverlay(
-        imagePath: path,
-        isVideo: isVideo,
-        onPost: (_) {
-          Navigator.of(context).pop();
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(isVideo ? 'Đăng video thành công (demo)' : 'Đăng ảnh thành công (demo)')),
-          );
-        },
+  void _showCaptureOverlay(String path, bool isVideo) async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => CapturePreviewPage(
+          imagePath: path,
+          isVideo: isVideo,
+          onPost: (caption) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(isVideo
+                    ? 'Đăng video thành công (demo)'
+                    : 'Đăng ảnh thành công (demo)'),
+              ),
+            );
+          },
+        ),
       ),
     );
+
+    // 🔁 Sau khi pop về, bật lại camera preview nếu bị pause
+    if (_camCtrl != null && !_camCtrl!.value.isStreamingImages) {
+      try {
+        await _camCtrl!.initialize();
+        if (mounted) setState(() {});
+      } catch (_) {}
+    }
   }
 
   Future<void> _flipCamera() async {
     if (_cams.length < 2) return;
     final current = _cams.indexOf(_camCtrl!.description);
     final next = (current + 1) % _cams.length;
-    _camCtrl = CameraController(_cams[next], ResolutionPreset.high, enableAudio: false);
+    _camCtrl = CameraController(
+      _cams[next],
+      ResolutionPreset.high,
+      enableAudio: true,
+    );
     await _camCtrl!.initialize();
     if (mounted) setState(() {});
   }
@@ -138,12 +206,22 @@ class _CameraViewState extends State<CameraView> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     return PageView(
       controller: _vCtrl,
       scrollDirection: Axis.vertical,
       children: [
-        _cameraReady ? _buildCameraStack(context) : const Center(child: CircularProgressIndicator(color: Colors.pinkAccent)),
-        FeedView(onScrollUpAtTop: () => _vCtrl.animateToPage(0, duration: const Duration(milliseconds: 300), curve: Curves.easeInOut)),
+        _cameraReady
+            ? _buildCameraStack(context)
+            : const Center(
+                child: CircularProgressIndicator(color: Colors.pinkAccent)),
+        FeedView(
+          onScrollUpAtTop: () => _vCtrl.animateToPage(
+            0,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
+          ), posts: demoPosts,
+        ),
       ],
     );
   }
@@ -162,34 +240,46 @@ class _CameraViewState extends State<CameraView> {
   }
 
   Widget _buildHeader() {
-      return AppHeader(
+    return AppHeader(
       onLeftTap: () => _navigateToPage(0),
       onRightTap: () => _navigateToPage(2),
       friendsSection: GestureDetector(
-        onTap: _showFriendsSheet, // riêng cho CameraView
+        onTap: _showFriendsSheet,
         child: _buildFriendsButton("5", "Friends"),
       ),
     );
   }
 
   Widget _buildFriendsButton(String count, String label) {
-    return GestureDetector(
-      onTap: _showFriendsSheet,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        decoration: BoxDecoration(color: const Color.fromRGBO(79, 76, 76, 0.298), borderRadius: BorderRadius.circular(40)),
-        child: Row(
-          children: [
-            ShaderMask(
-              shaderCallback: (bounds) => instagramGradient.createShader(bounds),
-              child: const Icon(Icons.group_outlined, color: Colors.white, size: 22),
-            ),
-            const SizedBox(width: 8),
-            Text(count, style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 16, decoration: TextDecoration.none)),
-            const SizedBox(width: 6),
-            Text(label, style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 16, decoration: TextDecoration.none)),
-          ],
-        ),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      decoration: BoxDecoration(
+        color: const Color.fromRGBO(79, 76, 76, 0.298),
+        borderRadius: BorderRadius.circular(40),
+      ),
+      child: Row(
+        children: [
+          ShaderMask(
+            shaderCallback: (bounds) =>
+                instagramGradient.createShader(bounds),
+            child: const Icon(Icons.group_outlined,
+                color: Colors.white, size: 22),
+          ),
+          const SizedBox(width: 8),
+          Text(count,
+              style: GoogleFonts.poppins(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 16,
+                  decoration: TextDecoration.none)),
+          const SizedBox(width: 6),
+          Text(label,
+              style: GoogleFonts.poppins(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 16,
+                  decoration: TextDecoration.none)),
+        ],
       ),
     );
   }
@@ -198,19 +288,32 @@ class _CameraViewState extends State<CameraView> {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.black.withOpacity(0.8),
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(30))),
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(30))),
       builder: (_) => Container(
         padding: const EdgeInsets.all(20),
         child: Column(mainAxisSize: MainAxisSize.min, children: [
-          Container(height: 5, width: 40, decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(10))),
+          Container(
+              height: 5,
+              width: 40,
+              decoration: BoxDecoration(
+                  color: Colors.white24,
+                  borderRadius: BorderRadius.circular(10))),
           const SizedBox(height: 16),
-          Text('Your friends', style: GoogleFonts.poppins(fontSize: 18, color: Colors.white, fontWeight: FontWeight.w600)),
+          Text('Your friends',
+              style: GoogleFonts.poppins(
+                  fontSize: 18,
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600)),
           const SizedBox(height: 12),
           ...List.generate(
             5,
             (i) => ListTile(
-              leading: const CircleAvatar(backgroundColor: Color(0xFFEAEAEA), child: Icon(Icons.person, color: Colors.white)),
-              title: Text('Friend ${i + 1}', style: const TextStyle(color: Colors.white)),
+              leading: const CircleAvatar(
+                  backgroundColor: Color(0xFFEAEAEA),
+                  child: Icon(Icons.person, color: Colors.white)),
+              title: Text('Friend ${i + 1}',
+                  style: const TextStyle(color: Colors.white)),
             ),
           ),
         ]),
@@ -257,7 +360,8 @@ class _CameraViewState extends State<CameraView> {
             value: value,
             minHeight: 6,
             backgroundColor: Colors.white24,
-            valueColor: const AlwaysStoppedAnimation<Color>(Colors.pinkAccent),
+            valueColor:
+                const AlwaysStoppedAnimation<Color>(Colors.pinkAccent),
           ),
         ),
       ),
@@ -272,7 +376,9 @@ class _CameraViewState extends State<CameraView> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          GestureDetector(onTap: _pickFromGallery, child: const GradientIcon(icon: Icons.photo_library_outlined, size: 30)),
+          GestureDetector(
+              onTap: _pickFromGallery,
+              child: const GradientIcon(icon: Icons.photo_library_outlined, size: 30)),
           GestureDetector(
             onTapDown: (_) async {
               setState(() => _isPressed = true);
@@ -290,7 +396,8 @@ class _CameraViewState extends State<CameraView> {
             child: Container(
               height: 90,
               width: 90,
-              decoration: const BoxDecoration(shape: BoxShape.circle, gradient: instagramGradient),
+              decoration: const BoxDecoration(
+                  shape: BoxShape.circle, gradient: instagramGradient),
               child: Center(
                 child: AnimatedScale(
                   scale: _isPressed ? 0.85 : 1.0,
@@ -299,7 +406,9 @@ class _CameraViewState extends State<CameraView> {
                     height: 78,
                     width: 78,
                     decoration: BoxDecoration(
-                      color: _isRecording ? const Color(0xFFC4C3C3) : Colors.black,
+                      color: _isRecording
+                          ? const Color(0xFFC4C3C3)
+                          : Colors.black,
                       shape: BoxShape.circle,
                     ),
                   ),
@@ -307,7 +416,9 @@ class _CameraViewState extends State<CameraView> {
               ),
             ),
           ),
-          GestureDetector(onTap: _flipCamera, child: const GradientIcon(icon: Icons.flip_camera_ios, size: 30)),
+          GestureDetector(
+              onTap: _flipCamera,
+              child: const GradientIcon(icon: Icons.flip_camera_ios, size: 30)),
         ],
       ),
     );
@@ -320,15 +431,12 @@ class _CameraViewState extends State<CameraView> {
       right: 0,
       child: Column(
         children: [
-          Text(
-            "History",
-            style: GoogleFonts.poppins(
-              color: Colors.white.withOpacity(0.9),
-              fontSize: 20,
-              fontWeight: FontWeight.w600,
-              decoration: TextDecoration.none,
-            ),
-          ),
+          Text("History",
+              style: GoogleFonts.poppins(
+                  color: Colors.white.withOpacity(0.9),
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
+                  decoration: TextDecoration.none)),
           const GradientIcon(icon: Icons.expand_more),
         ],
       ),
