@@ -94,5 +94,10 @@ public class CustomUserDetailsService implements UserDetailsService {
         public User getUser() {
             return user;
         }
+
+        public String getUserId() {
+            return user.getUserId();
+        }
+    
     }
 }
