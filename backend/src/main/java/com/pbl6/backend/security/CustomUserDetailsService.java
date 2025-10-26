@@ -67,10 +67,13 @@ public class CustomUserDetailsService implements UserDetailsService {
         
         @Override
         public String getUsername() {
+            return user.getUsername();
+        }
+
+        public String getPrincipalIdentifier() {
             // Trả về cùng giá trị với JWT subject (email hoặc số điện thoại)
             return principalIdentifier;
         }
-        
         @Override
         public boolean isAccountNonExpired() {
             return true;

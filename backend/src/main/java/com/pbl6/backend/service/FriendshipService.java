@@ -21,25 +21,25 @@ public class FriendshipService {
 
     /**
      * Gửi lời mời kết bạn giữa hai người dùng
-     * @param currentUsername Username của người dùng hiện tại (người gửi lời mời)
+     * @param currentUserId UUID của người dùng hiện tại (người gửi lời mời)
      * @param targetUsername Username của người dùng được mời kết bạn
      * @return Friendship object đã được tạo
      * @throws RuntimeException nếu có lỗi xảy ra
      */
     @Transactional
-    public Friendship sendFriendRequest(String currentUsername, String targetUsername) {
-        // Kiểm tra không thể kết bạn với chính mình
-        if (currentUsername.equals(targetUsername)) {
-            throw new RuntimeException("Không thể gửi lời mời kết bạn cho chính mình");
-        }
-
-        // Tìm người dùng hiện tại
-        User currentUser = userRepository.findByUsername(currentUsername)
+    public Friendship sendFriendRequest(String currentUserId, String targetUsername) {
+        // Tìm người dùng hiện tại theo ID
+        User currentUser = userRepository.findById(currentUserId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng hiện tại"));
 
-        // Tìm người dùng được mời
+        // Tìm người dùng được mời theo username
         User targetUser = userRepository.findByUsername(targetUsername)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng được mời kết bạn"));
+
+        // Không thể kết bạn với chính mình
+        if (currentUser.getUserId().equals(targetUser.getUserId())) {
+            throw new RuntimeException("Không thể gửi lời mời kết bạn cho chính mình");
+        }
 
         // Kiểm tra xem đã có mối quan hệ nào giữa hai người dùng chưa
         Optional<Friendship> existingFriendship = friendshipRepository.findByUsers(currentUser, targetUser);
@@ -71,18 +71,18 @@ public class FriendshipService {
 
     /**
      * Chấp nhận lời mời kết bạn
-     * @param currentUsername Username của người dùng hiện tại (người nhận lời mời)
+     * @param currentUserId UUID của người dùng hiện tại (người nhận lời mời)
      * @param senderUsername Username của người gửi lời mời kết bạn
      * @return Friendship object đã được cập nhật
      * @throws RuntimeException nếu có lỗi xảy ra
      */
     @Transactional
-    public Friendship acceptFriendRequest(String currentUsername, String senderUsername) {
-        // Tìm người dùng hiện tại
-        User currentUser = userRepository.findByUsername(currentUsername)
+    public Friendship acceptFriendRequest(String currentUserId, String senderUsername) {
+        // Tìm người dùng hiện tại theo ID
+        User currentUser = userRepository.findById(currentUserId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng hiện tại"));
 
-        // Tìm người gửi lời mời
+        // Tìm người gửi lời mời theo username
         User senderUser = userRepository.findByUsername(senderUsername)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy người gửi lời mời"));
 
@@ -112,17 +112,17 @@ public class FriendshipService {
 
     /**
      * Từ chối lời mời kết bạn
-     * @param currentUsername Username của người dùng hiện tại (người nhận lời mời)
+     * @param currentUserId UUID của người dùng hiện tại (người nhận lời mời)
      * @param senderUsername Username của người gửi lời mời kết bạn
      * @throws RuntimeException nếu có lỗi xảy ra
      */
     @Transactional
-    public void rejectFriendRequest(String currentUsername, String senderUsername) {
-        // Tìm người dùng hiện tại
-        User currentUser = userRepository.findByUsername(currentUsername)
+    public void rejectFriendRequest(String currentUserId, String senderUsername) {
+        // Tìm người dùng hiện tại theo ID
+        User currentUser = userRepository.findById(currentUserId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng hiện tại"));
 
-        // Tìm người gửi lời mời
+        // Tìm người gửi lời mời theo username
         User senderUser = userRepository.findByUsername(senderUsername)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy người gửi lời mời"));
 
@@ -151,21 +151,24 @@ public class FriendshipService {
 
     /**
      * Chặn người dùng
-     * @param currentUsername Username của người dùng hiện tại
+     * @param currentUserId UUID của người dùng hiện tại
      * @param targetUsername Username của người dùng bị chặn
      * @return Friendship object với trạng thái BLOCKED
      */
     @Transactional
-    public Friendship blockUser(String currentUsername, String targetUsername) {
-        if (currentUsername.equals(targetUsername)) {
-            throw new RuntimeException("Không thể chặn chính mình");
-        }
-
-        User currentUser = userRepository.findByUsername(currentUsername)
+    public Friendship blockUser(String currentUserId, String targetUsername) {
+        // Tìm người dùng hiện tại theo ID
+        User currentUser = userRepository.findById(currentUserId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng hiện tại"));
 
+        // Tìm người dùng cần chặn theo username
         User targetUser = userRepository.findByUsername(targetUsername)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng cần chặn"));
+
+        // Không thể chặn chính mình
+        if (currentUser.getUserId().equals(targetUser.getUserId())) {
+            throw new RuntimeException("Không thể chặn chính mình");
+        }
 
         // Tìm hoặc tạo mối quan hệ
         Optional<Friendship> existingFriendship = friendshipRepository.findByUsers(currentUser, targetUser);

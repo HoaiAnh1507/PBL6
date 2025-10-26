@@ -61,10 +61,12 @@ public class FriendshipController {
                 errorResponse.put("error", "Không thể xác thực người dùng");
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
             }
+            System.out.println(">>> Current userId from token: " + currentPrincipal.getUserId());
+            System.out.println(">>> Target username: " + targetUsername);
 
             // Gửi lời mời kết bạn
             Friendship friendship = friendshipService.sendFriendRequest(
-                    currentPrincipal.getUsername(), 
+                    currentPrincipal.getUserId(), 
                     targetUsername
             );
 
@@ -106,7 +108,7 @@ public class FriendshipController {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
             }
 
-            Friendship friendship = friendshipService.acceptFriendRequest(currentPrincipal.getUsername(), senderUsername);
+            Friendship friendship = friendshipService.acceptFriendRequest(currentPrincipal.getUserId(), senderUsername);
             
             FriendshipResponse response = new FriendshipResponse(friendship);
             
@@ -145,7 +147,7 @@ public class FriendshipController {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
             }
 
-            friendshipService.rejectFriendRequest(currentPrincipal.getUsername(), senderUsername);
+            friendshipService.rejectFriendRequest(currentPrincipal.getUserId(), senderUsername);
             
             Map<String, String> successResponse = new HashMap<>();
             successResponse.put("message", "Từ chối lời mời kết bạn thành công");
@@ -181,9 +183,7 @@ public class FriendshipController {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
             }
 
-            String currentUsername = currentPrincipal.getUsername();
-
-            Friendship friendship = friendshipService.blockUser(currentUsername, targetUsername);
+            Friendship friendship = friendshipService.blockUser(currentPrincipal.getUserId(), targetUsername);
             
             FriendshipResponse response = new FriendshipResponse(friendship);
             
