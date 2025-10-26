@@ -1,11 +1,11 @@
 package com.pbl6.backend.controller;
 
-import com.pbl6.backend.model.Friendship;
-import com.pbl6.backend.request.CreateFriendshipRequest;
 import com.pbl6.backend.response.FriendshipResponse;
+import com.pbl6.backend.response.PublicUserResponse;
+import com.pbl6.backend.model.Friendship;
 import com.pbl6.backend.security.CustomUserDetailsService;
 import com.pbl6.backend.service.FriendshipService;
-import jakarta.validation.Valid;
+import com.pbl6.backend.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,192 +15,139 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/friendships")
-@CrossOrigin(origins = "*", maxAge = 3600)
 public class FriendshipController {
 
     @Autowired
     private FriendshipService friendshipService;
 
-    /**
-     * Lấy thông tin người dùng hiện tại từ JWT token
-     */
+    @Autowired
+    private UserService userService;
+
+    // Helper: lấy principal hiện tại từ SecurityContext
     private CustomUserDetailsService.CustomUserPrincipal getCurrentPrincipal() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !authentication.isAuthenticated()) {
-            return null;
+            throw new RuntimeException("Chưa xác thực");
         }
         Object principal = authentication.getPrincipal();
         if (principal instanceof CustomUserDetailsService.CustomUserPrincipal userPrincipal) {
             return userPrincipal;
         }
-        return null;
+        throw new RuntimeException("Không thể xác thực người dùng");
     }
 
-    /**
-     * API gửi lời mời kết bạn
-     * POST /api/friendships/request/{targetUsername}
-     * 
-     * Nhận vào username của người dùng được mời kết bạn từ path parameter
-     * Backend sẽ tìm UUID từ username để lưu vào database
-     * 
-     * @param targetUsername Username của người dùng được mời kết bạn
-     * @return ResponseEntity chứa thông tin mối quan hệ bạn bè đã tạo hoặc thông báo lỗi
-     */
     @PostMapping("/request/{targetUsername}")
-    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<?> sendFriendRequest(@PathVariable String targetUsername) {
-        try {
-            // Lấy thông tin người dùng hiện tại từ JWT token
-            CustomUserDetailsService.CustomUserPrincipal currentPrincipal = getCurrentPrincipal();
-            if (currentPrincipal == null) {
-                Map<String, String> errorResponse = new HashMap<>();
-                errorResponse.put("error", "Không thể xác thực người dùng");
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
-            }
-            System.out.println(">>> Current userId from token: " + currentPrincipal.getUserId());
-            System.out.println(">>> Target username: " + targetUsername);
-
-            // Gửi lời mời kết bạn
-            Friendship friendship = friendshipService.sendFriendRequest(
-                    currentPrincipal.getUserId(), 
-                    targetUsername
-            );
-
-            // Tạo response
-            FriendshipResponse response = new FriendshipResponse(friendship);
-            
-            Map<String, Object> successResponse = new HashMap<>();
-            successResponse.put("message", "Gửi lời mời kết bạn thành công");
-            successResponse.put("friendship", response);
-            
-            return ResponseEntity.ok(successResponse);
-
-        } catch (RuntimeException e) {
-            Map<String, String> errorResponse = new HashMap<>();
-            errorResponse.put("error", e.getMessage());
-            return ResponseEntity.badRequest().body(errorResponse);
-        } catch (Exception e) {
-            Map<String, String> errorResponse = new HashMap<>();
-            errorResponse.put("error", "Đã xảy ra lỗi không mong muốn");
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
-        }
+        CustomUserDetailsService.CustomUserPrincipal principal = getCurrentPrincipal();
+        Friendship friendship = friendshipService.sendFriendRequest(principal.getUser().getUserId(), targetUsername);
+        return ResponseEntity.ok(new FriendshipResponse(friendship));
     }
 
-    /**
-     * API chấp nhận lời mời kết bạn
-     * POST /api/friendships/accept/{senderUsername}
-     * 
-     * @param senderUsername Username của người gửi lời mời kết bạn
-     * @return FriendshipResponse với trạng thái đã cập nhật
-     */
     @PostMapping("/accept/{senderUsername}")
-    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<?> acceptFriendRequest(@PathVariable String senderUsername) {
-        try {
-            CustomUserDetailsService.CustomUserPrincipal currentPrincipal = getCurrentPrincipal();
-            if (currentPrincipal == null) {
-                Map<String, String> errorResponse = new HashMap<>();
-                errorResponse.put("error", "Không thể xác thực người dùng");
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
-            }
-
-            Friendship friendship = friendshipService.acceptFriendRequest(currentPrincipal.getUserId(), senderUsername);
-            
-            FriendshipResponse response = new FriendshipResponse(friendship);
-            
-            Map<String, Object> successResponse = new HashMap<>();
-            successResponse.put("message", "Chấp nhận lời mời kết bạn thành công");
-            successResponse.put("friendship", response);
-            
-            return ResponseEntity.ok(successResponse);
-            
-        } catch (RuntimeException e) {
-            Map<String, String> errorResponse = new HashMap<>();
-            errorResponse.put("error", e.getMessage());
-            return ResponseEntity.badRequest().body(errorResponse);
-        } catch (Exception e) {
-            Map<String, String> errorResponse = new HashMap<>();
-            errorResponse.put("error", "Đã xảy ra lỗi khi chấp nhận lời mời kết bạn");
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
-        }
+        CustomUserDetailsService.CustomUserPrincipal principal = getCurrentPrincipal();
+        Friendship friendship = friendshipService.acceptFriendRequest(principal.getUser().getUserId(), senderUsername);
+        return ResponseEntity.ok(new FriendshipResponse(friendship));
     }
 
-    /**
-     * API từ chối lời mời kết bạn
-     * POST /api/friendships/reject/{senderUsername}
-     * 
-     * @param senderUsername Username của người gửi lời mời kết bạn
-     * @return Thông báo thành công
-     */
     @PostMapping("/reject/{senderUsername}")
-    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<?> rejectFriendRequest(@PathVariable String senderUsername) {
-        try {
-            CustomUserDetailsService.CustomUserPrincipal currentPrincipal = getCurrentPrincipal();
-            if (currentPrincipal == null) {
-                Map<String, String> errorResponse = new HashMap<>();
-                errorResponse.put("error", "Không thể xác thực người dùng");
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
-            }
-
-            friendshipService.rejectFriendRequest(currentPrincipal.getUserId(), senderUsername);
-            
-            Map<String, String> successResponse = new HashMap<>();
-            successResponse.put("message", "Từ chối lời mời kết bạn thành công");
-            
-            return ResponseEntity.ok(successResponse);
-            
-        } catch (RuntimeException e) {
-            Map<String, String> errorResponse = new HashMap<>();
-            errorResponse.put("error", e.getMessage());
-            return ResponseEntity.badRequest().body(errorResponse);
-        } catch (Exception e) {
-            Map<String, String> errorResponse = new HashMap<>();
-            errorResponse.put("error", "Đã xảy ra lỗi khi từ chối lời mời kết bạn");
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
-        }
+        CustomUserDetailsService.CustomUserPrincipal principal = getCurrentPrincipal();
+        friendshipService.rejectFriendRequest(principal.getUser().getUserId(), senderUsername);
+        return ResponseEntity.ok().build();
     }
 
-    /**
-     * API chặn người dùng
-     * POST /api/friendships/block/{targetUsername}
-     * 
-     * @param targetUsername Username của người dùng cần chặn
-     * @return FriendshipResponse với trạng thái BLOCKED
-     */
     @PostMapping("/block/{targetUsername}")
-    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<?> blockUser(@PathVariable String targetUsername) {
+        CustomUserDetailsService.CustomUserPrincipal principal = getCurrentPrincipal();
+        Friendship friendship = friendshipService.blockUser(principal.getUser().getUserId(), targetUsername);
+        return ResponseEntity.ok(new FriendshipResponse(friendship));
+    }
+
+    @PostMapping("/unblock/{targetUsername}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<?> unblockUser(@PathVariable String targetUsername) {
+        CustomUserDetailsService.CustomUserPrincipal principal = getCurrentPrincipal();
+        friendshipService.unblockUser(principal.getUser().getUserId(), targetUsername);
+        return ResponseEntity.ok().build();
+    }
+
+    @DeleteMapping("/unfriend/{targetUsername}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<?> unfriend(@PathVariable String targetUsername) {
+        CustomUserDetailsService.CustomUserPrincipal principal = getCurrentPrincipal();
+        friendshipService.unfriend(principal.getUser().getUserId(), targetUsername);
+        return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/requests")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<?> listRequests() {
+        CustomUserDetailsService.CustomUserPrincipal principal = getCurrentPrincipal();
+        List<FriendshipResponse> incoming = friendshipService.getIncomingRequests(principal.getUser().getUserId())
+                .stream().map(FriendshipResponse::new).collect(Collectors.toList());
+        List<FriendshipResponse> sent = friendshipService.getSentRequests(principal.getUser().getUserId())
+                .stream().map(FriendshipResponse::new).collect(Collectors.toList());
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("incoming", incoming);
+        payload.put("sent", sent);
+        return ResponseEntity.ok(payload);
+    }
+
+    @GetMapping("")
+    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
+    public ResponseEntity<?> listFriends() {
         try {
-            CustomUserDetailsService.CustomUserPrincipal currentPrincipal = getCurrentPrincipal();
-            if (currentPrincipal == null) {
+            CustomUserDetailsService.CustomUserPrincipal principal = getCurrentPrincipal();
+            if (principal == null) {
                 Map<String, String> error = new HashMap<>();
-                error.put("error", "Không thể xác thực người dùng");
+                error.put("error", "Chưa xác thực");
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
             }
-
-            Friendship friendship = friendshipService.blockUser(currentPrincipal.getUserId(), targetUsername);
             
-            FriendshipResponse response = new FriendshipResponse(friendship);
-            
-            Map<String, Object> result = new HashMap<>();
-            result.put("message", "Chặn người dùng thành công");
-            result.put("friendship", response);
-            
-            return ResponseEntity.ok(result);
-            
-        } catch (RuntimeException e) {
-            Map<String, String> error = new HashMap<>();
-            error.put("error", e.getMessage());
-            return ResponseEntity.badRequest().body(error);
+            List<PublicUserResponse> friends = friendshipService.getFriends(principal.getUser().getUserId());
+            return ResponseEntity.ok(friends);
         } catch (Exception e) {
+            System.err.println("ERROR in listFriends controller: " + e.getMessage());
+            e.printStackTrace();
             Map<String, String> error = new HashMap<>();
-            error.put("error", "Đã xảy ra lỗi khi chặn người dùng");
+            error.put("error", "Đã xảy ra lỗi khi lấy danh sách bạn bè: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+        }
+    }
+
+    @GetMapping("/debug")
+    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
+    public ResponseEntity<?> debugFriends() {
+        try {
+            CustomUserDetailsService.CustomUserPrincipal principal = getCurrentPrincipal();
+            if (principal == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Not authenticated");
+            }
+            
+            String userId = principal.getUser().getUserId();
+            String username = principal.getUser().getUsername();
+            
+            Map<String, Object> debug = new HashMap<>();
+            debug.put("currentUserId", userId);
+            debug.put("currentUsername", username);
+            debug.put("message", "Debug endpoint working");
+            
+            return ResponseEntity.ok(debug);
+        } catch (Exception e) {
+            System.err.println("ERROR in debug endpoint: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Debug error: " + e.getMessage());
         }
     }
 }
