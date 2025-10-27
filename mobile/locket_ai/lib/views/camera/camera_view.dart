@@ -5,7 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:locket_ai/models/user_model.dart';
 import 'package:locket_ai/views/camera/capture_preview_page.dart';
-import 'package:locket_ai/widgets/app_header.dart';
+import 'package:locket_ai/widgets/base_header.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:locket_ai/core/constants/colors.dart';
 import 'package:locket_ai/widgets/gradient_icon.dart';
@@ -196,14 +196,6 @@ class _CameraViewState extends State<CameraView>
     if (mounted) setState(() {});
   }
 
-  void _navigateToPage(int index) {
-    widget.horizontalController.animateToPage(
-      index,
-      duration: const Duration(milliseconds: 400),
-      curve: Curves.easeInOut,
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     super.build(context);
@@ -216,6 +208,7 @@ class _CameraViewState extends State<CameraView>
             : const Center(
                 child: CircularProgressIndicator(color: Colors.pinkAccent)),
         FeedView(
+          horizontalController: widget.horizontalController,
           currentUser: User(
             userId: '0',
             phoneNumber: '0900000000',
@@ -254,47 +247,11 @@ class _CameraViewState extends State<CameraView>
   }
 
   Widget _buildHeader() {
-    return AppHeader(
-      onLeftTap: () => _navigateToPage(0),
-      onRightTap: () => _navigateToPage(2),
-      friendsSection: GestureDetector(
-        onTap: _showFriendsSheet,
-        child: _buildFriendsButton("5", "Friends"),
-      ),
-    );
-  }
-
-  Widget _buildFriendsButton(String count, String label) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-      decoration: BoxDecoration(
-        color: const Color.fromRGBO(79, 76, 76, 0.298),
-        borderRadius: BorderRadius.circular(40),
-      ),
-      child: Row(
-        children: [
-          ShaderMask(
-            shaderCallback: (bounds) =>
-                instagramGradient.createShader(bounds),
-            child: const Icon(Icons.group_outlined,
-                color: Colors.white, size: 22),
-          ),
-          const SizedBox(width: 8),
-          Text(count,
-              style: GoogleFonts.poppins(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 16,
-                  decoration: TextDecoration.none)),
-          const SizedBox(width: 6),
-          Text(label,
-              style: GoogleFonts.poppins(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 16,
-                  decoration: TextDecoration.none)),
-        ],
-      ),
+    return BaseHeader(
+      horizontalController: widget.horizontalController,
+      count: 5,
+      label: 'Friends',
+      onTap: _showFriendsSheet
     );
   }
 

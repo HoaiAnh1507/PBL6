@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:locket_ai/widgets/base_header.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter/rendering.dart';
 import '../../viewmodels/feed_viewmodel.dart';
@@ -7,11 +9,13 @@ import '../feed/post_item.dart';
 import '../../models/user_model.dart';
 
 class FeedView extends StatefulWidget {
+  final PageController horizontalController;
   final User currentUser;
   final Future<void> Function() onScrollUpAtTop;
 
   const FeedView({
     Key? key,
+    required this.horizontalController,
     required this.currentUser,
     required this.onScrollUpAtTop,
   }) : super(key: key);
@@ -31,10 +35,55 @@ class _FeedViewState extends State<FeedView> {
     _scrollCtrl.addListener(() {
       if (_scrollCtrl.position.pixels <= 0 &&
           _scrollCtrl.position.userScrollDirection == ScrollDirection.forward) {
-        // 👇 Gọi callback khi người dùng kéo lên đầu danh sách
         widget.onScrollUpAtTop();
       }
     });
+  }
+
+  Widget _buildHeader() {
+    return BaseHeader(
+      horizontalController: widget.horizontalController,
+      count: 5,
+      label: 'Friends',
+      onTap: _showFriendsSheet
+    );
+  }
+
+  void _showFriendsSheet() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.black.withOpacity(0.8),
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(30))),
+      builder: (_) => Container(
+        padding: const EdgeInsets.all(20),
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          Container(
+              height: 5,
+              width: 40,
+              decoration: BoxDecoration(
+                  color: Colors.white24,
+                  borderRadius: BorderRadius.circular(10))),
+          const SizedBox(height: 16),
+          Text('Your friends',
+              style: GoogleFonts.poppins(
+                  fontSize: 18,
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600)),
+          const SizedBox(height: 12),
+          ...List.generate(
+            5,
+            (i) => ListTile(
+              leading: const CircleAvatar(
+                  backgroundColor: Color(0xFFEAEAEA),
+                  child: Icon(Icons.person, color: Colors.white)),
+              title: Text('Friend ${i + 1}',
+                  style: const TextStyle(color: Colors.white)),
+            ),
+          ),
+        ]),
+      ),
+    );
   }
 
   @override
@@ -44,7 +93,7 @@ class _FeedViewState extends State<FeedView> {
     return Stack(
       children: [
         const Positioned.fill(child: AnimatedGradientBackground()),
-
+        
         if (vm.loading)
           const Center(
             child: CircularProgressIndicator(color: Colors.white70),
@@ -76,6 +125,8 @@ class _FeedViewState extends State<FeedView> {
               );
             },
           ),
+
+          _buildHeader(),
       ],
     );
   }
