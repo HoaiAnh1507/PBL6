@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:locket_ai/widgets/base_footer.dart';
 import 'package:locket_ai/widgets/base_header.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter/rendering.dart';
@@ -86,6 +87,12 @@ class _FeedViewState extends State<FeedView> {
     );
   }
 
+  Widget _buildFooter() {
+    return BaseFooter(
+      horizontalController: widget.horizontalController,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final vm = Provider.of<FeedViewModel>(context);
@@ -127,6 +134,7 @@ class _FeedViewState extends State<FeedView> {
           ),
 
           _buildHeader(),
+          _buildFooter(),
       ],
     );
   }

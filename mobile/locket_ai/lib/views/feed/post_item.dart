@@ -150,7 +150,7 @@ class _PostItemState extends State<PostItem> {
                 ),
                 const SizedBox(width: 10),
                 Text(
-                  user.fullName,
+                  user.username,
                   style: GoogleFonts.poppins(
                     color: Colors.white,
                     fontWeight: FontWeight.w600,
