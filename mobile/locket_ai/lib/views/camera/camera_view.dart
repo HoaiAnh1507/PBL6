@@ -175,7 +175,6 @@ class _CameraViewState extends State<CameraView>
       ),
     );
 
-    // 🔁 Sau khi pop về, bật lại camera preview nếu bị pause
     if (_camCtrl != null && !_camCtrl!.value.isStreamingImages) {
       try {
         await _camCtrl!.initialize();
@@ -232,7 +231,7 @@ class _CameraViewState extends State<CameraView>
             updatedAt: DateTime.now(),
           ),
           onScrollUpAtTop: () => widget.horizontalController.animateToPage(
-            0,
+            1,
             duration: const Duration(milliseconds: 300),
             curve: Curves.easeInOut,
           ),
