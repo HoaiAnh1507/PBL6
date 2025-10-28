@@ -32,3 +32,5 @@ flutter:
     - assets/videos/video1.mp4
     - assets/videos/video2.mp4
     - assets/videos/video3.mp4
+    - assets/images/image1.png
+    - assets/images/image2.png  

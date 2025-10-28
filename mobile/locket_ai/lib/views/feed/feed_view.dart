@@ -3,23 +3,20 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:locket_ai/widgets/base_footer.dart';
 import 'package:locket_ai/widgets/base_header.dart';
 import 'package:provider/provider.dart';
-import 'package:flutter/rendering.dart';
 import '../../viewmodels/feed_viewmodel.dart';
 import '../../core/constants/background.dart';
 import '../feed/post_item.dart';
 import '../../models/user_model.dart';
 
 class FeedView extends StatefulWidget {
-  final PageController horizontalController;
+  final PageController verticalController;
   final User currentUser;
-  final Future<void> Function() onScrollUpAtTop;
 
   const FeedView({
-    Key? key,
-    required this.horizontalController,
+    super.key,
+    required this.verticalController,
     required this.currentUser,
-    required this.onScrollUpAtTop,
-  }) : super(key: key);
+  });
 
   @override
   State<FeedView> createState() => _FeedViewState();
@@ -32,18 +29,11 @@ class _FeedViewState extends State<FeedView> {
   @override
   void initState() {
     super.initState();
-
-    _scrollCtrl.addListener(() {
-      if (_scrollCtrl.position.pixels <= 0 &&
-          _scrollCtrl.position.userScrollDirection == ScrollDirection.forward) {
-        widget.onScrollUpAtTop();
-      }
-    });
   }
 
   Widget _buildHeader() {
     return BaseHeader(
-      horizontalController: widget.horizontalController,
+      horizontalController: widget.verticalController,
       count: 5,
       label: 'Friends',
       onTap: _showFriendsSheet
@@ -89,7 +79,7 @@ class _FeedViewState extends State<FeedView> {
 
   Widget _buildFooter() {
     return BaseFooter(
-      horizontalController: widget.horizontalController,
+      verticalController: widget.verticalController,
     );
   }
 

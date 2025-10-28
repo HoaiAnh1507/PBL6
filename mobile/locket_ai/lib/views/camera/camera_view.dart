@@ -3,7 +3,6 @@ import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:locket_ai/models/user_model.dart';
 import 'package:locket_ai/views/camera/capture_preview_page.dart';
 import 'package:locket_ai/widgets/base_header.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -11,7 +10,6 @@ import 'package:locket_ai/core/constants/colors.dart';
 import 'package:locket_ai/widgets/gradient_icon.dart';
 import '../../core/constants/background.dart';
 import '../../core/services/camera_service.dart';
-import '../feed/feed_view.dart';
 import 'camera_preview.dart';
 
 class CameraView extends StatefulWidget {
@@ -207,28 +205,6 @@ class _CameraViewState extends State<CameraView>
             ? _buildCameraStack(context)
             : const Center(
                 child: CircularProgressIndicator(color: Colors.pinkAccent)),
-        FeedView(
-          horizontalController: widget.horizontalController,
-          currentUser: User(
-            userId: '0',
-            phoneNumber: '0900000000',
-            username: 'me',
-            email: 'me@example.com',
-            fullName: 'Tôi',
-            profilePictureUrl: 'https://i.pravatar.cc/150?img=5',
-            passwordHash: 'hashed_pw_me',
-            subscriptionStatus: SubscriptionStatus.FREE,
-            subscriptionExpiresAt: null,
-            accountStatus: AccountStatus.ACTIVE,
-            createdAt: DateTime.now(),
-            updatedAt: DateTime.now(),
-          ),
-          onScrollUpAtTop: () => widget.horizontalController.animateToPage(
-            1,
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeInOut,
-          ),
-        )
       ],
     );
   }

@@ -92,7 +92,7 @@ class FeedViewModel extends ChangeNotifier {
         postId: 'p2',
         user: users[2],
         mediaType: MediaType.VIDEO,
-        mediaUrl: 'https://sample-videos.com/video123/mp4/720/big_buck_bunny_720p_1mb.mp4',
+        mediaUrl: 'https://media.istockphoto.com/id/1158647615/vi/video/c%E1%BA%ADn-c%E1%BA%A3nh-kh%C3%A1ch-h%C3%A0ng-n%E1%BB%AF-kh%C3%B4ng-th%E1%BB%83-nh%E1%BA%ADn-ra-khi-ch%E1%BB%8Dn-m%E1%BA%ABu-m%C3%A0u-t%E1%BA%A1i-c%E1%BB%ADa-h%C3%A0ng-s%C6%A1n.mp4?s=mp4-640x640-is&k=20&c=OYu9bqJ2XuUZt0FcNVbeHXo05w9UmSv2gC481Ik2KuM=',
         generatedCaption: 'Một ngày năng động cùng bạn bè 🎥',
         captionStatus: CaptionStatus.COMPLETED,
         userEditedCaption: null,

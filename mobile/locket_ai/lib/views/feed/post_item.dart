@@ -86,24 +86,33 @@ class _PostItemState extends State<PostItem> {
             right: 7,
             child: ClipRRect(
               borderRadius: BorderRadius.circular(40),
-              child: SizedBox(
+              child: Container(
                 width: screenWidth - 14,
                 height: screenWidth,
-                child: FittedBox(
-                  fit: BoxFit.cover,
-                  child: SizedBox(
-                    width: screenWidth - 14,
-                    height: MediaQuery.of(context).size.height * 0.8,
-                    child: post.mediaType == MediaType.PHOTO
-                        ? Image.network(post.mediaUrl, fit: BoxFit.cover)
-                        : (_chewie != null
-                            ? Chewie(controller: _chewie!)
-                            : Container(color: Colors.black)),
-                  ),
-                ),
+                color: Colors.black,
+                child: post.mediaType == MediaType.PHOTO
+                  ? Image.network(
+                      post.mediaUrl,
+                      fit: BoxFit.cover,
+                      width: double.infinity,
+                      height: double.infinity,
+                    )
+                  : (_chewie != null
+                      ? FittedBox(
+                          fit: BoxFit.cover,
+                          clipBehavior: Clip.hardEdge,
+                          child: SizedBox(
+                            width: _chewie!.videoPlayerController.value.size.width,
+                            height: _chewie!.videoPlayerController.value.size.height,
+                            child: Chewie(controller: _chewie!),
+                          ),
+                        )
+                      : Container(color: Colors.black)
+                    ),
               ),
             ),
           ),
+
 
           // Caption đè lên phần dưới của ảnh
           if (caption != null && caption.isNotEmpty)
