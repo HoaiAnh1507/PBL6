@@ -14,7 +14,7 @@ import 'camera_preview.dart';
 
 class CameraView extends StatefulWidget {
   final PageController horizontalController;
-  const CameraView({Key? key, required this.horizontalController}) : super(key: key);
+  const CameraView({super.key, required this.horizontalController});
 
   @override
   State<CameraView> createState() => _CameraViewState();

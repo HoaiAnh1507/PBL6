@@ -16,10 +16,8 @@ class AppFooter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Positioned(
-      bottom: 30,
-      left: 45,
-      right: 45,
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 45),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -33,7 +31,9 @@ class AppFooter extends StatelessWidget {
               height: 60,
               width: 60,
               decoration: const BoxDecoration(
-                  shape: BoxShape.circle, gradient: instagramGradient),
+                shape: BoxShape.circle,
+                gradient: instagramGradient,
+              ),
               child: Center(
                 child: Container(
                   height: 52,
@@ -43,7 +43,7 @@ class AppFooter extends StatelessWidget {
                     color: Colors.black,
                   ),
                 ),
-              )
+              ),
             ),
           ),
           GestureDetector(

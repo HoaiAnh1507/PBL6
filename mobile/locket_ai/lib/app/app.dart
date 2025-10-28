@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../views/main_view.dart';
 
 class LocketApp extends StatelessWidget {
-  const LocketApp({Key? key}) : super(key: key);
+  const LocketApp({super.key});
 
   @override
   Widget build(BuildContext context) {

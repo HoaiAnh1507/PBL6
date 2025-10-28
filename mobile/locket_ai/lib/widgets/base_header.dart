@@ -9,12 +9,12 @@ class BaseHeader extends StatelessWidget {
   final VoidCallback onTap;
 
   const BaseHeader({
-    Key? key,
+    super.key,
     required this.horizontalController,
     required this.count,
     required this.label,
     required this.onTap,
-  }) : super(key: key);
+  });
 
   void _navigateToPage(int index) {
     horizontalController.animateToPage(
@@ -26,10 +26,17 @@ class BaseHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AppHeader(
-      onLeftTap: () => _navigateToPage(0),
-      onRightTap: () => _navigateToPage(2),
-      friendsSection: FriendsButton(count: count, label: label, onTap: onTap),
+    return Padding(
+      padding: const EdgeInsets.only(top: 60, left: 30, right: 30),
+      child: AppHeader(
+        onLeftTap: () => _navigateToPage(0),
+        onRightTap: () => _navigateToPage(2),
+        friendsSection: FriendsButton(
+          count: count,
+          label: label,
+          onTap: onTap,
+        ),
+      ),
     );
   }
 }

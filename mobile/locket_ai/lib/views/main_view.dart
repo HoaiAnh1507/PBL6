@@ -6,7 +6,7 @@ import 'chat/chat_list_view.dart';
 import 'settings/settings_view.dart';
 
 class MainView extends StatefulWidget {
-  const MainView({Key? key}) : super(key: key);
+  const MainView({super.key});
 
   @override
   State<MainView> createState() => _MainViewState();
@@ -15,49 +15,81 @@ class MainView extends StatefulWidget {
 class _MainViewState extends State<MainView> {
   final PageController _hCtrl = PageController(initialPage: 1);
   final PageController _vCtrl = PageController(initialPage: 0);
+  final FocusNode _messageFocus = FocusNode();
+
+  @override
+  void initState() {
+    super.initState();
+    _messageFocus.addListener(() {
+      setState(() {
+      });
+    });
+  }
 
   @override
   void dispose() {
     _hCtrl.dispose();
     _vCtrl.dispose();
+    _messageFocus.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return PageView(
-      controller: _hCtrl,
-      scrollDirection: Axis.horizontal,
-      children: [
-        const SettingsView(),
-        PageView(
-          controller: _vCtrl,
-          scrollDirection: Axis.vertical,
+    final isKeyboardOpen = _messageFocus.hasFocus;
+
+    return GestureDetector(
+      behavior: HitTestBehavior.translucent,
+      onTap: () {
+        if (_messageFocus.hasFocus) _messageFocus.unfocus();
+      },
+      onPanDown: (_) {
+        if (_messageFocus.hasFocus) _messageFocus.unfocus();
+      },
+      child: AbsorbPointer(
+        absorbing: isKeyboardOpen, 
+        child: PageView(
+          controller: _hCtrl,
+          scrollDirection: Axis.horizontal,
+          physics: isKeyboardOpen
+              ? const NeverScrollableScrollPhysics()
+              : const BouncingScrollPhysics(),
           children: [
-            CameraView(horizontalController: _vCtrl), 
-            FeedView(
-              verticalController: _vCtrl,
-              currentUser: User(
-                userId: '0',
-                phoneNumber: '0900000000',
-                username: 'me',
-                email: 'me@example.com',
-                fullName: 'Tôi',
-                profilePictureUrl: 'https://i.pravatar.cc/150?img=5',
-                passwordHash: 'hashed_pw_me',
-                subscriptionStatus: SubscriptionStatus.FREE,
-                subscriptionExpiresAt: null,
-                accountStatus: AccountStatus.ACTIVE,
-                createdAt: DateTime.now(),
-                updatedAt: DateTime.now(),
-              )
-            )
-          ]
+            const SettingsView(),
+
+            PageView(
+              controller: _vCtrl,
+              scrollDirection: Axis.vertical,
+              physics: isKeyboardOpen
+                  ? const NeverScrollableScrollPhysics()
+                  : const BouncingScrollPhysics(),
+              children: [
+                CameraView(horizontalController: _vCtrl),
+                FeedView(
+                  verticalController: _vCtrl,
+                  currentUser: User(
+                    userId: '0',
+                    phoneNumber: '0900000000',
+                    username: 'me',
+                    email: 'me@example.com',
+                    fullName: 'Tôi',
+                    profilePictureUrl: 'https://i.pravatar.cc/150?img=5',
+                    passwordHash: 'hashed_pw_me',
+                    subscriptionStatus: SubscriptionStatus.FREE,
+                    subscriptionExpiresAt: null,
+                    accountStatus: AccountStatus.ACTIVE,
+                    createdAt: DateTime.now(),
+                    updatedAt: DateTime.now(),
+                  ),
+                  messageFocus: _messageFocus,
+                ),
+              ],
+            ),
+
+            const ChatListView(currentUserId: ''),
+          ],
         ),
-        
-        const ChatListView(currentUserId: ''),
-        
-      ],
+      ),
     );
   }
 }

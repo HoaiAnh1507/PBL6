@@ -96,6 +96,17 @@ class _PostItemState extends State<PostItem> {
                       fit: BoxFit.cover,
                       width: double.infinity,
                       height: double.infinity,
+                      loadingBuilder: (context, child, loadingProgress) {
+                        if (loadingProgress == null) return child;
+                        return const Center(
+                          child: CircularProgressIndicator(color: Colors.pinkAccent),
+                        );
+                      },
+                      errorBuilder: (context, error, stackTrace) {
+                        return const Center(
+                          child: Icon(Icons.broken_image, color: Colors.white54, size: 40),
+                        );
+                      },
                     )
                   : (_chewie != null
                       ? FittedBox(
@@ -107,12 +118,10 @@ class _PostItemState extends State<PostItem> {
                             child: Chewie(controller: _chewie!),
                           ),
                         )
-                      : Container(color: Colors.black)
-                    ),
+                      : const Center(child: CircularProgressIndicator(color: Colors.pinkAccent))),
               ),
             ),
           ),
-
 
           // Caption đè lên phần dưới của ảnh
           if (caption != null && caption.isNotEmpty)
@@ -124,8 +133,8 @@ class _PostItemState extends State<PostItem> {
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(30),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                    color: Colors.black.withOpacity(0.1),
+                    padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+                    color: Colors.black.withOpacity(0.2),
                     child: Text(
                       caption,
                       textAlign: TextAlign.center,
