@@ -8,7 +8,6 @@ import 'package:locket_ai/widgets/base_header.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:locket_ai/core/constants/colors.dart';
 import 'package:locket_ai/widgets/gradient_icon.dart';
-import '../../core/constants/background.dart';
 import '../../core/services/camera_service.dart';
 import 'camera_preview.dart';
 
@@ -212,7 +211,7 @@ class _CameraViewState extends State<CameraView>
   Widget _buildCameraStack(BuildContext context) {
     return Stack(
       children: [
-        const Positioned.fill(child: AnimatedGradientBackground()),
+        // const Positioned.fill(child: AnimatedGradientBackground()),
         _buildHeader(),
         _buildCameraPreview(),
         if (_isRecording) _buildProgressBar(),

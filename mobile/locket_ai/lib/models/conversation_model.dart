@@ -47,6 +47,25 @@ class Conversation extends Equatable {
     };
   }
 
+  /// ✅ Sao chép đối tượng và cho phép thay đổi một số trường
+  Conversation copyWith({
+    String? conversationId,
+    User? userOne,
+    User? userTwo,
+    DateTime? lastMessageAt,
+    DateTime? createdAt,
+    List<Message>? messages,
+  }) {
+    return Conversation(
+      conversationId: conversationId ?? this.conversationId,
+      userOne: userOne ?? this.userOne,
+      userTwo: userTwo ?? this.userTwo,
+      lastMessageAt: lastMessageAt ?? this.lastMessageAt,
+      createdAt: createdAt ?? this.createdAt,
+      messages: messages ?? this.messages,
+    );
+  }
+
   @override
   List<Object?> get props =>
       [conversationId, userOne, userTwo, lastMessageAt, createdAt, messages];

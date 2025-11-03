@@ -9,7 +9,7 @@ class SettingsView extends StatelessWidget {
   Widget build(BuildContext context) {
     final vm = Provider.of<SettingsViewModel>(context);
     return Scaffold(
-      backgroundColor: Colors.black,
+      // backgroundColor: Colors.black,
       body: SafeArea(
         child: ListView(
           children: [

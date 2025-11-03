@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:locket_ai/models/user_model.dart';
+import 'package:provider/provider.dart';
 import 'package:locket_ai/views/feed/feed_view.dart';
-import 'camera/camera_view.dart';
-import 'chat/chat_list_view.dart';
-import 'settings/settings_view.dart';
+import 'package:locket_ai/views/camera/camera_view.dart';
+import 'package:locket_ai/views/chat/chat_list_view.dart';
+import 'package:locket_ai/views/settings/settings_view.dart';
+import '../../viewmodels/auth_viewmodel.dart';
 
 class MainView extends StatefulWidget {
   const MainView({super.key});
@@ -20,10 +21,7 @@ class _MainViewState extends State<MainView> {
   @override
   void initState() {
     super.initState();
-    _messageFocus.addListener(() {
-      setState(() {
-      });
-    });
+    _messageFocus.addListener(() => setState(() {}));
   }
 
   @override
@@ -36,18 +34,22 @@ class _MainViewState extends State<MainView> {
 
   @override
   Widget build(BuildContext context) {
+    final authVM = Provider.of<AuthViewModel>(context);
+    final currentUser = authVM.currentUser;
     final isKeyboardOpen = _messageFocus.hasFocus;
+
+    if (currentUser == null) {
+      return const Center(
+        child: Text("Không có người dùng đăng nhập."),
+      );
+    }
 
     return GestureDetector(
       behavior: HitTestBehavior.translucent,
-      onTap: () {
-        if (_messageFocus.hasFocus) _messageFocus.unfocus();
-      },
-      onPanDown: (_) {
-        if (_messageFocus.hasFocus) _messageFocus.unfocus();
-      },
+      onTap: () => _messageFocus.unfocus(),
+      onPanDown: (_) => _messageFocus.unfocus(),
       child: AbsorbPointer(
-        absorbing: isKeyboardOpen, 
+        absorbing: isKeyboardOpen,
         child: PageView(
           controller: _hCtrl,
           scrollDirection: Axis.horizontal,
@@ -66,27 +68,13 @@ class _MainViewState extends State<MainView> {
               children: [
                 CameraView(horizontalController: _vCtrl),
                 FeedView(
-                  verticalController: _vCtrl,
-                  currentUser: User(
-                    userId: '0',
-                    phoneNumber: '0900000000',
-                    username: 'me',
-                    email: 'me@example.com',
-                    fullName: 'Tôi',
-                    profilePictureUrl: 'https://i.pravatar.cc/150?img=5',
-                    passwordHash: 'hashed_pw_me',
-                    subscriptionStatus: SubscriptionStatus.FREE,
-                    subscriptionExpiresAt: null,
-                    accountStatus: AccountStatus.ACTIVE,
-                    createdAt: DateTime.now(),
-                    updatedAt: DateTime.now(),
-                  ),
+                  currentUser: currentUser,
                   messageFocus: _messageFocus,
                 ),
               ],
             ),
 
-            const ChatListView(currentUserId: ''),
+            ChatListView(currentUserId: currentUser.userId),
           ],
         ),
       ),

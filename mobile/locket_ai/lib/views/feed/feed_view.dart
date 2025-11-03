@@ -5,18 +5,15 @@ import 'package:locket_ai/widgets/base_header.dart';
 import 'package:locket_ai/widgets/message_bar.dart';
 import 'package:provider/provider.dart';
 import '../../viewmodels/feed_viewmodel.dart';
-import '../../core/constants/background.dart';
 import '../feed/post_item.dart';
 import '../../models/user_model.dart';
 
 class FeedView extends StatefulWidget {
-  final PageController verticalController;
   final User currentUser;
   final FocusNode messageFocus;
 
   const FeedView({
     super.key,
-    required this.verticalController,
     required this.currentUser,
     required this.messageFocus,
   });
@@ -26,12 +23,23 @@ class FeedView extends StatefulWidget {
 }
 
 class _FeedViewState extends State<FeedView> {
+  final PageController _verticalController = PageController();
   final ScrollController _scrollCtrl = ScrollController();
   final PageController _pageCtrl = PageController();
   final TextEditingController _messageCtrl = TextEditingController(); 
   final FocusNode _messageFocus = FocusNode();
 
   int _currentIndex = 0;
+
+  @override
+  void dispose() {
+    _verticalController.dispose();
+    _scrollCtrl.dispose();
+    _pageCtrl.dispose();
+    _messageCtrl.dispose();
+    _messageFocus.dispose();
+    super.dispose();
+  }
 
   @override
   void initState() {
@@ -43,7 +51,7 @@ class _FeedViewState extends State<FeedView> {
 
   Widget _buildHeader() {
     return BaseHeader(
-      horizontalController: widget.verticalController,
+      horizontalController: _verticalController,
       count: 5,
       label: 'Friends',
       onTap: _showFriendsSheet
@@ -120,7 +128,7 @@ class _FeedViewState extends State<FeedView> {
 
   Widget _buildFooter() {
     return BaseFooter(
-      verticalController: widget.verticalController,
+      verticalController: _verticalController,
       messageController: _messageCtrl,
       onSend: () {}
     );
@@ -128,19 +136,21 @@ class _FeedViewState extends State<FeedView> {
 
   @override
   Widget build(BuildContext context) {
-    final vm = Provider.of<FeedViewModel>(context);
+    final feedVm = Provider.of<FeedViewModel>(context);
+    final posts = feedVm.getVisiblePosts(currentUser: widget.currentUser);
+
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
         resizeToAvoidBottomInset: false, 
         body: Stack(
           children: [
-            const Positioned.fill(child: AnimatedGradientBackground()),
-            if (vm.loading)
+            // const Positioned.fill(child: AnimatedGradientBackground()),
+            if (feedVm.loading)
               const Center(
                 child: CircularProgressIndicator(color: Colors.pinkAccent),
               )
-            else if (vm.posts.isEmpty)
+            else if (posts.isEmpty)
               Center(
                 child: Text(
                   'No moments shared yet',
@@ -154,7 +164,7 @@ class _FeedViewState extends State<FeedView> {
               PageView.builder(
                 controller: _pageCtrl,
                 scrollDirection: Axis.vertical,
-                itemCount: vm.posts.length,
+                itemCount: posts.length,
                 physics: _messageFocus.hasFocus
                   ? const NeverScrollableScrollPhysics() 
                   : const BouncingScrollPhysics(), 
@@ -162,7 +172,8 @@ class _FeedViewState extends State<FeedView> {
                   setState(() => _currentIndex = index);
                 },
                 itemBuilder: (_, index) {
-                  final post = vm.posts[index];
+                  final post = posts[index];
+                  
                   return GestureDetector(
                     onTap: () {
                       if (_messageFocus.hasFocus) {

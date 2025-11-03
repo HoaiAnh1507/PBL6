@@ -161,11 +161,13 @@ class _PostItemState extends State<PostItem> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 CircleAvatar(
-                  backgroundImage: NetworkImage(
-                    user.profilePictureUrl ?? 'https://i.pravatar.cc/150?img=1',
+                    backgroundColor: Colors.grey[800],
+                    backgroundImage: NetworkImage(
+                      (user.profilePictureUrl != null && user.profilePictureUrl!.isNotEmpty)
+                          ? user.profilePictureUrl!
+                          : 'https://i.pravatar.cc/150?u=${user.userId}',
+                    ),
                   ),
-                  radius: 13,
-                ),
                 const SizedBox(width: 10),
                 Text(
                   user.username,
