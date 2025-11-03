@@ -211,7 +211,6 @@ class _CameraViewState extends State<CameraView>
   Widget _buildCameraStack(BuildContext context) {
     return Stack(
       children: [
-        // const Positioned.fill(child: AnimatedGradientBackground()),
         _buildHeader(),
         _buildCameraPreview(),
         if (_isRecording) _buildProgressBar(),

@@ -100,4 +100,25 @@ class ChatViewModel extends ChangeNotifier {
     conv.messages?.add(msg);
     notifyListeners();
   }
+
+  Conversation? getConversation(String currentUserId, String friendId) {
+    try {
+      return _conversations.values.firstWhere(
+        (c) =>
+            (c.userOne.userId == currentUserId && c.userTwo.userId == friendId) ||
+            (c.userTwo.userId == currentUserId && c.userOne.userId == friendId),
+      );
+    } catch (_) {
+      // Nếu không có conversation → tạo mới
+      return _createConversation(currentUserId, friendId);
+    }
+  }
+
+  Message? getLatestMessage(String currentUserId, String friendId) {
+    final conv = getConversation(currentUserId, friendId);
+    if (conv == null || conv.messages == null || conv.messages!.isEmpty) return null;
+    // Lấy tin nhắn gần nhất
+    conv.messages!.sort((a, b) => b.sentAt.compareTo(a.sentAt));
+    return conv.messages!.first;
+  }
 }
