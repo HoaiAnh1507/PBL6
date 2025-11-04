@@ -1,11 +1,15 @@
 package com.pbl6.backend.service;
 
+import com.pbl6.backend.model.Conversation;
 import com.pbl6.backend.model.Friendship;
 import com.pbl6.backend.model.User;
+import com.pbl6.backend.repository.ConversationRepository;
 import com.pbl6.backend.repository.FriendshipRepository;
 import com.pbl6.backend.repository.UserRepository;
 import com.pbl6.backend.response.PublicUserResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,6 +20,8 @@ import java.util.stream.Collectors;
 @Service
 public class FriendshipService {
 
+    private static final Logger log = LoggerFactory.getLogger(FriendshipService.class);
+
     @Autowired
     private FriendshipRepository friendshipRepository;
 
@@ -24,6 +30,9 @@ public class FriendshipService {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private ConversationRepository conversationRepository;
 
     /**
      * Gửi lời mời kết bạn giữa hai người dùng
@@ -101,7 +110,25 @@ public class FriendshipService {
         // Cập nhật trạng thái thành ACCEPTED
         friendship.setStatus(Friendship.FriendshipStatus.ACCEPTED);
         friendship.setActionUser(currentUser); // người thực hiện hành động
-        return friendshipRepository.save(friendship);
+        Friendship saved = friendshipRepository.save(friendship);
+
+        // Tạo conversation giữa 2 người nếu chưa tồn tại
+        Conversation conv = conversationRepository.findByUsers(senderUser, currentUser)
+                .orElseGet(() -> {
+                    Conversation conversation = new Conversation(senderUser, currentUser);
+                    Conversation savedConv = conversationRepository.save(conversation);
+                    return savedConv;
+                });
+
+        if (conv != null) {
+            log.info("Conversation ensured for users [{}] and [{}]: id={}, createdAt={}, lastMessageAt={}",
+                    senderUser.getUserId(), currentUser.getUserId(),
+                    conv.getConversationId(), conv.getCreatedAt(), conv.getLastMessageAt());
+        } else {
+            log.warn("Conversation not created/found for users [{}] and [{}]", senderUser.getUserId(), currentUser.getUserId());
+        }
+
+        return saved;
     }
 
     /**
