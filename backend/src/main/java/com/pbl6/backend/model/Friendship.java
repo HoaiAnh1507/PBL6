@@ -25,9 +25,13 @@ public class Friendship {
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
     private FriendshipStatus status = FriendshipStatus.PENDING;
-    
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "action_user_id")
+    private User actionUser;
     
     public enum FriendshipStatus {
         PENDING, ACCEPTED, BLOCKED
@@ -91,5 +95,13 @@ public class Friendship {
     
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public User getActionUser() {
+        return actionUser;
+    }
+
+    public void setActionUser(User actionUser) {
+        this.actionUser = actionUser;
     }
 }

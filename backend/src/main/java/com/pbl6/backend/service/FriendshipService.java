@@ -67,6 +67,7 @@ public class FriendshipService {
         friendship.setUserOne(currentUser);  // Người gửi lời mời
         friendship.setUserTwo(targetUser);   // Người nhận lời mời
         friendship.setStatus(Friendship.FriendshipStatus.PENDING);
+        friendship.setActionUser(currentUser); // người thực hiện hành động
 
         return friendshipRepository.save(friendship);
     }
@@ -99,6 +100,7 @@ public class FriendshipService {
 
         // Cập nhật trạng thái thành ACCEPTED
         friendship.setStatus(Friendship.FriendshipStatus.ACCEPTED);
+        friendship.setActionUser(currentUser); // người thực hiện hành động
         return friendshipRepository.save(friendship);
     }
 
@@ -152,6 +154,7 @@ public class FriendshipService {
         Friendship friendship = existingFriendship.orElseGet(() -> new Friendship(currentUser, targetUser));
 
         friendship.setStatus(Friendship.FriendshipStatus.BLOCKED);
+        friendship.setActionUser(currentUser); // người thực hiện hành động
         return friendshipRepository.save(friendship);
     }
 
