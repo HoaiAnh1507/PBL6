@@ -32,6 +32,7 @@ class _CameraViewState extends State<CameraView>
   bool _isRecording = false;
   Timer? _recordTimer;
   final int _maxDuration = 15;
+  DateTime? _pressStartTime;
 
   @override
   void initState() {
@@ -130,6 +131,7 @@ class _CameraViewState extends State<CameraView>
     try {
       await _camCtrl!.startVideoRecording();
       setState(() => _isRecording = true);
+
       const tick = Duration(milliseconds: 100);
       _recordTimer = Timer.periodic(tick, (timer) {
         if (timer.tick * tick.inSeconds >= _maxDuration) _stopRecording();
@@ -145,6 +147,7 @@ class _CameraViewState extends State<CameraView>
       _recordTimer?.cancel();
       final file = await _camCtrl!.stopVideoRecording();
       setState(() => _isRecording = false);
+
       if (!mounted) return;
       _showCaptureOverlay(file.path, true);
     } catch (e) {
@@ -305,8 +308,7 @@ class _CameraViewState extends State<CameraView>
             value: value,
             minHeight: 6,
             backgroundColor: Colors.white24,
-            valueColor:
-                const AlwaysStoppedAnimation<Color>(Colors.pinkAccent),
+            valueColor: const AlwaysStoppedAnimation<Color>(Colors.pinkAccent),
           ),
         ),
       ),
@@ -321,39 +323,47 @@ class _CameraViewState extends State<CameraView>
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
+          GestureDetector(onTap: _pickFromGallery, child: const GradientIcon(icon: Icons.photo_library_outlined, size: 30)),
           GestureDetector(
-              onTap: _pickFromGallery,
-              child: const GradientIcon(icon: Icons.photo_library_outlined, size: 30)),
-          GestureDetector(
-            onTapDown: (_) async {
-              setState(() => _isPressed = true);
-              await Future.delayed(const Duration(milliseconds: 250));
-              if (_isPressed && !_isRecording) await _startRecording();
+            onTapDown: (_) {
+              _pressStartTime = DateTime.now();
+              _isPressed = true;
+              setState(() {});
             },
             onTapUp: (_) async {
+              final pressDuration =
+                  DateTime.now().difference(_pressStartTime ?? DateTime.now());
+
+              final wasLongPress = pressDuration.inMilliseconds > 300;
+
               setState(() => _isPressed = false);
-              _isRecording ? await _stopRecording() : _onCapturePressed();
+
+              if (_isRecording) {
+                await _stopRecording();
+              } else if (wasLongPress) {
+                await _startRecording();
+              } else {
+                await _onCapturePressed();
+              }
             },
             onTapCancel: () async {
-              setState(() => _isPressed = false);
+              _isPressed = false;
+              setState(() {});
               if (_isRecording) await _stopRecording();
             },
             child: Container(
               height: 90,
               width: 90,
-              decoration: const BoxDecoration(
-                  shape: BoxShape.circle, gradient: instagramGradient),
+              decoration: const BoxDecoration(shape: BoxShape.circle, gradient: instagramGradient),
               child: Center(
                 child: AnimatedScale(
                   scale: _isPressed ? 0.85 : 1.0,
-                  duration: const Duration(milliseconds: 100),
+                  duration: const Duration(milliseconds: 250),
                   child: Container(
                     height: 78,
                     width: 78,
                     decoration: BoxDecoration(
-                      color: _isRecording
-                          ? const Color(0xFFC4C3C3)
-                          : Colors.black,
+                      color: _isRecording ? const Color(0xFFC4C3C3) : Colors.black,
                       shape: BoxShape.circle,
                     ),
                   ),
@@ -361,9 +371,7 @@ class _CameraViewState extends State<CameraView>
               ),
             ),
           ),
-          GestureDetector(
-              onTap: _flipCamera,
-              child: const GradientIcon(icon: Icons.flip_camera_ios, size: 30)),
+          GestureDetector(onTap: _flipCamera, child: const GradientIcon(icon: Icons.flip_camera_ios, size: 30)),
         ],
       ),
     );
