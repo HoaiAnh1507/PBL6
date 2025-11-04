@@ -12,8 +12,8 @@ import '../../core/services/camera_service.dart';
 import 'camera_preview.dart';
 
 class CameraView extends StatefulWidget {
-  final PageController horizontalController;
-  const CameraView({super.key, required this.horizontalController});
+  final PageController verticalController;
+  const CameraView({super.key, required this.verticalController});
 
   @override
   State<CameraView> createState() => _CameraViewState();
@@ -222,7 +222,7 @@ class _CameraViewState extends State<CameraView>
 
   Widget _buildHeader() {
     return BaseHeader(
-      horizontalController: widget.horizontalController,
+      horizontalController: widget.verticalController,
       count: 5,
       label: 'Friends',
       onTap: _showFriendsSheet

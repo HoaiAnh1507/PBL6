@@ -66,8 +66,9 @@ class _MainViewState extends State<MainView> {
                   ? const NeverScrollableScrollPhysics()
                   : const BouncingScrollPhysics(),
               children: [
-                CameraView(horizontalController: _vCtrl),
+                CameraView(verticalController: _vCtrl),
                 FeedView(
+                  horizontalController: _hCtrl,
                   currentUser: currentUser,
                   messageFocus: _messageFocus,
                 ),

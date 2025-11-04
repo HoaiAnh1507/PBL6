@@ -118,6 +118,7 @@ class ChatListView extends StatelessWidget {
                         _formatTime(latestMessage?.sentAt ?? DateTime.now()),
                         style: GoogleFonts.poppins(
                           color: Color.fromARGB(179, 99, 99, 99),
+                          fontWeight: FontWeight.w500,
                           fontSize: 12,
                         ),
                       ),
@@ -128,6 +129,7 @@ class ChatListView extends StatelessWidget {
                     latestMessage?.content ?? 'Start a conversation',
                     style: GoogleFonts.poppins(
                       color: Color.fromARGB(179, 99, 99, 99),
+                      fontWeight: FontWeight.w500,
                       fontSize: 15,
                     ),
                     maxLines: 1,
@@ -136,6 +138,7 @@ class ChatListView extends StatelessWidget {
                   trailing: Icon(
                     Icons.arrow_forward_ios,
                     color: Color.fromARGB(179, 99, 99, 99),
+                    fontWeight: FontWeight.w500,
                     size: 16,
                   ),
                 );

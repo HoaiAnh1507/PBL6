@@ -9,11 +9,13 @@ import '../feed/post_item.dart';
 import '../../models/user_model.dart';
 
 class FeedView extends StatefulWidget {
+  final PageController horizontalController;
   final User currentUser;
   final FocusNode messageFocus;
 
   const FeedView({
     super.key,
+    required this.horizontalController,
     required this.currentUser,
     required this.messageFocus,
   });
@@ -51,7 +53,7 @@ class _FeedViewState extends State<FeedView> {
 
   Widget _buildHeader() {
     return BaseHeader(
-      horizontalController: _verticalController,
+      horizontalController: widget.horizontalController,
       count: 5,
       label: 'Friends',
       onTap: _showFriendsSheet
