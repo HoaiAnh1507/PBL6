@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
-import 'camera/camera_view.dart';
-import 'chat/chat_list_view.dart';
-import 'settings/settings_view.dart';
+import 'package:provider/provider.dart';
+import 'package:locket_ai/views/feed/feed_view.dart';
+import 'package:locket_ai/views/camera/camera_view.dart';
+import 'package:locket_ai/views/chat/chat_list_view.dart';
+import 'package:locket_ai/views/settings/settings_view.dart';
+import '../../viewmodels/auth_viewmodel.dart';
 
 class MainView extends StatefulWidget {
-  const MainView({Key? key}) : super(key: key);
+  const MainView({super.key});
 
   @override
   State<MainView> createState() => _MainViewState();
@@ -12,23 +15,70 @@ class MainView extends StatefulWidget {
 
 class _MainViewState extends State<MainView> {
   final PageController _hCtrl = PageController(initialPage: 1);
+  final PageController _vCtrl = PageController(initialPage: 0);
+  final FocusNode _messageFocus = FocusNode();
+
+  @override
+  void initState() {
+    super.initState();
+    _messageFocus.addListener(() => setState(() {}));
+  }
 
   @override
   void dispose() {
     _hCtrl.dispose();
+    _vCtrl.dispose();
+    _messageFocus.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return PageView(
-      controller: _hCtrl,
-      scrollDirection: Axis.horizontal,
-      children: [
-        const SettingsView(),
-        CameraView(horizontalController: _hCtrl), 
-        const ChatListView(currentUserId: ''),
-      ],
+    final authVM = Provider.of<AuthViewModel>(context);
+    final currentUser = authVM.currentUser;
+    final isKeyboardOpen = _messageFocus.hasFocus;
+
+    if (currentUser == null) {
+      return const Center(
+        child: Text("Không có người dùng đăng nhập."),
+      );
+    }
+
+    return GestureDetector(
+      behavior: HitTestBehavior.translucent,
+      onTap: () => _messageFocus.unfocus(),
+      onPanDown: (_) => _messageFocus.unfocus(),
+      child: AbsorbPointer(
+        absorbing: isKeyboardOpen,
+        child: PageView(
+          controller: _hCtrl,
+          scrollDirection: Axis.horizontal,
+          physics: isKeyboardOpen
+              ? const NeverScrollableScrollPhysics()
+              : const BouncingScrollPhysics(),
+          children: [
+            const SettingsView(),
+
+            PageView(
+              controller: _vCtrl,
+              scrollDirection: Axis.vertical,
+              physics: isKeyboardOpen
+                  ? const NeverScrollableScrollPhysics()
+                  : const BouncingScrollPhysics(),
+              children: [
+                CameraView(verticalController: _vCtrl),
+                FeedView(
+                  horizontalController: _hCtrl,
+                  currentUser: currentUser,
+                  messageFocus: _messageFocus,
+                ),
+              ],
+            ),
+
+            ChatListView(currentUserId: currentUser.userId),
+          ],
+        ),
+      ),
     );
   }
 }

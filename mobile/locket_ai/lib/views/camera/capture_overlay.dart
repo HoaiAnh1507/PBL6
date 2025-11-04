@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 import '../../core/constants/colors.dart';
 import '../../widgets/gradient_icon.dart';
-import '../../core/constants/background.dart';
 import '../../widgets/app_header.dart';
 
 class CaptureOverlay extends StatefulWidget {
@@ -149,7 +148,6 @@ class _CaptureOverlayState extends State<CaptureOverlay> {
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        const Positioned.fill(child: AnimatedGradientBackground()),
         _buildHeader(),
         _buildMediaPreview(context),
         _buildCaptureControls(context),

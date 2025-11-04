@@ -15,24 +15,25 @@ class AppHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Positioned(
-      top: 60,
-      left: 30,
-      right: 30,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          GestureDetector(
-            onTap: onLeftTap,
-            child: const GradientCircleIcon(icon: Icons.account_circle_outlined, size: 30),
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        GestureDetector(
+          onTap: onLeftTap,
+          child: const GradientCircleIcon(
+            icon: Icons.account_circle_outlined,
+            size: 30,
           ),
-          friendsSection, // tu dinh nghia o FeedView
-          GestureDetector(
-            onTap: onRightTap,
-            child: const GradientCircleIcon(icon: Icons.maps_ugc_outlined, size: 30),
+        ),
+        friendsSection,
+        GestureDetector(
+          onTap: onRightTap,
+          child: const GradientCircleIcon(
+            icon: Icons.maps_ugc_outlined,
+            size: 30,
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

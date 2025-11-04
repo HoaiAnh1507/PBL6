@@ -3,20 +3,17 @@ import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:locket_ai/models/user_model.dart';
 import 'package:locket_ai/views/camera/capture_preview_page.dart';
-import 'package:locket_ai/widgets/app_header.dart';
+import 'package:locket_ai/widgets/base_header.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:locket_ai/core/constants/colors.dart';
 import 'package:locket_ai/widgets/gradient_icon.dart';
-import '../../core/constants/background.dart';
 import '../../core/services/camera_service.dart';
-import '../feed/feed_view.dart';
 import 'camera_preview.dart';
 
 class CameraView extends StatefulWidget {
-  final PageController horizontalController;
-  const CameraView({Key? key, required this.horizontalController}) : super(key: key);
+  final PageController verticalController;
+  const CameraView({super.key, required this.verticalController});
 
   @override
   State<CameraView> createState() => _CameraViewState();
@@ -175,7 +172,6 @@ class _CameraViewState extends State<CameraView>
       ),
     );
 
-    // 🔁 Sau khi pop về, bật lại camera preview nếu bị pause
     if (_camCtrl != null && !_camCtrl!.value.isStreamingImages) {
       try {
         await _camCtrl!.initialize();
@@ -197,14 +193,6 @@ class _CameraViewState extends State<CameraView>
     if (mounted) setState(() {});
   }
 
-  void _navigateToPage(int index) {
-    widget.horizontalController.animateToPage(
-      index,
-      duration: const Duration(milliseconds: 400),
-      curve: Curves.easeInOut,
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     super.build(context);
@@ -216,27 +204,6 @@ class _CameraViewState extends State<CameraView>
             ? _buildCameraStack(context)
             : const Center(
                 child: CircularProgressIndicator(color: Colors.pinkAccent)),
-        FeedView(
-          currentUser: User(
-            userId: '0',
-            phoneNumber: '0900000000',
-            username: 'me',
-            email: 'me@example.com',
-            fullName: 'Tôi',
-            profilePictureUrl: 'https://i.pravatar.cc/150?img=5',
-            passwordHash: 'hashed_pw_me',
-            subscriptionStatus: SubscriptionStatus.FREE,
-            subscriptionExpiresAt: null,
-            accountStatus: AccountStatus.ACTIVE,
-            createdAt: DateTime.now(),
-            updatedAt: DateTime.now(),
-          ),
-          onScrollUpAtTop: () => widget.horizontalController.animateToPage(
-            0,
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeInOut,
-          ),
-        )
       ],
     );
   }
@@ -244,7 +211,6 @@ class _CameraViewState extends State<CameraView>
   Widget _buildCameraStack(BuildContext context) {
     return Stack(
       children: [
-        const Positioned.fill(child: AnimatedGradientBackground()),
         _buildHeader(),
         _buildCameraPreview(),
         if (_isRecording) _buildProgressBar(),
@@ -255,47 +221,11 @@ class _CameraViewState extends State<CameraView>
   }
 
   Widget _buildHeader() {
-    return AppHeader(
-      onLeftTap: () => _navigateToPage(0),
-      onRightTap: () => _navigateToPage(2),
-      friendsSection: GestureDetector(
-        onTap: _showFriendsSheet,
-        child: _buildFriendsButton("5", "Friends"),
-      ),
-    );
-  }
-
-  Widget _buildFriendsButton(String count, String label) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-      decoration: BoxDecoration(
-        color: const Color.fromRGBO(79, 76, 76, 0.298),
-        borderRadius: BorderRadius.circular(40),
-      ),
-      child: Row(
-        children: [
-          ShaderMask(
-            shaderCallback: (bounds) =>
-                instagramGradient.createShader(bounds),
-            child: const Icon(Icons.group_outlined,
-                color: Colors.white, size: 22),
-          ),
-          const SizedBox(width: 8),
-          Text(count,
-              style: GoogleFonts.poppins(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 16,
-                  decoration: TextDecoration.none)),
-          const SizedBox(width: 6),
-          Text(label,
-              style: GoogleFonts.poppins(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 16,
-                  decoration: TextDecoration.none)),
-        ],
-      ),
+    return BaseHeader(
+      horizontalController: widget.verticalController,
+      count: 5,
+      label: 'Friends',
+      onTap: _showFriendsSheet
     );
   }
 

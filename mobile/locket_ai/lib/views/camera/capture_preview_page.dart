@@ -4,7 +4,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:video_player/video_player.dart';
 import '../../core/constants/colors.dart';
 import '../../widgets/gradient_icon.dart';
-import '../../core/constants/background.dart';
 
 class CapturePreviewPage extends StatefulWidget {
   final String imagePath;
@@ -53,7 +52,6 @@ class _CapturePreviewPageState extends State<CapturePreviewPage> {
 
     return Stack(
       children: [
-        const Positioned.fill(child: AnimatedGradientBackground()),
         Positioned(
           top: 60,
           left: 30,
