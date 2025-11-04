@@ -45,7 +45,6 @@ public class AuthService {
 
     /**
      * Đăng ký người dùng mới
-     * Thực hiện theo flow trong sơ đồ use case
      */
     public AuthResponse register(UserRegistrationRequest request) {
         // Kiểm tra username đã tồn tại
@@ -98,7 +97,7 @@ public class AuthService {
 
             // Kiểm tra định dạng để xác định email hoặc phone number
             if (EMAIL_PATTERN.matcher(loginIdentifier).matches()) {
-                // Tìm user bằng email
+                // Tìm user bằng email  
                 Optional<User> userOptional = userRepository.findByEmail(loginIdentifier);
                 if (userOptional.isEmpty()) {
                     throw new RuntimeException("Email không tồn tại trong hệ thống!");

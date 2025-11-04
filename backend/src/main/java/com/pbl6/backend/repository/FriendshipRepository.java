@@ -25,7 +25,9 @@ public interface FriendshipRepository extends JpaRepository<Friendship, String> 
     @Query("SELECT f FROM Friendship f WHERE f.userOne = :user AND f.status = 'PENDING'")
     List<Friendship> findSentRequestsByUser(@Param("user") User user);
     
-    @Query("SELECT CASE WHEN f.userOne = :user THEN f.userTwo ELSE f.userOne END FROM Friendship f WHERE (f.userOne = :user OR f.userTwo = :user) AND f.status = 'ACCEPTED'")
+    @Query("SELECT f.userTwo FROM Friendship f WHERE f.userOne = :user AND f.status = 'ACCEPTED' " +
+           "UNION " +
+           "SELECT f.userOne FROM Friendship f WHERE f.userTwo = :user AND f.status = 'ACCEPTED'")
     List<User> findFriendsByUser(@Param("user") User user);
     
     @Query("SELECT COUNT(f) FROM Friendship f WHERE (f.userOne = :user OR f.userTwo = :user) AND f.status = 'ACCEPTED'")
