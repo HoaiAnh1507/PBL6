@@ -62,6 +62,8 @@ public class SecurityConfig {
                 .requestMatchers("/api/public/**").permitAll()
                 .requestMatchers("/error").permitAll()
                 .requestMatchers("/actuator/health").permitAll()
+                // Cho phép AI server gọi callback không cần JWT (đã có header bí mật)
+                .requestMatchers("/api/ai/callback/**").permitAll()
                 
                 // API endpoints cần authentication
                 .requestMatchers("/api/users/**").authenticated()
