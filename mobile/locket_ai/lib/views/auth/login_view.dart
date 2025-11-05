@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../viewmodels/auth_viewmodel.dart';
 import '../../viewmodels/friendship_viewmodel.dart';
 import '../../viewmodels/chat_viewmodel.dart';
+import '../../viewmodels/user_viewmodel.dart';
 
 class LoginView extends StatefulWidget {
   const LoginView({super.key});
@@ -98,7 +99,12 @@ class LoginView extends StatefulWidget {
                             if (success && mounted) {
                               final friendshipVM = Provider.of<FriendshipViewModel>(context, listen: false);
                               final chatVM = Provider.of<ChatViewModel>(context, listen: false);
+                              final userVM = Provider.of<UserViewModel>(context, listen: false);
 
+                              // Đồng bộ currentUser vào UserViewModel để ChatViewModel có thể nạp mock
+                              userVM.login(authVM.currentUser!.userId);
+
+                              // Nạp danh sách bạn bè và dữ liệu chat mock cho người dùng hiện tại
                               await friendshipVM.loadFriendships(authVM.currentUser!);
                               chatVM.loadDataForCurrentUser();
 

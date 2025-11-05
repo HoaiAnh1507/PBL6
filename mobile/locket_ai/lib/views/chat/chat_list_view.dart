@@ -55,6 +55,18 @@ class ChatListView extends StatelessWidget {
           builder: (context, chatVM, userVM, _) {
             final friends = chatVM.getAcceptedFriends(currentUserId);
 
+            // Sắp xếp bạn bè theo thời gian tin nhắn gần nhất (mới nhất lên trước)
+            final sortedFriends = List.of(friends)
+              ..sort((a, b) {
+                final latestA = chatVM.getLatestMessage(currentUserId, a.userId)?.sentAt;
+                final latestB = chatVM.getLatestMessage(currentUserId, b.userId)?.sentAt;
+
+                if (latestA == null && latestB == null) return 0;
+                if (latestA == null) return 1; // A không có tin → sau B
+                if (latestB == null) return -1; // B không có tin → sau A
+                return latestB.compareTo(latestA); // mới nhất trước
+              });
+
             if (friends.isEmpty) {
               return Center(
                 child: Text(
@@ -69,9 +81,9 @@ class ChatListView extends StatelessWidget {
 
             return ListView.builder(
               padding: const EdgeInsets.symmetric(vertical: 10),
-              itemCount: friends.length,
+              itemCount: sortedFriends.length,
               itemBuilder: (context, index) {
-                final user = friends[index];
+                final user = sortedFriends[index];
                 final latestMessage = chatVM.getLatestMessage(currentUserId, user.userId);
 
                 return ListTile(
@@ -115,9 +127,11 @@ class ChatListView extends StatelessWidget {
                       ),
                       Text(
                         // Nếu chưa có tin nhắn → dùng DateTime.now()
-                        _formatTime(latestMessage?.sentAt ?? DateTime.now()),
+                        latestMessage == null
+                            ? ''
+                            : _formatTime(latestMessage.sentAt),
                         style: GoogleFonts.poppins(
-                          color: Color.fromARGB(179, 99, 99, 99),
+                          color: Color.fromARGB(179, 130, 130, 130),
                           fontWeight: FontWeight.w500,
                           fontSize: 12,
                         ),
@@ -128,7 +142,7 @@ class ChatListView extends StatelessWidget {
                     // Nếu chưa có tin nhắn → hiển thị "Start a conversation"
                     latestMessage?.content ?? 'Start a conversation',
                     style: GoogleFonts.poppins(
-                      color: Color.fromARGB(179, 99, 99, 99),
+                      color: Color.fromARGB(179, 130, 130, 130),
                       fontWeight: FontWeight.w500,
                       fontSize: 15,
                     ),
@@ -137,7 +151,7 @@ class ChatListView extends StatelessWidget {
                   ),
                   trailing: Icon(
                     Icons.arrow_forward_ios,
-                    color: Color.fromARGB(179, 99, 99, 99),
+                    color: Color.fromARGB(179, 130, 130, 130),
                     fontWeight: FontWeight.w500,
                     size: 16,
                   ),

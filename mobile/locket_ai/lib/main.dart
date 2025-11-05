@@ -30,16 +30,18 @@ void main() async {
         ),
 
         // ✅ AuthViewModel phụ thuộc vào UserViewModel
+        // Giữ nguyên instance để không mất trạng thái đăng nhập
         ChangeNotifierProxyProvider<UserViewModel, AuthViewModel>(
           create: (_) => AuthViewModel(userViewModel: UserViewModel()),
-          update: (_, userVM, __) => AuthViewModel(userViewModel: userVM),
+          update: (_, userVM, authVM) => authVM!,
         ),
 
         // ✅ ChatViewModel phụ thuộc vào User + Friendship
         ChangeNotifierProxyProvider2<UserViewModel, FriendshipViewModel, ChatViewModel>(
           create: (_) => ChatViewModel(),
           update: (_, userVM, friendshipVM, chatVM) {
-            chatVM!.setDependencies(userVM, friendshipVM);
+            chatVM ??= ChatViewModel();
+            chatVM.setDependencies(userVM, friendshipVM);
             return chatVM;
           },
         ),

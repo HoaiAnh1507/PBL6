@@ -28,7 +28,8 @@ class ChatViewModel extends ChangeNotifier {
 
     final friends = getAcceptedFriends(user.userId);
     for (var friend in friends) {
-      _createConversation(user.userId, friend.userId);
+      final conv = _createConversation(user.userId, friend.userId);
+      _addMockMessages(conv, user, friend);
     }
 
     notifyListeners();
@@ -55,10 +56,16 @@ class ChatViewModel extends ChangeNotifier {
     final currentUser = userViewModel.getUserById(currentUserId);
     final friend = userViewModel.getUserById(friendId);
 
+    if (currentUser == null || friend == null) {
+      debugPrint(
+          "⚠️ Không thể tạo conversation vì user không tồn tại: $currentUserId, $friendId");
+      throw Exception("User không tồn tại trong hệ thống");
+    }
+
     final newConv = Conversation(
       conversationId: DateTime.now().millisecondsSinceEpoch.toString(),
-      userOne: currentUser!,
-      userTwo: friend!,
+      userOne: currentUser,
+      userTwo: friend,
       createdAt: DateTime.now(),
       messages: [],
     );
@@ -89,10 +96,13 @@ class ChatViewModel extends ChangeNotifier {
       orElse: () => _createConversation(currentUserId, friendId),
     );
 
+    final sender = userViewModel.getUserById(currentUserId);
+    if (sender == null) return;
+
     final msg = Message(
       messageId: DateTime.now().millisecondsSinceEpoch.toString(),
       conversation: conv,
-      sender: userViewModel.getUserById(currentUserId),
+      sender: sender,
       content: content,
       sentAt: DateTime.now(),
     );
@@ -117,8 +127,160 @@ class ChatViewModel extends ChangeNotifier {
   Message? getLatestMessage(String currentUserId, String friendId) {
     final conv = getConversation(currentUserId, friendId);
     if (conv == null || conv.messages == null || conv.messages!.isEmpty) return null;
-    // Lấy tin nhắn gần nhất
     conv.messages!.sort((a, b) => b.sentAt.compareTo(a.sentAt));
     return conv.messages!.first;
+  }
+
+  // ------------------- 🧪 MOCK DATA --------------------
+
+  void _addMockMessages(Conversation conv, User user, User friend) {
+    final now = DateTime.now();
+
+    List<Message> messages;
+
+    switch (friend.userId) {
+      case 'u1': // tuan
+        messages = [
+          Message(
+            messageId: 'm1_${conv.conversationId}',
+            conversation: conv,
+            sender: friend,
+            content: "Đi đá bóng cuối tuần không?",
+            sentAt: now.subtract(const Duration(hours: 5)),
+          ),
+          Message(
+            messageId: 'm2_${conv.conversationId}',
+            conversation: conv,
+            sender: user,
+            content: "Ok, chiều chủ nhật nhé!",
+            sentAt: now.subtract(const Duration(hours: 4, minutes: 15)),
+          ),
+          Message(
+            messageId: 'm3_${conv.conversationId}',
+            conversation: conv,
+            sender: friend,
+            content: "Sân cũ hay thử sân mới ở Q.7?",
+            sentAt: now.subtract(const Duration(hours: 3, minutes: 40)),
+          ),
+          Message(
+            messageId: 'm4_${conv.conversationId}',
+            conversation: conv,
+            sender: user,
+            content: "Thử sân mới xem, nghe bảo mặt cỏ đẹp.",
+            sentAt: now.subtract(const Duration(hours: 3, minutes: 10)),
+          ),
+        ];
+        break;
+      case 'u2': // hieu
+        messages = [
+          Message(
+            messageId: 'm1_${conv.conversationId}',
+            conversation: conv,
+            sender: friend,
+            content: "Game mới ra chưa? Có đáng chơi không?",
+            sentAt: now.subtract(const Duration(days: 1, hours: 2)),
+          ),
+          Message(
+            messageId: 'm2_${conv.conversationId}',
+            conversation: conv,
+            sender: user,
+            content: "Ra rồi, story khá hay. Tối rảnh không?",
+            sentAt: now.subtract(const Duration(days: 1, hours: 1, minutes: 20)),
+          ),
+          Message(
+            messageId: 'm3_${conv.conversationId}',
+            conversation: conv,
+            sender: friend,
+            content: "Rảnh, làm vài màn co-op nhé!",
+            sentAt: now.subtract(const Duration(days: 1, hours: 1)),
+          ),
+        ];
+        break;
+      case 'u3': // rin
+        messages = [
+          Message(
+            messageId: 'm1_${conv.conversationId}',
+            conversation: conv,
+            sender: friend,
+            content: "Check-in Đà Nẵng nè, biển đẹp quá!",
+            // > 1 tuần trước để test header thời gian
+            sentAt: now.subtract(const Duration(days: 10, hours: 4)),
+          ),
+          Message(
+            messageId: 'm2_${conv.conversationId}',
+            conversation: conv,
+            sender: user,
+            content: "Đẹp thiệt, có đi Bà Nà Hills không?",
+            sentAt: now.subtract(const Duration(days: 9, hours: 22)),
+          ),
+          Message(
+            messageId: 'm3_${conv.conversationId}',
+            conversation: conv,
+            sender: friend,
+            content: "Có chứ! View trên đó xịn lắm.",
+            sentAt: now.subtract(const Duration(days: 9, hours: 20, minutes: 30)),
+          ),
+          Message(
+            messageId: 'm4_${conv.conversationId}',
+            conversation: conv,
+            sender: friend,
+            content: "Xem không, để tí nữa gửi thêm ảnh cho mà coi.",
+            sentAt: now.subtract(const Duration(days: 9, hours: 20, minutes: 30, seconds: 10)),
+          ),
+          Message(
+            messageId: 'm5_${conv.conversationId}',
+            conversation: conv,
+            sender: user,
+            content: "Gửi mình vài tấm nữa đi!",
+            sentAt: now.subtract(const Duration(days: 8, hours: 18)),
+          ),
+        ];
+        break;
+      case 'u0': // me (trường hợp bạn là 'me' khi currentUser != 'u0')
+        messages = [
+          Message(
+            messageId: 'm1_${conv.conversationId}',
+            conversation: conv,
+            sender: friend,
+            content: "Đang code tính năng chat, sắp xong rồi.",
+            sentAt: now.subtract(const Duration(hours: 6)),
+          ),
+          Message(
+            messageId: 'm2_${conv.conversationId}',
+            conversation: conv,
+            sender: user,
+            content: "Ngon, tối push PR nhé.",
+            sentAt: now.subtract(const Duration(hours: 5, minutes: 20)),
+          ),
+        ];
+        break;
+      default: // fallback chung
+        messages = [
+          Message(
+            messageId: 'm1_${conv.conversationId}',
+            conversation: conv,
+            sender: friend,
+            content: "Hey ${user.fullName.split(' ').last}, dạo này sao rồi?",
+            sentAt: now.subtract(const Duration(minutes: 45)),
+          ),
+          Message(
+            messageId: 'm2_${conv.conversationId}',
+            conversation: conv,
+            sender: user,
+            content: "Tớ ổn, vẫn đang bận code Flutter 😆",
+            sentAt: now.subtract(const Duration(minutes: 30)),
+          ),
+          Message(
+            messageId: 'm3_${conv.conversationId}',
+            conversation: conv,
+            sender: friend,
+            content: "Nghe hay đấy, app cậu làm tới đâu rồi?",
+            sentAt: now.subtract(const Duration(minutes: 10)),
+          ),
+        ];
+        break;
+    }
+
+    conv.messages?.addAll(messages);
   }
 }
