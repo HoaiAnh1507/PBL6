@@ -5,17 +5,20 @@ import 'package:locket_ai/widgets/base_header.dart';
 import 'package:locket_ai/widgets/message_bar.dart';
 import 'package:provider/provider.dart';
 import '../../viewmodels/feed_viewmodel.dart';
+import '../../viewmodels/chat_viewmodel.dart';
 import '../feed/post_item.dart';
 import '../../models/user_model.dart';
 
 class FeedView extends StatefulWidget {
   final PageController horizontalController;
+  final PageController verticalController;
   final User currentUser;
   final FocusNode messageFocus;
 
   const FeedView({
     super.key,
     required this.horizontalController,
+    required this.verticalController,
     required this.currentUser,
     required this.messageFocus,
   });
@@ -25,7 +28,6 @@ class FeedView extends StatefulWidget {
 }
 
 class _FeedViewState extends State<FeedView> {
-  final PageController _verticalController = PageController();
   final ScrollController _scrollCtrl = ScrollController();
   final PageController _pageCtrl = PageController();
   final TextEditingController _messageCtrl = TextEditingController(); 
@@ -35,7 +37,6 @@ class _FeedViewState extends State<FeedView> {
 
   @override
   void dispose() {
-    _verticalController.dispose();
     _scrollCtrl.dispose();
     _pageCtrl.dispose();
     _messageCtrl.dispose();
@@ -107,15 +108,25 @@ class _FeedViewState extends State<FeedView> {
         controller: _messageCtrl,
         focusNode:  _messageFocus,
         onSend: () {
-          final vm = Provider.of<FeedViewModel>(context, listen: false);
-          if (vm.posts.isEmpty) return;
+          final feedVm = Provider.of<FeedViewModel>(context, listen: false);
+          final chatVm = Provider.of<ChatViewModel>(context, listen: false);
 
-          final post = vm.posts[_currentIndex];
-          final username = post.user.username; 
+          if (feedVm.posts.isEmpty) return;
+
+          final post = feedVm.posts[_currentIndex];
+          final content = _messageCtrl.text.trim();
+          if (content.isEmpty) return;
+
+          chatVm.sendMessageWithPost(
+            widget.currentUser.userId,
+            post.user.userId,
+            content,
+            post,
+          );
 
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Sent message to $username'),
+              content: Text('Đã gửi tin nhắn đến ${post.user.username} kèm bài đăng'),
               duration: const Duration(seconds: 2),
               behavior: SnackBarBehavior.floating,
             ),
@@ -130,7 +141,7 @@ class _FeedViewState extends State<FeedView> {
 
   Widget _buildFooter() {
     return BaseFooter(
-      verticalController: _verticalController,
+      verticalController: widget.verticalController,
       messageController: _messageCtrl,
       onSend: () {}
     );

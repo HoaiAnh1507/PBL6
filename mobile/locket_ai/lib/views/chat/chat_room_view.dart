@@ -4,6 +4,9 @@ import 'package:locket_ai/core/constants/colors.dart';
 import 'package:provider/provider.dart';
 import '../../viewmodels/chat_viewmodel.dart';
 import '../../viewmodels/auth_viewmodel.dart';
+import '../../models/post_model.dart';
+import 'package:video_player/video_player.dart';
+import 'package:chewie/chewie.dart';
 
 class ChatRoomView extends StatefulWidget {
   final String friendId;
@@ -79,9 +82,17 @@ class _ChatRoomViewState extends State<ChatRoomView> {
         ),
         centerTitle: true,
       ),
-      body: Container(
-        color: Colors.black,
-        child: Column(
+      body: GestureDetector(
+        behavior: HitTestBehavior.translucent,
+        onHorizontalDragEnd: (details) {
+          // Vuốt từ trái sang phải (primaryVelocity > 0) thì quay lại ChatListView
+          if (details.primaryVelocity != null && details.primaryVelocity! > 300) {
+            Navigator.of(context).pop();
+          }
+        },
+        child: Container(
+          color: Colors.black,
+          child: Column(
           children: [
             // Danh sách tin nhắn
             Expanded(
@@ -130,6 +141,7 @@ class _ChatRoomViewState extends State<ChatRoomView> {
                             msg.content,
                             style: GoogleFonts.poppins(
                               color: Colors.white,
+                              fontWeight: FontWeight.w500,
                               fontSize: 15,
                             ),
                           ),
@@ -152,6 +164,17 @@ class _ChatRoomViewState extends State<ChatRoomView> {
                                   ),
                                 ),
                               ),
+                            if (msg.repliedToPost != null) ...[
+                              Center(
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(vertical: 6.0),
+                                  child: ChatPostEmbed(
+                                    post: msg.repliedToPost!,
+                                    alignRight: isMine,
+                                  ),
+                                ),
+                              ),
+                            ],
                             if (isMine)
                               Align(
                                 alignment: Alignment.centerRight,
@@ -282,6 +305,211 @@ class _ChatRoomViewState extends State<ChatRoomView> {
               ),
             ),
           ],
+        ),
+      ),
+    ),
+  );
+  }
+}
+
+class ChatPostEmbed extends StatefulWidget {
+  final Post post;
+  final bool alignRight;
+  const ChatPostEmbed({super.key, required this.post, required this.alignRight});
+
+  @override
+  State<ChatPostEmbed> createState() => _ChatPostEmbedState();
+}
+
+class _ChatPostEmbedState extends State<ChatPostEmbed> {
+  VideoPlayerController? _videoController;
+  ChewieController? _chewieController;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.post.mediaType == MediaType.VIDEO) _initVideo();
+  }
+
+  Future<void> _initVideo() async {
+    try {
+      final url = widget.post.mediaUrl;
+      _videoController = url.startsWith('http')
+          ? VideoPlayerController.network(url)
+          : VideoPlayerController.asset(url);
+      await _videoController!.initialize();
+      // Đồng bộ hành vi với PostItem: tự chạy, lặp lại, ẩn điều khiển
+      // Mute để đảm bảo autoplay hoạt động ổn định trên web.
+      await _videoController!.setVolume(0.0);
+      await _videoController!.setLooping(true);
+      _chewieController = ChewieController(
+        videoPlayerController: _videoController!,
+        autoPlay: true,
+        looping: true,
+        showControls: false,
+      );
+      _videoController!.play();
+      if (mounted) setState(() {});
+    } catch (_) {}
+  }
+
+  @override
+  void dispose() {
+    _chewieController?.dispose();
+    _videoController?.dispose();
+    super.dispose();
+  }
+
+  String _timeAgo(DateTime createdAt) {
+    final now = DateTime.now();
+    final diff = now.difference(createdAt);
+    if (diff.inMinutes < 1) return 'just now';
+    if (diff.inMinutes < 60) return '${diff.inMinutes}m';
+    if (diff.inHours < 24) return '${diff.inHours}h';
+    if (diff.inDays < 7) return '${diff.inDays}d';
+    return '${createdAt.year}-${createdAt.month.toString().padLeft(2, '0')}-${createdAt.day.toString().padLeft(2, '0')}';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final post = widget.post;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final maxWidth = screenWidth - 24; // dùng toàn bộ bề ngang nội dung (vuông như PostItem)
+    // Bo góc và tỉ lệ giống PostItem (vuông, bo 40)
+    final radius = 40.0;
+    final caption = post.userEditedCaption?.isNotEmpty == true
+        ? post.userEditedCaption
+        : post.generatedCaption;
+
+    Widget media;
+    if (post.mediaType == MediaType.PHOTO) {
+      final isNetwork = post.mediaUrl.startsWith('http');
+      media = isNetwork
+          ? Image.network(
+              post.mediaUrl,
+              fit: BoxFit.cover,
+              width: double.infinity,
+              height: double.infinity,
+              loadingBuilder: (context, child, loadingProgress) {
+                if (loadingProgress == null) return child;
+                return const Center(
+                  child: CircularProgressIndicator(color: Colors.pinkAccent),
+                );
+              },
+              errorBuilder: (context, error, stackTrace) {
+                return const Center(
+                  child: Icon(Icons.broken_image, color: Colors.white54, size: 40),
+                );
+              },
+            )
+          : Image.asset(
+              post.mediaUrl,
+              fit: BoxFit.cover,
+              width: double.infinity,
+              height: double.infinity,
+            );
+    } else {
+      media = _chewieController != null
+          ? FittedBox(
+              fit: BoxFit.cover,
+              clipBehavior: Clip.hardEdge,
+              child: SizedBox(
+                width: _chewieController!.videoPlayerController.value.size.width,
+                height: _chewieController!.videoPlayerController.value.size.height,
+                child: Chewie(controller: _chewieController!),
+              ),
+            )
+          : Container(
+              color: Colors.black,
+              child: const Center(
+                child: CircularProgressIndicator(color: Colors.pinkAccent),
+              ),
+            );
+    }
+
+    final avatarUrl = (post.user.profilePictureUrl != null &&
+            post.user.profilePictureUrl!.isNotEmpty)
+        ? post.user.profilePictureUrl!
+        : 'https://i.pravatar.cc/150?u=${post.user.userId}';
+
+    return ConstrainedBox(
+      constraints: BoxConstraints(maxWidth: maxWidth),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(radius),
+        child: SizedBox(
+          width: maxWidth,
+          height: maxWidth, // vuông như PostItem
+          child: Stack(
+            children: [
+              Positioned.fill(child: media),
+              Positioned(
+                top: 14,
+                left: 25,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.4),
+                    borderRadius: BorderRadius.circular(36),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      CircleAvatar(
+                        radius: 12,
+                        backgroundImage: NetworkImage(avatarUrl),
+                      ),
+                      const SizedBox(width: 10),
+                      Text(
+                        post.user.username,
+                        style: GoogleFonts.poppins(
+                          color: Colors.white,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Text(
+                        _timeAgo(post.createdAt),
+                        style: GoogleFonts.poppins(
+                          color: Colors.white70,
+                          fontSize: 14.3,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              // Caption sát đáy media để dễ đọc, giữ style giống FeedView
+              if (caption != null && caption.isNotEmpty)
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: 15,
+                  child: Center(
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(30),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+                        color: Colors.black.withOpacity(0.2),
+                        child: Text(
+                          caption,
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.poppins(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 16,
+                            decoration: TextDecoration.none,
+                          ),
+                          maxLines: 3,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
     );
