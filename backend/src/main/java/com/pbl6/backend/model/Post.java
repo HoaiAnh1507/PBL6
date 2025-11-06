@@ -9,7 +9,7 @@ import java.util.List;
 @Table(name = "Posts", indexes = {
     @Index(name = "idx_post_user_id", columnList = "user_id"),
     @Index(name = "idx_post_created_at", columnList = "created_at"),
-    @Index(name = "idx_post_caption_status", columnList = "caption_status"),
+    @Index(name = "idx_post_post_status", columnList = "post_status"),
     @Index(name = "idx_post_media_type", columnList = "media_type"),
     @Index(name = "idx_post_user_created", columnList = "user_id, created_at")
 })
@@ -36,10 +36,10 @@ public class Post {
     private String generatedCaption;
     
     @Enumerated(EnumType.STRING)
-    @Column(name = "caption_status", nullable = false)
+    @Column(name = "post_status", nullable = false)
     private CaptionStatus captionStatus = CaptionStatus.PENDING;
     
-    @Column(name = "user_edited_caption", columnDefinition = "TEXT")
+    @Column(name = "final_caption", columnDefinition = "TEXT")
     private String userEditedCaption;
     
     @Column(name = "created_at", nullable = false, updatable = false)
