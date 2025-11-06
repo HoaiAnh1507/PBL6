@@ -53,6 +53,7 @@ public class PostController {
 
     // 1b. Người dùng nhấn đăng: cập nhật final_caption và post_status=COMPLETED
     @PostMapping("/ai/commit")
+    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     public ResponseEntity<Map<String, String>> commitPost(@Valid @RequestBody PostFinalizeRequest req) {
         
             Post updated = postService.finalizePost(req);
