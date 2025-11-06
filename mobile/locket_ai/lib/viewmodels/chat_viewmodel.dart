@@ -3,6 +3,7 @@ import '../models/user_model.dart';
 import '../models/friendship_model.dart';
 import '../models/message_model.dart';
 import '../models/conversation_model.dart';
+import '../models/post_model.dart';
 import 'user_viewmodel.dart';
 import 'friendship_viewmodel.dart';
 
@@ -104,6 +105,36 @@ class ChatViewModel extends ChangeNotifier {
       conversation: conv,
       sender: sender,
       content: content,
+      sentAt: DateTime.now(),
+    );
+
+    conv.messages?.add(msg);
+    notifyListeners();
+  }
+
+  /// Gửi tin nhắn kèm post được reply (dùng khi gửi từ FeedView)
+  void sendMessageWithPost(
+    String currentUserId,
+    String friendId,
+    String content,
+    Post repliedPost,
+  ) {
+    final conv = _conversations.values.firstWhere(
+      (c) =>
+          (c.userOne.userId == currentUserId && c.userTwo.userId == friendId) ||
+          (c.userTwo.userId == currentUserId && c.userOne.userId == friendId),
+      orElse: () => _createConversation(currentUserId, friendId),
+    );
+
+    final sender = userViewModel.getUserById(currentUserId);
+    if (sender == null) return;
+
+    final msg = Message(
+      messageId: DateTime.now().millisecondsSinceEpoch.toString(),
+      conversation: conv,
+      sender: sender,
+      content: content,
+      repliedToPost: repliedPost,
       sentAt: DateTime.now(),
     );
 

@@ -44,7 +44,21 @@ class _MainViewState extends State<MainView> {
       );
     }
 
-    return GestureDetector(
+    return WillPopScope(
+      onWillPop: () async {
+        final page = (_hCtrl.hasClients ? _hCtrl.page : 1.0) ?? 1.0;
+        final idx = page.round();
+        if (idx == 0 || idx == 2) {
+          await _hCtrl.animateToPage(
+            1,
+            duration: const Duration(milliseconds: 250),
+            curve: Curves.easeOut,
+          );
+          return false; // chặn thoát app, chuyển về CameraView
+        }
+        return true; // ở CameraView thì để hành vi mặc định
+      },
+      child: GestureDetector(
       behavior: HitTestBehavior.translucent,
       onTap: () => _messageFocus.unfocus(),
       onPanDown: (_) => _messageFocus.unfocus(),
@@ -66,9 +80,10 @@ class _MainViewState extends State<MainView> {
                   ? const NeverScrollableScrollPhysics()
                   : const BouncingScrollPhysics(),
               children: [
-                CameraView(verticalController: _vCtrl),
+                CameraView(verticalController: _vCtrl, horizontalController: _hCtrl),
                 FeedView(
                   horizontalController: _hCtrl,
+                  verticalController: _vCtrl,
                   currentUser: currentUser,
                   messageFocus: _messageFocus,
                 ),
@@ -78,6 +93,7 @@ class _MainViewState extends State<MainView> {
             ChatListView(currentUserId: currentUser.userId),
           ],
         ),
+      ),
       ),
     );
   }
