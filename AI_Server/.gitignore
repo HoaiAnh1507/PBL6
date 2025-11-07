@@ -1,0 +1,75 @@
+# ================================
+# AI SERVER SPECIFIC GITIGNORE  
+# ================================
+# Note: Main .gitignore is at project root
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ai_caption_env/
+.venv/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Virtual environments
+venv/
+ENV/
+env/
+.venv/
+ai_caption_env/
+
+# AI Models & Weights (large files)
+*.h5
+*.weights
+*.model
+*.pkl
+*.pt
+*.pth
+best.weights.h5
+tokenizer.json
+
+# Keep example/sample models
+!sample*.h5
+!example*.weights
+
+# Data & Datasets
+data/
+datasets/
+temp_videos/
+downloads/
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+*.ipynb
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Environment
+.env
+.env.local
+
+# Temporary files
+*.tmp
+*.temp
+temp_*
+*.mp4
+*.avi
+*.mov
+*.mkv
+*.webm
+
+# Keep sample videos
+!sample*.mp4
+!test*.mp4
+
+# Logs
+*.log
+logs/

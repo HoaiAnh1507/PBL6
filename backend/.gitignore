@@ -1,0 +1,37 @@
+# ================================
+# BACKEND SPECIFIC GITIGNORE
+# ================================
+# Note: Main .gitignore is at project root
+
+# Maven build artifacts
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+
+# Spring Boot specific
+*.pid
+*.pid.lock
+application-*.properties
+!application.properties
+!application-dev.properties
+
+# IDE specific to backend
+.idea/
+*.iws
+*.iml
+*.ipr
+
+# Local environment
+.env.local
+
+# Database files (if using embedded DB for testing)
+*.db
+*.sqlite
+*.h2.db
+
+# Logs specific to backend
+*.log
+logs/
