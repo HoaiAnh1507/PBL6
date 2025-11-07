@@ -3,6 +3,7 @@
 ## Git Ignore Strategy
 
 ### 📁 Project Structure
+
 ```
 PBL6/
 ├── .gitignore              # Main project gitignore
@@ -17,28 +18,33 @@ PBL6/
 ### 🚫 What's Ignored
 
 #### 🔒 **Security & Environment**
+
 - `.env` files (except `.env.example`)
 - API keys, credentials, certificates
 - Database connection strings
 - Secret configuration files
 
 #### 🔧 **Build Artifacts**
+
 - **Backend**: `target/`, `*.jar`, `*.war`
 - **AI Server**: `__pycache__/`, `*.pyc`, virtual environments
 - **Mobile**: `build/`, `.dart_tool/`, iOS/Android builds
 
-#### 🤖 **AI Models & Data** 
+#### 🤖 **AI Models & Data**
+
 - Large model files (`*.h5`, `*.weights`, `*.pt`)
 - Training datasets and temp data
 - Video files (except samples)
 - Jupyter notebook checkpoints
 
 #### 💻 **IDE & OS Files**
+
 - `.idea/`, `.vscode/` (IDE configs)
 - `.DS_Store`, `Thumbs.db` (OS files)
 - Editor swap files, temporary files
 
 #### 📱 **Mobile Specific**
+
 - iOS: `Pods/`, generated frameworks
 - Android: `.gradle/`, `local.properties`
 - Generated Dart files (`*.g.dart`)
@@ -46,17 +52,20 @@ PBL6/
 ### ✅ **What's Tracked**
 
 #### 📋 **Configuration Templates**
+
 - `.env.example` files
 - Sample configuration files
 - Development property templates
 
 #### 🎯 **Source Code**
+
 - All application source code
 - Configuration templates
 - Documentation and README files
 - Sample/test media files
 
 #### 🔧 **Build Configuration**
+
 - `pom.xml`, `pubspec.yaml`
 - Gradle build files
 - CMake configurations
@@ -82,6 +91,7 @@ PBL6/
 - **Temporary ignores**: Use `git update-index --skip-worktree filename`
 
 ### 🔍 **Check Ignored Files**
+
 ```bash
 # See what's being ignored
 git status --ignored
