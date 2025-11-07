@@ -6,6 +6,7 @@ import com.pbl6.backend.request.AiCaptionInitRequest;
 import com.pbl6.backend.request.PostDirectCreateRequest;
 import com.pbl6.backend.request.PostFinalizeRequest;
 import com.pbl6.backend.response.AiCaptionInitResponse;
+import com.pbl6.backend.response.CaptionStatusResponse;
 import com.pbl6.backend.response.PostResponse;
 import com.pbl6.backend.service.PostService;
 import jakarta.validation.Valid;
@@ -55,13 +56,12 @@ public class PostController {
     @PostMapping("/ai/commit")
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     public ResponseEntity<Map<String, String>> commitPost(@Valid @RequestBody PostFinalizeRequest req) {
-        
-            Post updated = postService.finalizePost(req);
-            return ResponseEntity.ok(Map.of(
-                    "postId", updated.getPostId(),
-                    "postStatus", updated.getCaptionStatus().name()
-            ));
-        
+
+        Post updated = postService.finalizePost(req);
+        return ResponseEntity.ok(Map.of(
+                "postId", updated.getPostId(),
+                "postStatus", updated.getCaptionStatus().name()));
+
     }
 
     // 1c. Người dùng hủy: xóa post theo postId
@@ -71,7 +71,15 @@ public class PostController {
         return ResponseEntity.ok(Map.of("deleted", postId));
     }
 
-    // 2. Đăng trực tiếp (không AI): tạo Post với generated_caption=null, final_caption theo người dùng, post_status=COMPLETED
+    // 1d. Mobile polling: check caption generation status
+    @GetMapping("/{postId}/caption-status")
+    public ResponseEntity<CaptionStatusResponse> getCaptionStatus(@PathVariable String postId) {
+        CaptionStatusResponse status = postService.getCaptionStatus(postId);
+        return ResponseEntity.ok(status);
+    }
+
+    // 2. Đăng trực tiếp (không AI): tạo Post với generated_caption=null,
+    // final_caption theo người dùng, post_status=COMPLETED
     @PostMapping
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     public ResponseEntity<PostResponse> createDirect(@Valid @RequestBody PostDirectCreateRequest req) {

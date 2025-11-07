@@ -9,16 +9,19 @@ import com.pbl6.backend.request.AiCaptionInitRequest;
 import com.pbl6.backend.request.PostDirectCreateRequest;
 import com.pbl6.backend.request.PostFinalizeRequest;
 import com.pbl6.backend.response.AiCaptionInitResponse;
+import com.pbl6.backend.response.CaptionStatusResponse;
 import com.pbl6.backend.response.PostReactionResponse;
 import com.pbl6.backend.response.PostResponse;
 import com.pbl6.backend.response.UserResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collections;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.List;
 import java.util.ArrayList;
 
@@ -29,28 +32,102 @@ public class PostService {
     private final PostRepository postRepository;
     private final UserRepository userRepository;
     private final PostRecipientRepository postRecipientRepository;
+    private final AzureQueueService azureQueueService;
 
-    public PostService(PostRepository postRepository, UserRepository userRepository, PostRecipientRepository postRecipientRepository) {
+    @Value("${server.port:8080}")
+    private String serverPort;
+
+    public PostService(PostRepository postRepository,
+            UserRepository userRepository,
+            PostRecipientRepository postRecipientRepository,
+            AzureQueueService azureQueueService) {
         this.postRepository = postRepository;
         this.userRepository = userRepository;
         this.postRecipientRepository = postRecipientRepository;
+        this.azureQueueService = azureQueueService;
     }
 
     @Transactional
     public AiCaptionInitResponse initAiCaption(User user, AiCaptionInitRequest req) {
         Post.MediaType mediaType = parseMediaType(req.getMediaType());
 
-        String aiCaption = generateCaptionStub(mediaType, req.getMediaUrl());
-
+        // Create post with PENDING status
         Post post = new Post(user, mediaType, req.getMediaUrl());
-        post.setGeneratedCaption(aiCaption);
+        post.setGeneratedCaption(null); // Will be set by callback
         post.setCaptionStatus(Post.CaptionStatus.PENDING);
         post.setUserEditedCaption(null);
 
         post = postRepository.save(post);
-        log.info("AI init tạo Post: id={}, status={}, generatedCaption={}", post.getPostId(), post.getCaptionStatus(), post.getGeneratedCaption());
+        log.info("✅ Created Post for AI caption | PostID: {} | MediaType: {} | Status: {}",
+                post.getPostId(), mediaType, Post.CaptionStatus.PENDING);
 
-        return new AiCaptionInitResponse(post.getPostId(), post.getGeneratedCaption());
+        // Enqueue job to Azure Service Bus
+        try {
+            String jobId = UUID.randomUUID().toString();
+            String mood = req.getMood() != null ? req.getMood() : "neutral";
+            String callbackUrl = buildCallbackUrl();
+
+            azureQueueService.enqueueCaptionJob(
+                    jobId,
+                    post.getPostId(),
+                    req.getMediaUrl(),
+                    mood,
+                    callbackUrl);
+
+            log.info("📤 Enqueued AI caption job | PostID: {} | JobID: {} | Mood: {}",
+                    post.getPostId(), jobId, mood);
+
+        } catch (Exception e) {
+            log.error("❌ Failed to enqueue caption job | PostID: {}", post.getPostId(), e);
+            // Mark as FAILED if can't enqueue
+            post.setCaptionStatus(Post.CaptionStatus.FAILED);
+            post = postRepository.save(post);
+            throw new RuntimeException("Failed to enqueue caption generation job", e);
+        }
+
+        return new AiCaptionInitResponse(post.getPostId(), null); // Caption will come via callback
+    }
+
+    /**
+     * Update post with caption result from AI Server callback
+     */
+    @Transactional
+    public void updateCaptionResult(String postId, boolean success, String caption, String errorMessage) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new IllegalArgumentException("Post not found: " + postId));
+
+        if (success && caption != null) {
+            post.setGeneratedCaption(caption);
+            post.setCaptionStatus(Post.CaptionStatus.COMPLETED);
+            log.info("✅ Caption updated successfully | PostID: {} | Caption: {}",
+                    postId, caption.substring(0, Math.min(50, caption.length())));
+        } else {
+            post.setGeneratedCaption(null);
+            post.setCaptionStatus(Post.CaptionStatus.FAILED);
+            log.warn("⚠️ Caption generation failed | PostID: {} | Error: {}", postId, errorMessage);
+        }
+
+        postRepository.save(post);
+    }
+
+    /**
+     * Get caption status for mobile polling
+     */
+    public CaptionStatusResponse getCaptionStatus(String postId) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new IllegalArgumentException("Post not found: " + postId));
+
+        return new CaptionStatusResponse(
+                post.getCaptionStatus().name(),
+                post.getGeneratedCaption() != null,
+                post.getGeneratedCaption(),
+                post.getCaptionStatus() == Post.CaptionStatus.FAILED ? "Caption generation failed. Please try again."
+                        : null);
+    }
+
+    private String buildCallbackUrl() {
+        // For local development
+        return "http://localhost:" + serverPort + "/api/ai/callback/captions";
     }
 
     @Transactional
@@ -64,7 +141,7 @@ public class PostService {
 
         // Cập nhật recipients nếu có
         setRecipients(saved, req.getRecipientIds());
-        log.info("Finalize Post: id={}, status={}, finalCaptionLength={}", saved.getPostId(), saved.getCaptionStatus(), 
+        log.info("Finalize Post: id={}, status={}, finalCaptionLength={}", saved.getPostId(), saved.getCaptionStatus(),
                 Optional.ofNullable(saved.getUserEditedCaption()).map(String::length).orElse(0));
         return saved;
     }
@@ -82,7 +159,8 @@ public class PostService {
 
         // Lưu recipients nếu có
         setRecipients(post, req.getRecipientIds());
-        log.info("Create Direct Post: id={}, status={}, hasCaption={}", post.getPostId(), post.getCaptionStatus(), post.getUserEditedCaption() != null);
+        log.info("Create Direct Post: id={}, status={}, hasCaption={}", post.getPostId(), post.getCaptionStatus(),
+                post.getUserEditedCaption() != null);
         return post;
     }
 
@@ -106,8 +184,7 @@ public class PostService {
                 u.getProfilePictureUrl(),
                 u.getAccountStatus().name(),
                 u.getSubscriptionStatus().name(),
-                u.getCreatedAt()
-        );
+                u.getCreatedAt());
 
         List<UserResponse> recipientResponses = new ArrayList<>();
         try {
@@ -122,8 +199,7 @@ public class PostService {
                         r.getProfilePictureUrl(),
                         r.getAccountStatus().name(),
                         r.getSubscriptionStatus().name(),
-                        r.getCreatedAt()
-                ));
+                        r.getCreatedAt()));
             }
         } catch (Exception e) {
             log.warn("Không thể lấy recipients cho post {}: {}", post.getPostId(), e.getMessage());
@@ -139,8 +215,7 @@ public class PostService {
                 post.getCreatedAt(),
                 recipientResponses,
                 Collections.<PostReactionResponse>emptyList(),
-                0
-        );
+                0);
     }
 
     private Post.MediaType parseMediaType(String mediaType) {
@@ -154,7 +229,8 @@ public class PostService {
     // Stub sinh caption AI - sẽ thay bằng tích hợp thật sau này
     private String generateCaptionStub(Post.MediaType type, String mediaUrl) {
         String kind = type == Post.MediaType.PHOTO ? "ảnh" : "video";
-        return "Caption AI cho " + kind + " — " + (mediaUrl.length() > 50 ? mediaUrl.substring(0, 50) + "..." : mediaUrl);
+        return "Caption AI cho " + kind + " — "
+                + (mediaUrl.length() > 50 ? mediaUrl.substring(0, 50) + "..." : mediaUrl);
     }
 
     private void setRecipients(Post post, List<String> recipientIds) {
@@ -165,7 +241,8 @@ public class PostService {
         postRecipientRepository.deleteByPost(post);
         int added = 0;
         for (String rid : recipientIds) {
-            if (rid == null || rid.isBlank()) continue;
+            if (rid == null || rid.isBlank())
+                continue;
             Optional<User> ru = userRepository.findById(rid);
             if (ru.isEmpty()) {
                 log.warn("Bỏ qua recipientId không tồn tại: {}", rid);

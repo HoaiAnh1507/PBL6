@@ -1,0 +1,169 @@
+# ================================
+# GLOBAL PROJECT GITIGNORE
+# ================================
+
+# ================================
+# ENVIRONMENT & SECRETS
+# ================================
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+*.p12
+**/secrets/
+**/credentials/
+
+# ================================
+# BACKEND (Java/Spring Boot)
+# ================================
+backend/target/
+backend/*.jar
+backend/*.war
+backend/*.pid
+backend/*.pid.lock
+backend/.mvn/timing.properties
+backend/.mvn/wrapper/maven-wrapper.jar
+backend/dependency-reduced-pom.xml
+backend/buildNumber.properties
+
+# ================================
+# AI SERVER (Python)
+# ================================
+AI_Server/__pycache__/
+AI_Server/*.pyc
+AI_Server/*.pyo
+AI_Server/*.pyd
+AI_Server/.Python
+AI_Server/env/
+AI_Server/venv/
+AI_Server/ai_caption_env/
+AI_Server/.venv/
+AI_Server/pip-log.txt
+AI_Server/pip-delete-this-directory.txt
+AI_Server/.tox/
+AI_Server/.coverage
+AI_Server/.pytest_cache/
+AI_Server/*.egg-info/
+AI_Server/dist/
+AI_Server/build/
+
+# AI Models & Data (large files)
+AI_Server/*.h5
+AI_Server/*.weights
+AI_Server/*.model
+AI_Server/*.pkl
+AI_Server/*.pt
+AI_Server/*.pth
+AI_Server/models/
+AI_Server/data/
+AI_Server/datasets/
+
+# Jupyter Notebooks checkpoints
+AI_Server/.ipynb_checkpoints/
+AI_Server/*/.ipynb_checkpoints/
+
+# ================================
+# MOBILE (Flutter)
+# ================================
+mobile/locket_ai/.dart_tool/
+mobile/locket_ai/.flutter-plugins
+mobile/locket_ai/.flutter-plugins-dependencies
+mobile/locket_ai/.packages
+mobile/locket_ai/.pub-cache/
+mobile/locket_ai/.pub/
+mobile/locket_ai/build/
+mobile/locket_ai/ios/Pods/
+mobile/locket_ai/ios/.symlinks/
+mobile/locket_ai/ios/Flutter/Flutter.framework
+mobile/locket_ai/ios/Flutter/Flutter.podspec
+mobile/locket_ai/android/.gradle/
+mobile/locket_ai/android/captures/
+mobile/locket_ai/android/gradlew
+mobile/locket_ai/android/gradlew.bat
+mobile/locket_ai/android/local.properties
+mobile/locket_ai/android/key.properties
+
+# ================================
+# IDE & EDITORS
+# ================================
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.sublime-*
+*.iml
+*.ipr
+*.iws
+
+# ================================
+# OS GENERATED FILES
+# ================================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# ================================
+# LOGS & TEMP FILES
+# ================================
+*.log
+*.tmp
+*.temp
+*.pid
+*.lock
+logs/
+tmp/
+temp/
+
+# ================================
+# TESTING & COVERAGE
+# ================================
+coverage/
+*.cover
+.coverage
+.pytest_cache/
+test-results/
+junit.xml
+
+# ================================
+# DOCUMENTATION BUILD
+# ================================
+docs/_build/
+site/
+
+# ================================
+# DEPLOYMENT & PRODUCTION
+# ================================
+docker-compose.override.yml
+.env.production
+.env.staging
+kubernetes/secrets/
+
+# ================================
+# MEDIA & UPLOADS (for development)
+# ================================
+uploads/
+media/
+static/files/
+*.mp4
+*.avi
+*.mov
+*.mkv
+*.webm
+# Keep sample videos for testing
+!**/sample*.mp4
+!**/test*.mp4
+
+# ================================
+# PACKAGE MANAGERS
+# ================================
+node_modules/
+package-lock.json
+yarn.lock
+.pnpm-store/

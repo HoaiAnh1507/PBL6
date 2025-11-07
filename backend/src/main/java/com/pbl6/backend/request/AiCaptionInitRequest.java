@@ -9,11 +9,20 @@ public class AiCaptionInitRequest {
     @NotBlank(message = "mediaUrl là bắt buộc")
     private String mediaUrl;
 
-    public AiCaptionInitRequest() {}
+    private String mood; // User selected mood: happy, sad, excited, etc.
+
+    public AiCaptionInitRequest() {
+    }
 
     public AiCaptionInitRequest(String mediaType, String mediaUrl) {
         this.mediaType = mediaType;
         this.mediaUrl = mediaUrl;
+    }
+
+    public AiCaptionInitRequest(String mediaType, String mediaUrl, String mood) {
+        this.mediaType = mediaType;
+        this.mediaUrl = mediaUrl;
+        this.mood = mood;
     }
 
     public String getMediaType() {
@@ -30,5 +39,13 @@ public class AiCaptionInitRequest {
 
     public void setMediaUrl(String mediaUrl) {
         this.mediaUrl = mediaUrl;
+    }
+
+    public String getMood() {
+        return mood;
+    }
+
+    public void setMood(String mood) {
+        this.mood = mood;
     }
 }

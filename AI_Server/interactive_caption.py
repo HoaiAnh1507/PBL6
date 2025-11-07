@@ -48,12 +48,12 @@ init_start = time.time()
 # Build and load TensorFlow model
 print("  [1/4] Loading TensorFlow model...")
 model = build_model(feat_dim=768, vocab_size=10364, max_len=47)
-model.load_weights("kaggle/working/checkpoints/best.weights.h5")
+model.load_weights("/Users/duy/Downloads/PBL6/AI_Server/best.weights.h5")
 model.compile(optimizer="adam", loss="sparse_categorical_crossentropy")
 
 # Load tokenizer
 print("  [2/4] Loading tokenizer...")
-with open("kaggle/working/checkpoints/tokenizer.json", "r") as f:
+with open("/Users/duy/Downloads/PBL6/AI_Server/tokenizer.json", "r") as f:
     tokenizer = tokenizer_from_json(f.read())
 
 # Constants

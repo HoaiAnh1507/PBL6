@@ -23,6 +23,15 @@ tqdm>=4.65.0
 # NLP Evaluation
 nltk>=3.8.0
 
+# Azure Service Bus for Queue
+azure-servicebus>=7.11.0
+
+# HTTP requests for callback
+requests>=2.31.0
+
+# Environment variables
+python-dotenv>=1.0.0
+
 # Optional: Jupyter
 jupyter>=1.0.0
 ipykernel>=6.25.0
