@@ -36,6 +36,9 @@ class _CapturePreviewPageState extends State<CapturePreviewPage> {
   Timer? _typingTimer;
   final String _aiTargetCaption = 'This is AI generated caption';
   int _typingIndex = 0;
+  // AI cancellation and generation tracking
+  int _aiGenerationId = 0;
+  bool _aiCancelRequested = false;
 
   String _wrapPerLine(String text, int maxChars) {
     final lines = text.split('\n');
@@ -75,44 +78,256 @@ class _CapturePreviewPageState extends State<CapturePreviewPage> {
     super.dispose();
   }
 
+  Future<void> _typeText(String text, void Function(String) onTyped,
+      {int speedMs = 55, int dotMs = 360, int? genId}) async {
+    for (int i = 1; i <= text.length; i++) {
+      if ((genId != null && genId != _aiGenerationId) || _aiCancelRequested) return;
+      onTyped(text.substring(0, i));
+      if (mounted) setState(() {});
+      final char = text[i - 1];
+      final delay = (char == '.') ? dotMs : speedMs;
+      await Future.delayed(Duration(milliseconds: delay));
+      if ((genId != null && genId != _aiGenerationId) || _aiCancelRequested) return;
+    }
+  }
+
+  Future<void> _eraseText(String text, void Function(String) onTyped,
+      {int speedMs = 35, int? genId}) async {
+    for (int i = text.length - 1; i >= 0; i--) {
+      if ((genId != null && genId != _aiGenerationId) || _aiCancelRequested) return;
+      onTyped(text.substring(0, i));
+      if (mounted) setState(() {});
+      await Future.delayed(Duration(milliseconds: speedMs));
+      if ((genId != null && genId != _aiGenerationId) || _aiCancelRequested) return;
+    }
+  }
+
+  // ------------------- Mood Picker and Backend -------------------
+  static const List<String> _moodsEn = [
+    'happy',
+    'sad',
+    'excited',
+    'calm',
+    'anxious',
+    'angry',
+    'tired',
+    'energetic',
+    'lonely',
+    'grateful',
+    'stressed',
+    'relaxed',
+    'confident',
+    'bored',
+    'curious',
+    'hopeful',
+    'frustrated',
+    'proud',
+    'overwhelmed',
+    'motivated',
+  ];
+
+  // Icon mapping for each mood (safe, widely available Material icons)
+  static final Map<String, IconData> _moodIcons = {
+    'happy': Icons.sentiment_satisfied,
+    'sad': Icons.sentiment_dissatisfied,
+    'excited': Icons.flash_on,
+    'calm': Icons.self_improvement,
+    'anxious': Icons.priority_high,
+    'angry': Icons.mood_bad,
+    'tired': Icons.bedtime,
+    'energetic': Icons.fitness_center,
+    'lonely': Icons.person_outline,
+    'grateful': Icons.favorite,
+    'stressed': Icons.warning,
+    'relaxed': Icons.spa,
+    'confident': Icons.verified,
+    'bored': Icons.sentiment_neutral,
+    'curious': Icons.search,
+    'hopeful': Icons.auto_awesome,
+    'frustrated': Icons.sentiment_dissatisfied,
+    'proud': Icons.workspace_premium,
+    'overwhelmed': Icons.waves,
+    'motivated': Icons.flag,
+  };
+
+  IconData _iconForMood(String mood) {
+    return _moodIcons[mood.toLowerCase()] ?? Icons.sentiment_neutral;
+  }
+
+  Future<void> _sendMoodToBackend(String moodEn) async {
+    // TODO: replace with real API call
+    await Future.delayed(const Duration(milliseconds: 200));
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Mood sent: $moodEn')),
+    );
+  }
+
+  Future<void> _openMoodSheet() async {
+    final selected = await showModalBottomSheet<String>(
+      context: context,
+      isScrollControlled: true,
+      enableDrag: true,
+      backgroundColor: Colors.black87,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        final height = MediaQuery.of(ctx).size.height * 0.33;
+        final width = MediaQuery.of(ctx).size.width;
+        final columns = width >= 420 ? 3 : 2;
+        final aspect = columns == 2 ? 3.8 : 3.2;
+        const itemStyle = TextStyle(
+          color: Colors.white,
+          fontSize: 15,
+          fontWeight: FontWeight.w600,
+        );
+        return SafeArea(
+          child: SizedBox(
+            height: height,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      height: 5,
+                      width: 40,
+                      decoration: BoxDecoration(
+                        color: Colors.white24,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'How are you feeling?',
+                    style: GoogleFonts.poppins(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Expanded(
+                    child: GridView.builder(
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: columns,
+                        crossAxisSpacing: 10,
+                        mainAxisSpacing: 10,
+                        childAspectRatio: aspect,
+                      ),
+                      itemCount: _moodsEn.length,
+                      primary: false,
+                      physics: const BouncingScrollPhysics(),
+                      addAutomaticKeepAlives: false,
+                      addSemanticIndexes: false,
+                      cacheExtent: 300,
+                      itemBuilder: (context, index) {
+                        final mEn = _moodsEn[index];
+                        return GestureDetector(
+                          onTap: () {
+                            Navigator.pop(ctx, mEn);
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                            decoration: BoxDecoration(
+                              color: Colors.white10,
+                              borderRadius: BorderRadius.circular(24),
+                              border: Border.all(color: Colors.white12),
+                              boxShadow: const [
+                                BoxShadow(color: Colors.black54, blurRadius: 8, offset: Offset(0, 4)),
+                              ],
+                            ),
+                            alignment: Alignment.center,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(_iconForMood(mEn), color: Colors.white, size: 18),
+                                const SizedBox(width: 8),
+                                Flexible(
+                                  child: Text(
+                                    mEn,
+                                    textAlign: TextAlign.center,
+                                    style: itemStyle,
+                                    overflow: TextOverflow.ellipsis,
+                                    maxLines: 1,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+
+    if (selected != null) {
+      await _sendMoodToBackend(selected);
+      if (!mounted) return;
+      _startAIDemo();
+    }
+  }
+
   void _startAIDemo() async {
     if (_aiGenerating) return;
+    _typingTimer?.cancel();
+    final int genId = ++_aiGenerationId;
+    _aiCancelRequested = false;
     setState(() {
       _aiGenerating = true;
-      _aiPhaseText = 'AI is analyzing...';
-      _typingIndex = 0;
-    });
-
-    await Future.delayed(const Duration(milliseconds: 800));
-    if (!mounted) return;
-    setState(() => _aiPhaseText = 'AI is thinking...');
-
-    await Future.delayed(const Duration(milliseconds: 800));
-    if (!mounted) return;
-    setState(() => _aiPhaseText = 'AI is generating...');
-
-    await Future.delayed(const Duration(milliseconds: 800));
-    if (!mounted) return;
-    setState(() {
       _aiPhaseText = '';
-      _captionController.text = '';
-      _typingIndex = 0;
     });
 
-    _typingTimer?.cancel();
-    _typingTimer = Timer.periodic(const Duration(milliseconds: 55), (t) {
-      if (_typingIndex < _aiTargetCaption.length) {
-        _typingIndex++;
-        _captionController.text = _aiTargetCaption.substring(0, _typingIndex);
-        setState(() {});
-      } else {
-        t.cancel();
-        _typingTimer = null;
-        setState(() {
-          _aiGenerating = false;
-        });
-      }
+    await _typeText('AI is analyzing...', (s) => _aiPhaseText = s, genId: genId);
+    if (!mounted || genId != _aiGenerationId || _aiCancelRequested) return;
+    await Future.delayed(const Duration(milliseconds: 350));
+    if (!mounted || genId != _aiGenerationId || _aiCancelRequested) return;
+    await _eraseText(_aiPhaseText, (s) => _aiPhaseText = s, genId: genId);
+
+    if (!mounted || genId != _aiGenerationId || _aiCancelRequested) return;
+    await _typeText('AI is thinking...', (s) => _aiPhaseText = s, genId: genId);
+    if (!mounted || genId != _aiGenerationId || _aiCancelRequested) return;
+    await Future.delayed(const Duration(milliseconds: 350));
+    if (!mounted || genId != _aiGenerationId || _aiCancelRequested) return;
+    await _eraseText(_aiPhaseText, (s) => _aiPhaseText = s, genId: genId);
+
+    if (!mounted || genId != _aiGenerationId || _aiCancelRequested) return;
+    await _typeText('AI is generating...', (s) => _aiPhaseText = s, genId: genId);
+    if (!mounted || genId != _aiGenerationId || _aiCancelRequested) return;
+    await Future.delayed(const Duration(milliseconds: 350));
+    if (!mounted || genId != _aiGenerationId || _aiCancelRequested) return;
+    await _eraseText(_aiPhaseText, (s) => _aiPhaseText = s, genId: genId);
+
+    if (!mounted || genId != _aiGenerationId || _aiCancelRequested) return;
+    _captionController.text = '';
+    await _typeText(_aiTargetCaption, (s) => _captionController.text = s, genId: genId);
+
+    if (!mounted || genId != _aiGenerationId || _aiCancelRequested) return;
+    setState(() {
+      _aiGenerating = false;
     });
+  }
+
+  void _cancelAIGeneration() {
+    _typingTimer?.cancel();
+    _aiCancelRequested = true;
+    _aiGenerationId++;
+    setState(() {
+      _aiGenerating = false;
+      _aiPhaseText = '';
+    });
+    _captionController.clear();
+    FocusScope.of(context).unfocus();
   }
 
   @override
@@ -146,6 +361,7 @@ class _CapturePreviewPageState extends State<CapturePreviewPage> {
               ),
               GestureDetector(
                 onTap: () async {
+                  if (_aiGenerating) return;
                   try {
                     File(widget.imagePath);
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -181,6 +397,7 @@ class _CapturePreviewPageState extends State<CapturePreviewPage> {
                         ? (_isVideoInitialized
                             ? GestureDetector(
                                 onTap: () {
+                                  if (_aiGenerating) return;
                                   if (_videoController!.value.isPlaying) {
                                     _videoController!.pause();
                                   } else {
@@ -230,10 +447,14 @@ class _CapturePreviewPageState extends State<CapturePreviewPage> {
                           decoration: TextDecoration.none,
                         );
 
-                        final String displayText = _aiGenerating && _aiPhaseText.isNotEmpty
-                            ? _aiPhaseText
+                        final String displayText = _aiGenerating
+                            ? (_aiPhaseText.isNotEmpty
+                                ? _aiPhaseText
+                                : (_captionController.text.isNotEmpty
+                                    ? _captionController.text
+                                    : ' '))
                             : (_captionController.text.isEmpty
-                                ? 'Share your thoughts...'
+                                ? 'Share your thought'
                                 : _captionController.text);
 
                         // Tính độ rộng theo nội dung
@@ -288,16 +509,12 @@ class _CapturePreviewPageState extends State<CapturePreviewPage> {
                                 borderRadius: BorderRadius.circular(chipRadius),
                               ),
                               child: (_aiGenerating && _aiPhaseText.isNotEmpty)
-                                  ? AnimatedSwitcher(
-                                    duration: const Duration(milliseconds: 250),
-                                    child: Text(
+                                  ? Text(
                                       _aiPhaseText,
-                                      key: ValueKey(_aiPhaseText),
                                       textAlign: TextAlign.center,
                                       style: style,
                                       maxLines: 1,
-                                    ),
-                                  )
+                                    )
                                 : TextField(
                                     controller: _captionController,
                                     focusNode: _captionFocusNode,
@@ -312,7 +529,7 @@ class _CapturePreviewPageState extends State<CapturePreviewPage> {
                                       isDense: true,
                                       // Đồng bộ với phần đo chiều rộng
                                       contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-                                      hintText: 'Share your thoughts...',
+                                      hintText: _aiGenerating ? null : 'Share your thoughts...',
                                       hintStyle: GoogleFonts.poppins(
                                         color: Colors.white70,
                                         fontSize: 16,
@@ -349,29 +566,45 @@ class _CapturePreviewPageState extends State<CapturePreviewPage> {
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
               GestureDetector(
-                onTap: () => Navigator.pop(context),
+                onTap: () {
+                  if (_aiGenerating) {
+                    _cancelAIGeneration();
+                  } else {
+                    Navigator.pop(context);
+                  }
+                },
                 child: const GradientIcon(icon: Icons.cancel_outlined, size: 30),
               ),
-              GestureDetector(
-                onTap: () {
-                  widget.onPost(_captionController.text);
-                  Navigator.pop(context);
-                },
-                child: Container(
-                  height: 90,
-                  width: 90,
-                  decoration: const BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: instagramGradient,
-                  ),
-                  child: const Center(
-                    child: Icon(Icons.send, color: Colors.white, size: 40),
+              Opacity(
+                opacity: _aiGenerating ? 0.4 : 1.0,
+                child: GestureDetector(
+                  onTap: () {
+                    if (_aiGenerating) return;
+                    widget.onPost(_captionController.text);
+                    Navigator.pop(context);
+                  },
+                  child: Container(
+                    height: 90,
+                    width: 90,
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: instagramGradient,
+                    ),
+                    child: const Center(
+                      child: Icon(Icons.send, color: Colors.white, size: 40),
+                    ),
                   ),
                 ),
               ),
-              GestureDetector(
-                onTap: _startAIDemo,
-                child: const GradientIcon(icon: Icons.auto_fix_high, size: 30),
+              Opacity(
+                opacity: _aiGenerating ? 0.4 : 1.0,
+                child: GestureDetector(
+                  onTap: () {
+                    if (_aiGenerating) return;
+                    _openMoodSheet();
+                  },
+                  child: const GradientIcon(icon: Icons.auto_fix_high, size: 30),
+                ),
               ),
             ],
           ),
