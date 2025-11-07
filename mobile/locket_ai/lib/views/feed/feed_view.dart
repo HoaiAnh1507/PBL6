@@ -151,6 +151,10 @@ class _FeedViewState extends State<FeedView> {
   Widget build(BuildContext context) {
     final feedVm = Provider.of<FeedViewModel>(context);
     final posts = feedVm.getVisiblePosts(currentUser: widget.currentUser);
+    final bool isOwnPost = posts.isNotEmpty &&
+        _currentIndex >= 0 &&
+        _currentIndex < posts.length &&
+        posts[_currentIndex].user.userId == widget.currentUser.userId;
 
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
@@ -183,6 +187,13 @@ class _FeedViewState extends State<FeedView> {
                   : const BouncingScrollPhysics(), 
                 onPageChanged: (index) {
                   setState(() => _currentIndex = index);
+                  // Nếu lướt tới bài của chính mình thì ẩn và hạ input
+                  if (index >= 0 && index < posts.length) {
+                    final post = posts[index];
+                    if (post.user.userId == widget.currentUser.userId) {
+                      _messageFocus.unfocus();
+                    }
+                  }
                 },
                 itemBuilder: (_, index) {
                   final post = posts[index];
@@ -221,7 +232,18 @@ class _FeedViewState extends State<FeedView> {
                 padding: EdgeInsets.only(
                   bottom: MediaQuery.of(context).viewInsets.bottom,
                 ),
-                child: _buildMessageBar(),
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 200),
+                  switchInCurve: Curves.easeIn,
+                  switchOutCurve: Curves.easeOut,
+                  transitionBuilder: (child, animation) => FadeTransition(
+                    opacity: animation,
+                    child: child,
+                  ),
+                  child: isOwnPost
+                      ? const SizedBox.shrink()
+                      : _buildMessageBar(),
+                ),
               )
             ),
 

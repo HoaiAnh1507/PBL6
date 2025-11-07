@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:io';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:locket_ai/models/user_model.dart';
 import 'package:video_player/video_player.dart';
@@ -31,7 +32,7 @@ class _PostItemState extends State<PostItem> {
       final path = widget.post.mediaUrl;
       _v = path.startsWith('http')
           ? VideoPlayerController.network(path)
-          : VideoPlayerController.asset(path);
+          : VideoPlayerController.file(File(path));
       await _v!.initialize();
       _v!.setLooping(true);
       _chewie = ChewieController(
@@ -91,23 +92,35 @@ class _PostItemState extends State<PostItem> {
                 height: screenWidth,
                 color: Colors.black,
                 child: post.mediaType == MediaType.PHOTO
-                  ? Image.network(
-                      post.mediaUrl,
-                      fit: BoxFit.cover,
-                      width: double.infinity,
-                      height: double.infinity,
-                      loadingBuilder: (context, child, loadingProgress) {
-                        if (loadingProgress == null) return child;
-                        return const Center(
-                          child: CircularProgressIndicator(color: Colors.pinkAccent),
-                        );
-                      },
-                      errorBuilder: (context, error, stackTrace) {
-                        return const Center(
-                          child: Icon(Icons.broken_image, color: Colors.white54, size: 40),
-                        );
-                      },
-                    )
+                  ? (post.mediaUrl.startsWith('http')
+                      ? Image.network(
+                          post.mediaUrl,
+                          fit: BoxFit.cover,
+                          width: double.infinity,
+                          height: double.infinity,
+                          loadingBuilder: (context, child, loadingProgress) {
+                            if (loadingProgress == null) return child;
+                            return const Center(
+                              child: CircularProgressIndicator(color: Colors.pinkAccent),
+                            );
+                          },
+                          errorBuilder: (context, error, stackTrace) {
+                            return const Center(
+                              child: Icon(Icons.broken_image, color: Colors.white54, size: 40),
+                            );
+                          },
+                        )
+                      : Image.file(
+                          File(post.mediaUrl),
+                          fit: BoxFit.cover,
+                          width: double.infinity,
+                          height: double.infinity,
+                          errorBuilder: (context, error, stackTrace) {
+                            return const Center(
+                              child: Icon(Icons.broken_image, color: Colors.white54, size: 40),
+                            );
+                          },
+                        ))
                   : (_chewie != null
                       ? FittedBox(
                           fit: BoxFit.cover,

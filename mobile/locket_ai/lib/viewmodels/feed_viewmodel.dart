@@ -11,6 +11,7 @@ class FeedViewModel extends ChangeNotifier {
   
   List<Post> posts = [];
   bool loading = false;
+  bool _hasLoadedSamples = false;
 
   FeedViewModel();
 
@@ -18,7 +19,10 @@ class FeedViewModel extends ChangeNotifier {
   void setDependencies(UserViewModel userVM, FriendshipViewModel friendshipVM) {
     this.userVM = userVM;
     this.friendshipVM = friendshipVM;
-    loadSamplePosts();
+    // Chỉ tải dữ liệu mẫu một lần, tránh ghi đè bài đăng người dùng
+    if (!_hasLoadedSamples && posts.isEmpty) {
+      loadSamplePosts();
+    }
   }
 
   /// Tải danh sách post giả lập
@@ -64,6 +68,7 @@ class FeedViewModel extends ChangeNotifier {
     ];
 
     loading = false;
+    _hasLoadedSamples = true;
     notifyListeners();
   }
 

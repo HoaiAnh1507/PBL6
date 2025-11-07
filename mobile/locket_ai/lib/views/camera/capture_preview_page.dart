@@ -11,7 +11,7 @@ import '../../widgets/gradient_icon.dart';
 class CapturePreviewPage extends StatefulWidget {
   final String imagePath;
   final bool isVideo;
-  final Function(String caption) onPost;
+  final Function(String caption, String mediaPath, bool isVideo) onPost;
 
   const CapturePreviewPage({
     super.key,
@@ -31,7 +31,8 @@ class _CapturePreviewPageState extends State<CapturePreviewPage> {
   bool _isVideoInitialized = false;
 
   // Demo AI caption generation state
-  bool _aiGenerating = false;
+bool _aiGenerating = false;
+bool _posting = false;
   String _aiPhaseText = '';
   Timer? _typingTimer;
   final String _aiTargetCaption = 'This is AI generated caption';
@@ -569,6 +570,9 @@ class _CapturePreviewPageState extends State<CapturePreviewPage> {
                 onTap: () {
                   if (_aiGenerating) {
                     _cancelAIGeneration();
+                  } else if (_posting) {
+                    // đang đăng, không cho thoát để hiển thị loading
+                    return;
                   } else {
                     Navigator.pop(context);
                   }
@@ -576,12 +580,16 @@ class _CapturePreviewPageState extends State<CapturePreviewPage> {
                 child: const GradientIcon(icon: Icons.cancel_outlined, size: 30),
               ),
               Opacity(
-                opacity: _aiGenerating ? 0.4 : 1.0,
+                opacity: (_aiGenerating || _posting) ? 0.4 : 1.0,
                 child: GestureDetector(
-                  onTap: () {
-                    if (_aiGenerating) return;
-                    widget.onPost(_captionController.text);
-                    Navigator.pop(context);
+                  onTap: () async {
+                    if (_aiGenerating || _posting) return;
+                    setState(() => _posting = true);
+                    // gọi onPost để thêm bài vào feed
+                    widget.onPost(_captionController.text, widget.imagePath, widget.isVideo);
+                    // giả lập loading trước khi quay lại Feed
+                    await Future.delayed(const Duration(milliseconds: 700));
+                    if (mounted) Navigator.pop(context);
                   },
                   child: Container(
                     height: 90,
@@ -597,10 +605,10 @@ class _CapturePreviewPageState extends State<CapturePreviewPage> {
                 ),
               ),
               Opacity(
-                opacity: _aiGenerating ? 0.4 : 1.0,
+                opacity: (_aiGenerating || _posting) ? 0.4 : 1.0,
                 child: GestureDetector(
                   onTap: () {
-                    if (_aiGenerating) return;
+                    if (_aiGenerating || _posting) return;
                     _openMoodSheet();
                   },
                   child: const GradientIcon(icon: Icons.auto_fix_high, size: 30),
@@ -609,6 +617,25 @@ class _CapturePreviewPageState extends State<CapturePreviewPage> {
             ],
           ),
         ),
+        if (_posting)
+          Positioned.fill(
+            child: Container(
+              color: Colors.black.withOpacity(0.35),
+              child: const Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    CircularProgressIndicator(color: Colors.pinkAccent),
+                    SizedBox(height: 12),
+                    Text(
+                      'Uploading...',
+                      style: TextStyle(color: Colors.white, fontSize: 16, decoration: TextDecoration.none),
+                    )
+                  ],
+                ),
+              ),
+            ),
+          ),
           ],
         )),
     );

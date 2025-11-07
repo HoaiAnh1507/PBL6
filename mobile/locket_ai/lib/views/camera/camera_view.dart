@@ -2,6 +2,10 @@ import 'dart:async';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
+import '../../viewmodels/feed_viewmodel.dart';
+import '../../viewmodels/auth_viewmodel.dart';
+import '../../models/post_model.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:locket_ai/views/camera/capture_preview_page.dart';
 import 'package:locket_ai/widgets/base_header.dart';
@@ -163,10 +167,28 @@ class _CameraViewState extends State<CameraView>
         builder: (_) => CapturePreviewPage(
           imagePath: path,
           isVideo: isVideo,
-          onPost: (caption) {
+          onPost: (caption, mediaPath, isV) {
+            final feedVm = Provider.of<FeedViewModel>(context, listen: false);
+            final authVm = Provider.of<AuthViewModel>(context, listen: false);
+            final user = authVm.currentUser;
+
+            if (user != null) {
+              final post = Post(
+                postId: DateTime.now().millisecondsSinceEpoch.toString(),
+                user: user,
+                mediaType: isV ? MediaType.VIDEO : MediaType.PHOTO,
+                mediaUrl: mediaPath,
+                generatedCaption: null,
+                captionStatus: CaptionStatus.COMPLETED,
+                userEditedCaption: caption.isNotEmpty ? caption : null,
+                createdAt: DateTime.now(),
+              );
+              feedVm.addPost(post);
+            }
+
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text(isVideo
+                content: Text(isV
                     ? 'Đăng video thành công (demo)'
                     : 'Đăng ảnh thành công (demo)'),
               ),
@@ -175,6 +197,11 @@ class _CameraViewState extends State<CameraView>
         ),
       ),
     );
+
+    // Sau khi đóng preview, chuyển thẳng sang Feed để xem bài đăng mới
+    try {
+      widget.verticalController.jumpToPage(1);
+    } catch (_) {}
 
     if (_camCtrl != null && !_camCtrl!.value.isStreamingImages) {
       try {
