@@ -19,7 +19,7 @@ except ImportError:
 # Azure Service Bus Configuration
 AZURE_SERVICEBUS_CONNECTION_STRING = os.getenv(
     "AZURE_SERVICEBUS_CONNECTION_STRING",
-    "Endpoint=sb://locketai.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=43J40uu5l1SOY06HWOH/Vh60fdRaG1aSY+ASbPmll9g=",
+    "Endpoint=sb://your-servicebus.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=YOUR_ACCESS_KEY_HERE",
 )
 
 AZURE_QUEUE_NAME = os.getenv("AZURE_QUEUE_NAME", "caption-jobs")
