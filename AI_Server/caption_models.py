@@ -120,11 +120,13 @@ class VideoCaptionGenerator:
         frames = []
         frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
 
-        # Sample frames evenly (max 8 frames)
-        sample_interval = max(1, frame_count // 8)
+        # ✅ FIX: Sample 24 frames (MUST match training!)
+        # BEFORE: sample_interval = max(1, frame_count // 8)  # ❌ Only 8 frames!
+        NUM_FRAMES = 24
+        indices = np.linspace(0, max(frame_count - 1, 0), num=NUM_FRAMES, dtype=int)
 
-        for i in range(0, frame_count, sample_interval):
-            cap.set(cv2.CAP_PROP_POS_FRAMES, i)
+        for idx in indices:
+            cap.set(cv2.CAP_PROP_POS_FRAMES, int(idx))
             ret, frame = cap.read()
             if ret:
                 # Convert BGR to RGB
@@ -142,8 +144,18 @@ class VideoCaptionGenerator:
 
         with torch.no_grad():
             features = self.clip_model.encode_image(frames_tensor)
+            # ✅ FIX: Normalize features (CRITICAL - must match training!)
+            features = features / features.norm(dim=-1, keepdim=True)
             # Average pool features across frames
             pooled_features = features.mean(dim=0)
+
+        # 🔍 Debug logging
+        print(
+            f"  🔍 Extracted {len(frames)} frames → feature shape: {pooled_features.shape}"
+        )
+        print(
+            f"  🔍 Feature stats: mean={pooled_features.mean().item():.4f}, std={pooled_features.std().item():.4f}, norm={pooled_features.norm().item():.4f}"
+        )
 
         return pooled_features.cpu().numpy()
 
@@ -208,6 +220,18 @@ class VideoCaptionGenerator:
             new_beams.sort(key=lambda x: x[1], reverse=True)
             beams = new_beams[:beam_size]
 
+            # 🔍 Debug: Check for infinite loop (same token repeated)
+            if step > 5:  # After a few steps
+                current_tokens = [self.idx2word.get(s[-1], "") for s, _ in beams[:3]]
+                if len(set(current_tokens)) == 1:  # All beams have same last token
+                    print(
+                        f"  ⚠️  WARNING: Potential infinite loop detected at step {step}"
+                    )
+                    print(f"      All top beams predicting: '{current_tokens[0]}'")
+                    print(
+                        f"      Sequence so far: {[self.idx2word.get(id, '') for id in beams[0][0]]}"
+                    )
+
             if all(s[-1] == self.end_idx for s, _ in beams):
                 break
 
@@ -220,7 +244,7 @@ class VideoCaptionGenerator:
         ]
 
         final_caption = " ".join(words).strip()
-        print(f"🎯 Generated caption: '{final_caption}'")
+        print(f"🎯 Generated caption: '{final_caption}' (length: {len(words)} words)")
         return final_caption
 
     def process_video(self, video_url, mood="neutral"):
