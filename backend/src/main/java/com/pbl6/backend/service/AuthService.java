@@ -259,7 +259,12 @@ public class AuthService {
         boolean hasDigit = password.chars().anyMatch(Character::isDigit);
         
         if (!hasUpperCase || !hasLowerCase || !hasDigit) {
-            throw new RuntimeException("Mật khẩu phải chứa ít nhất 1 chữ hoa, 1 chữ thường và 1 số!");
+            throw new RuntimeException(
+                "Mật khẩu không hợp lệ. Yêu cầu:\n" +
+                "- Ít nhất 1 chữ hoa.\n" +
+                "- Ít nhất 1 chữ thường.\n" +
+                "- Ít nhất 1 chữ số."
+            );
         }
     }
 
