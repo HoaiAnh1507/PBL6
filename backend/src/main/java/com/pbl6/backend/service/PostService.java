@@ -55,8 +55,7 @@ public class PostService {
         Post post = new Post(user, mediaType, req.getMediaUrl());
         post.setGeneratedCaption(null); // Will be set by callback
         post.setCaptionStatus(Post.CaptionStatus.PENDING);
-        post.setUserEditedCaption(null);
-
+        
         post = postRepository.save(post);
         log.info("✅ Created Post for AI caption | PostID: {} | MediaType: {} | Status: {}",
                 post.getPostId(), mediaType, Post.CaptionStatus.PENDING);
@@ -135,14 +134,14 @@ public class PostService {
         Post post = postRepository.findById(req.getPostId())
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy post với id=" + req.getPostId()));
 
-        post.setUserEditedCaption(req.getFinalCaption());
+        post.setFinalCaption(req.getFinalCaption());
         post.setCaptionStatus(Post.CaptionStatus.COMPLETED);
         Post saved = postRepository.save(post);
 
         // Cập nhật recipients nếu có
         setRecipients(saved, req.getRecipientIds());
         log.info("Finalize Post: id={}, status={}, finalCaptionLength={}", saved.getPostId(), saved.getCaptionStatus(),
-                Optional.ofNullable(saved.getUserEditedCaption()).map(String::length).orElse(0));
+                Optional.ofNullable(saved.getFinalCaption()).map(String::length).orElse(0));
         return saved;
     }
 
@@ -152,7 +151,7 @@ public class PostService {
 
         Post post = new Post(user, mediaType, req.getMediaUrl());
         post.setGeneratedCaption(null);
-        post.setUserEditedCaption(req.getFinalCaption());
+        post.setFinalCaption(req.getFinalCaption());
         post.setCaptionStatus(Post.CaptionStatus.COMPLETED);
 
         post = postRepository.save(post);
@@ -160,7 +159,7 @@ public class PostService {
         // Lưu recipients nếu có
         setRecipients(post, req.getRecipientIds());
         log.info("Create Direct Post: id={}, status={}, hasCaption={}", post.getPostId(), post.getCaptionStatus(),
-                post.getUserEditedCaption() != null);
+                post.getFinalCaption() != null);
         return post;
     }
 
@@ -208,7 +207,7 @@ public class PostService {
         return new PostResponse(
                 post.getPostId(),
                 ur,
-                post.getUserEditedCaption(),
+                post.getFinalCaption(),
                 post.getMediaType().name(),
                 post.getMediaUrl(),
                 post.getCaptionStatus().name(),

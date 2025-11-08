@@ -40,7 +40,7 @@ public class Post {
     private CaptionStatus captionStatus = CaptionStatus.PENDING;
     
     @Column(name = "final_caption", columnDefinition = "TEXT")
-    private String userEditedCaption;
+    private String finalCaption;
     
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -129,12 +129,12 @@ public class Post {
         this.captionStatus = captionStatus;
     }
     
-    public String getUserEditedCaption() {
-        return userEditedCaption;
+    public String getFinalCaption() {
+        return finalCaption;
     }
     
-    public void setUserEditedCaption(String userEditedCaption) {
-        this.userEditedCaption = userEditedCaption;
+    public void setFinalCaption(String finalCaption) {
+        this.finalCaption = finalCaption;
     }
     
     public LocalDateTime getCreatedAt() {
