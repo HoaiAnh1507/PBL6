@@ -46,13 +46,17 @@ public class StorageController {
             String providedBlobName = req.getBlobName();
             String finalBlobName = providedBlobName;
             if (finalBlobName == null || finalBlobName.isBlank()) {
-                // Auto-generate blob name: {userId}/{MM}/{timestamp}.jpg
+                // Auto-generate blob name: {userId}/{MM-YYYY}/{timestamp}.{ext}
                 var principal = getCurrentPrincipal();
                 String userId = principal.getUser().getUserId();
-                int month = java.time.OffsetDateTime.now().getMonthValue();
-                String monthStr = String.format("%02d", month);
+                var now = java.time.OffsetDateTime.now();
+                int month = now.getMonthValue();
+                int year = now.getYear();
+                String monthYear = String.format("%02d-%04d", month, year);
                 String timestamp = String.valueOf(System.currentTimeMillis());
-                finalBlobName = userId + "/" + monthStr + "/" + timestamp + ".jpg";
+                String mediaType = req.getMediaType();
+                String ext = (mediaType != null && mediaType.equalsIgnoreCase("VIDEO")) ? ".mp4" : ".jpg";
+                finalBlobName = userId + "/" + monthYear + "/" + timestamp + ext;
             }
             sas = storageService.generateBlobUploadSas(req.getContainerName(), finalBlobName, ttl);
         } else {
