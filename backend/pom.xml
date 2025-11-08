@@ -105,6 +105,13 @@
             <artifactId>azure-messaging-servicebus</artifactId>
             <version>7.15.0</version>
         </dependency>
+
+        <!-- Azure Storage Blob for SAS token generation -->
+        <dependency>
+            <groupId>com.azure</groupId>
+            <artifactId>azure-storage-blob</artifactId>
+            <version>12.25.0</version>
+        </dependency>
     </dependencies>
 
     <build>

@@ -27,6 +27,12 @@ public class DotenvApplicationListener implements ApplicationListener<Applicatio
         String azureConnectionString = dotenv.get("AZURE_SERVICEBUS_CONNECTION_STRING");
         String azureQueueName = dotenv.get("AZURE_QUEUE_NAME");
 
+        
+        // Azure Storage credentials
+        String storageAccountName = dotenv.get("AZURE_STORAGE_ACCOUNT_NAME");
+        String storageAccountKey = dotenv.get("AZURE_STORAGE_ACCOUNT_KEY");
+        String storageConnectionString = dotenv.get("AZURE_STORAGE_CONNECTION_STRING");
+        
         // AI Caption settings
         String aiCallbackSecret = dotenv.get("AI_CAPTION_CALLBACK_SECRET");
 
@@ -49,11 +55,13 @@ public class DotenvApplicationListener implements ApplicationListener<Applicatio
             System.setProperty("MAIL_FROM_NAME", mailFromName);
 
         // Set Azure properties
-        if (azureConnectionString != null)
-            System.setProperty("AZURE_SERVICEBUS_CONNECTION_STRING", azureConnectionString);
-        if (azureQueueName != null)
-            System.setProperty("AZURE_QUEUE_NAME", azureQueueName);
-
+        if (azureConnectionString != null) System.setProperty("AZURE_SERVICEBUS_CONNECTION_STRING", azureConnectionString);
+        if (azureQueueName != null) System.setProperty("AZURE_QUEUE_NAME", azureQueueName);
+        // Set Azure Storage properties
+        if (storageAccountName != null) System.setProperty("AZURE_STORAGE_ACCOUNT_NAME", storageAccountName);
+        if (storageAccountKey != null) System.setProperty("AZURE_STORAGE_ACCOUNT_KEY", storageAccountKey);
+        if (storageConnectionString != null) System.setProperty("AZURE_STORAGE_CONNECTION_STRING", storageConnectionString);
+        
         // Set AI Caption properties
         if (aiCallbackSecret != null)
             System.setProperty("AI_CAPTION_CALLBACK_SECRET", aiCallbackSecret);
@@ -65,6 +73,9 @@ public class DotenvApplicationListener implements ApplicationListener<Applicatio
         System.out.println("   AZURE_SERVICEBUS_CONNECTION_STRING="
                 + (azureConnectionString != null ? "configured" : "<missing>"));
         System.out.println("   AZURE_QUEUE_NAME=" + (azureQueueName != null ? azureQueueName : "<missing>"));
+        System.out.println("   AZURE_STORAGE_ACCOUNT_NAME=" + (storageAccountName != null ? "configured" : "<missing>"));
+        System.out.println("   AZURE_STORAGE_ACCOUNT_KEY=" + (storageAccountKey != null ? "configured" : "<missing>"));
+        System.out.println("   AZURE_STORAGE_CONNECTION_STRING=" + (storageConnectionString != null ? "configured" : "<missing>"));
         System.out.println("   AI_CAPTION_CALLBACK_SECRET=" + (aiCallbackSecret != null ? "configured" : "<missing>"));
     }
 }
