@@ -101,8 +101,8 @@ class LoginView extends StatefulWidget {
                               final chatVM = Provider.of<ChatViewModel>(context, listen: false);
                               final userVM = Provider.of<UserViewModel>(context, listen: false);
 
-                              // Đồng bộ currentUser vào UserViewModel để ChatViewModel có thể nạp mock
-                              userVM.login(authVM.currentUser!.userId);
+                              // Đồng bộ currentUser (từ backend) vào UserViewModel để ChatViewModel có thể nạp mock
+                              userVM.setCurrentUser(authVM.currentUser!);
 
                               // Nạp danh sách bạn bè và dữ liệu chat mock cho người dùng hiện tại
                               await friendshipVM.loadFriendships(authVM.currentUser!);

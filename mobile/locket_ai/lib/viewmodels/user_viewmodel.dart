@@ -87,6 +87,18 @@ class UserViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  // ✅ Set current user từ Auth (thêm vào danh sách nếu chưa có)
+  void setCurrentUser(User user) {
+    final idx = _users.indexWhere((u) => u.userId == user.userId);
+    if (idx == -1) {
+      _users.insert(0, user);
+    } else {
+      _users[idx] = user;
+    }
+    _currentUser = user;
+    notifyListeners();
+  }
+
   // ✅ Logout
   void logout() {
     _currentUser = null;
