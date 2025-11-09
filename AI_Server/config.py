@@ -31,6 +31,12 @@ BACKEND_CALLBACK_SECRET = os.getenv("BACKEND_CALLBACK_SECRET", "change-me")
 MAX_PROCESSING_TIME = int(os.getenv("MAX_PROCESSING_TIME", "15"))  # seconds
 BEAM_SIZE = int(os.getenv("BEAM_SIZE", "5"))
 
+# ✨ Multi-Worker Configuration
+NUM_WORKERS = int(os.getenv("NUM_WORKERS", "1"))  # Number of concurrent workers
+PREFETCH_COUNT = int(
+    os.getenv("PREFETCH_COUNT", "1")
+)  # Messages to prefetch per worker
+
 # Model Paths
 MODEL_WEIGHTS_PATH = "best.weights.h5"
 TOKENIZER_PATH = "tokenizer.json"
@@ -40,5 +46,7 @@ DEVICE_PREFERENCE = os.getenv("DEVICE", "auto")  # auto, cuda, mps, cpu
 
 print(f"🔧 Config loaded:")
 print(f"   Queue: {AZURE_QUEUE_NAME}")
+print(f"   Workers: {NUM_WORKERS}")
+print(f"   Prefetch: {PREFETCH_COUNT}")
 print(f"   Max processing time: {MAX_PROCESSING_TIME}s")
 print(f"   Beam size: {BEAM_SIZE}")
