@@ -33,7 +33,7 @@ class LoginView extends StatefulWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 const Text(
-                  "Đăng nhập",
+            "Sign In",
                   style: TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
@@ -45,7 +45,7 @@ class LoginView extends StatefulWidget {
                   controller: _usernameController,
                   style: const TextStyle(color: Colors.white),
                   decoration: InputDecoration(
-                    labelText: "Tên đăng nhập",
+                  labelText: "Email or Phone",
                     labelStyle: const TextStyle(color: Colors.white70),
                     enabledBorder: OutlineInputBorder(
                       borderSide: const BorderSide(color: Colors.white24),
@@ -57,7 +57,7 @@ class LoginView extends StatefulWidget {
                     ),
                   ),
                   validator: (value) =>
-                      value == null || value.isEmpty ? "Nhập tên đăng nhập" : null,
+                  value == null || value.isEmpty ? "Enter email or phone" : null,
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
@@ -65,7 +65,7 @@ class LoginView extends StatefulWidget {
                   obscureText: true,
                   style: const TextStyle(color: Colors.white),
                   decoration: InputDecoration(
-                    labelText: "Mật khẩu",
+                  labelText: "Password",
                     labelStyle: const TextStyle(color: Colors.white70),
                     enabledBorder: OutlineInputBorder(
                       borderSide: const BorderSide(color: Colors.white24),
@@ -77,7 +77,7 @@ class LoginView extends StatefulWidget {
                     ),
                   ),
                   validator: (value) =>
-                      value == null || value.isEmpty ? "Nhập mật khẩu" : null,
+                  value == null || value.isEmpty ? "Enter password" : null,
                 ),
                 const SizedBox(height: 24),
                 if (authVM.errorMessage != null)
@@ -101,12 +101,20 @@ class LoginView extends StatefulWidget {
                               final chatVM = Provider.of<ChatViewModel>(context, listen: false);
                               final userVM = Provider.of<UserViewModel>(context, listen: false);
 
-                              // Đồng bộ currentUser (từ backend) vào UserViewModel để ChatViewModel có thể nạp mock
+                              // Đồng bộ currentUser (từ backend) vào UserViewModel
                               userVM.setCurrentUser(authVM.currentUser!);
 
-                              // Nạp danh sách bạn bè và dữ liệu chat mock cho người dùng hiện tại
-                              await friendshipVM.loadFriendships(authVM.currentUser!);
-                              chatVM.loadDataForCurrentUser();
+                              // Nếu có JWT: nạp friends + hội thoại từ backend
+                              final jwt = authVM.jwtToken;
+                              final current = authVM.currentUser!;
+                              if (jwt != null && jwt.isNotEmpty) {
+                                await friendshipVM.loadFriendsRemote(jwt: jwt, current: current);
+                                await chatVM.loadRemoteConversations(jwt: jwt, currentUserId: current.userId);
+                              } else {
+                                // Fallback: mock
+                                await friendshipVM.loadFriendships(current);
+                                chatVM.loadDataForCurrentUser();
+                              }
 
                               if (!mounted) return;
 
@@ -131,7 +139,7 @@ class LoginView extends StatefulWidget {
                   child: authVM.isLoading
                       ? const CircularProgressIndicator(color: Colors.white)
                       : const Text(
-                          "Đăng nhập",
+            "Sign In",
                           style: TextStyle(fontSize: 18, color: Colors.white),
                         ),
                 ),

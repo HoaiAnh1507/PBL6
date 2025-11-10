@@ -372,9 +372,9 @@ bool _aiGenerating = false;
           _aiPhaseText = 'AI is tired now :(';
           _aiGenerating = false;
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Upload thất bại')),
-        );
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Upload failed')),
+      );
         return;
       }
 
@@ -386,9 +386,9 @@ bool _aiGenerating = false;
           _aiPhaseText = 'AI is tired now :(';
           _aiGenerating = false;
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Khởi tạo AI thất bại')),
-        );
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('AI init failed')),
+      );
         return;
       }
 
@@ -449,7 +449,7 @@ bool _aiGenerating = false;
       final token = authVM.jwtToken ?? _authToken;
       if (token == null || token.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Thiếu JWT. Vui lòng đăng nhập backend hoặc set token.')),
+      const SnackBar(content: Text('Missing JWT. Please log in to backend or set token.')),
         );
         return null;
       }
@@ -470,7 +470,7 @@ bool _aiGenerating = false;
       if (res.statusCode != 200) {
         final bodyText = res.body.isNotEmpty ? res.body : '(no body)';
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Lấy SAS thất bại: ${res.statusCode} $bodyText')),
+      SnackBar(content: Text('Get SAS failed: ${res.statusCode} $bodyText')),
         );
         return null;
       }
@@ -497,7 +497,7 @@ bool _aiGenerating = false;
       }
       final putBody = putResp.body.isNotEmpty ? putResp.body : '(no body)';
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Azure PUT thất bại: ${putResp.statusCode} $putBody')),
+      SnackBar(content: Text('Azure PUT failed: ${putResp.statusCode} $putBody')),
       );
       return null;
     } catch (_) {
@@ -523,7 +523,7 @@ bool _aiGenerating = false;
       if (res.statusCode != 200) {
         final bodyText = res.body.isNotEmpty ? res.body : '(no body)';
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Hủy bài không thành công: ${res.statusCode} $bodyText')),
+      SnackBar(content: Text('Failed to cancel post: ${res.statusCode} $bodyText')),
         );
       } else {
         // Thành công: xóa postId pending
@@ -550,7 +550,7 @@ bool _aiGenerating = false;
       final token = authVM.jwtToken ?? _authToken;
       if (token == null || token.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Thiếu JWT. Vui lòng đăng nhập backend hoặc set token.')),
+      const SnackBar(content: Text('Missing JWT. Please log in to backend or set token.')),
         );
         return null;
       }
@@ -568,7 +568,7 @@ bool _aiGenerating = false;
       if (res.statusCode != 200) {
         final bodyText = res.body.isNotEmpty ? res.body : '(no body)';
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('ai/init thất bại: ${res.statusCode} $bodyText')),
+      SnackBar(content: Text('ai/init failed: ${res.statusCode} $bodyText')),
         );
         return null;
       }
@@ -586,7 +586,7 @@ bool _aiGenerating = false;
       final token = authVM.jwtToken ?? _authToken;
       if (token == null || token.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Thiếu JWT. Vui lòng đăng nhập backend hoặc set token.')),
+      const SnackBar(content: Text('Missing JWT. Please log in to backend or set token.')),
         );
         return null;
       }
@@ -605,7 +605,7 @@ bool _aiGenerating = false;
       if (res.statusCode != 200) {
         final bodyText = res.body.isNotEmpty ? res.body : '(no body)';
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Đăng bài thất bại: ${res.statusCode} $bodyText')),
+      SnackBar(content: Text('Post failed: ${res.statusCode} $bodyText')),
         );
         return null;
       }
@@ -640,7 +640,7 @@ bool _aiGenerating = false;
       if (res.statusCode != 200) {
         final bodyText = res.body.isNotEmpty ? res.body : '(no body)';
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Commit AI thất bại: ${res.statusCode} $bodyText')),
+      SnackBar(content: Text('Commit AI failed: ${res.statusCode} $bodyText')),
         );
         return null;
       }
@@ -680,7 +680,7 @@ bool _aiGenerating = false;
       if (res.statusCode != 200) {
         final bodyText = res.body.isNotEmpty ? res.body : '(no body)';
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('caption-status thất bại: ${res.statusCode} $bodyText')),
+      SnackBar(content: Text('caption-status failed: ${res.statusCode} $bodyText')),
         );
         return null;
       }
@@ -744,7 +744,7 @@ bool _aiGenerating = false;
                   try {
                     File(widget.imagePath);
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('File đã được lưu (demo)')),
+      const SnackBar(content: Text('File saved (demo)')),
                     );
                   } catch (e) {
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -831,13 +831,13 @@ bool _aiGenerating = false;
                         final String measureBase = _aiGenerating
                             ? (_aiCurrentPhrase.isNotEmpty
                                 ? _aiCurrentPhrase
-                                : (_captionController.text.isEmpty ? 'Share your thought' : _captionController.text))
+                                : (_captionController.text.isEmpty ? 'Share your thoughts' : _captionController.text))
                             : (_captionController.text.isEmpty
-                                ? 'Share your thought'
+                                ? 'Share your thoughts'
                                 : _captionController.text);
                         final String displayText = _aiGenerating
                             ? (_aiPhaseText.isNotEmpty ? _aiPhaseText : _aiPhaseFallback)
-                            : (_captionController.text.isEmpty ? 'Share your thought' : _captionController.text);
+                            : (_captionController.text.isEmpty ? 'Share your thoughts' : _captionController.text);
 
                         // Tính độ rộng theo nội dung
                         final lines = measureBase.split('\n');
@@ -978,7 +978,7 @@ bool _aiGenerating = false;
                         } catch (_) {}
                         if (mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Đăng bài (AI) thành công')),
+      const SnackBar(content: Text('AI post succeeded')),
                           );
                           Navigator.pop(context);
                         }
@@ -999,7 +999,7 @@ bool _aiGenerating = false;
                         } catch (_) {}
                         if (mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Đăng bài thành công')),
+      const SnackBar(content: Text('Post succeeded')),
                           );
                           Navigator.pop(context);
                         }

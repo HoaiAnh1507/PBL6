@@ -16,4 +16,17 @@ class ConversationsApi {
     }
     return [];
   }
+
+  Future<Map<String, dynamic>?> getConversationById(String conversationId) async {
+    final uri = ApiConfig.endpoint(ApiConfig.conversationByIdPath(conversationId));
+    final resp = await http.get(uri, headers: _headers);
+    if (resp.statusCode == 200) {
+      try {
+        return jsonDecode(resp.body) as Map<String, dynamic>;
+      } catch (_) {
+        return null;
+      }
+    }
+    return null;
+  }
 }

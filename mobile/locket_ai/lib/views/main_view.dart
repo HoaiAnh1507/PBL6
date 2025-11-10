@@ -40,7 +40,7 @@ class _MainViewState extends State<MainView> {
 
     if (currentUser == null) {
       return const Center(
-        child: Text("Không có người dùng đăng nhập."),
+              child: Text("No user logged in."),
       );
     }
 

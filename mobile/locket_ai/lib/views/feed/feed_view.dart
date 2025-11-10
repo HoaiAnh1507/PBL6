@@ -126,7 +126,7 @@ class _FeedViewState extends State<FeedView> {
 
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Đã gửi tin nhắn đến ${post.user.username} kèm bài đăng'),
+        content: Text('Sent a message to ${post.user.username} with the post'),
               duration: const Duration(seconds: 2),
               behavior: SnackBarBehavior.floating,
             ),

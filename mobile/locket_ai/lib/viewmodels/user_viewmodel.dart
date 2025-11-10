@@ -1,5 +1,8 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 import 'dart:convert';
 import '../models/user_model.dart';
 import '../core/config/api_config.dart';
@@ -84,7 +87,7 @@ class UserViewModel extends ChangeNotifier {
   void login(String userId) {
     final found = _users.firstWhere(
       (u) => u.userId == userId,
-      orElse: () => throw Exception("Không tìm thấy user $userId"),
+      orElse: () => throw Exception("User not found $userId"),
     );
     _currentUser = found;
     notifyListeners();
@@ -110,9 +113,9 @@ class UserViewModel extends ChangeNotifier {
 
   // ✅ Lấy user theo ID
   User? getUserById(String userId) {
-    return _users.firstWhere(
-      (u) => u.userId == userId,
-    );
+    final idx = _users.indexWhere((u) => u.userId == userId);
+    if (idx == -1) return null;
+    return _users[idx];
   }
 
   // ===== Backend integration =====
@@ -262,6 +265,69 @@ class UserViewModel extends ChangeNotifier {
     } catch (_) {
       return null;
     }
+  }
+
+  // ✅ Upload avatar from a local file using signed upload URL
+  Future<String?> uploadAvatarFromFile({
+    required String jwt,
+    required File file,
+  }) async {
+    try {
+      final fileName = file.path.split(Platform.pathSeparator).last;
+      final contentType = _guessMimeType(file.path);
+      final data = await getAvatarUploadUrl(jwt: jwt, fileName: fileName, contentType: contentType);
+      if (data == null) return null;
+      final uploadUrl = data['uploadUrl']?.toString();
+      final fileKey = data['fileKey']?.toString();
+      final headersDynamic = data['headers'];
+      final headers = <String, String>{};
+      if (headersDynamic is Map) {
+        headers.addAll(headersDynamic.map((k, v) => MapEntry(k.toString(), v.toString())));
+      }
+      // Fallback ensure Content-Type is present
+      headers.putIfAbsent('Content-Type', () => contentType);
+      // Azure Blob SAS often requires x-ms-blob-type
+      if (uploadUrl != null && uploadUrl.contains('blob.core.windows.net') && !headers.containsKey('x-ms-blob-type')) {
+        headers['x-ms-blob-type'] = 'BlockBlob';
+      }
+      final bytes = await file.readAsBytes();
+      final method = (data['method']?.toString().toUpperCase() ?? 'PUT');
+      http.Response putResp;
+      if (method == 'POST') {
+        // Support presigned POST (e.g., S3) with multipart form fields
+        final fieldsDynamic = data['fields'];
+        if (fieldsDynamic is Map) {
+          final req = http.MultipartRequest('POST', Uri.parse(uploadUrl!));
+          fieldsDynamic.forEach((k, v) => req.fields[k.toString()] = v.toString());
+          req.files.add(http.MultipartFile.fromBytes('file', bytes, filename: fileName, contentType: MediaType.parse(contentType)));
+          headers.forEach((k, v) => req.headers[k] = v);
+          final streamed = await req.send();
+          final respBytes = await streamed.stream.toBytes();
+          putResp = http.Response.bytes(respBytes, streamed.statusCode, headers: streamed.headers, request: streamed.request);
+        } else {
+          // Generic POST with raw body
+          putResp = await http.post(Uri.parse(uploadUrl!), headers: headers, body: bytes);
+        }
+      } else {
+        putResp = await http.put(Uri.parse(uploadUrl!), headers: headers, body: bytes);
+      }
+      // Accept common success codes: 200 (OK), 201 (Created), 204 (No Content)
+      if (putResp.statusCode == 200 || putResp.statusCode == 201 || putResp.statusCode == 204) {
+        return fileKey; // return storage key to be saved as profilePictureUrl
+      }
+      debugPrint('Avatar upload failed: ${putResp.statusCode} ${putResp.reasonPhrase}');
+      return null;
+    } catch (e) {
+      debugPrint('Avatar upload error: $e');
+      return null;
+    }
+  }
+
+  String _guessMimeType(String path) {
+    final lower = path.toLowerCase();
+    if (lower.endsWith('.jpg') || lower.endsWith('.jpeg')) return 'image/jpeg';
+    if (lower.endsWith('.png')) return 'image/png';
+    return 'application/octet-stream';
   }
 
   // ✅ Xóa tài khoản của chính mình (yêu cầu OTP code)

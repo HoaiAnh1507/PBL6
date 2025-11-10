@@ -64,10 +64,20 @@ class _ChatRoomViewState extends State<ChatRoomView> {
   Widget build(BuildContext context) {
     final chatVM = Provider.of<ChatViewModel>(context);
     final currentUserId = _currentUserId(context);
+    // Nếu chưa có tin nhắn nhưng có JWT → cố gắng nạp hội thoại từ backend
+    final authVM = Provider.of<AuthViewModel>(context, listen: false);
+    final jwt = authVM.jwtToken;
+    final initialMessages = chatVM.getMessagesWith(currentUserId, widget.friendId);
+    if ((initialMessages.isEmpty) && jwt != null && jwt.isNotEmpty) {
+      // Nếu chưa có tin nhắn: ưu tiên nạp chi tiết hội thoại cho cặp này
+      chatVM.loadRemoteMessagesForPair(
+        jwt: jwt,
+        currentUserId: currentUserId,
+        friendId: widget.friendId,
+      );
+    }
     // Sắp xếp tin nhắn theo thời gian tăng dần (cũ → mới)
-    final messages = List.of(
-      chatVM.getMessagesWith(currentUserId, widget.friendId),
-    )..sort((a, b) => a.sentAt.compareTo(b.sentAt));
+    final messages = List.of(initialMessages)..sort((a, b) => a.sentAt.compareTo(b.sentAt));
 
     return Scaffold(
       appBar: AppBar(
@@ -282,9 +292,18 @@ class _ChatRoomViewState extends State<ChatRoomView> {
                       onTap: () {
                         final text = _controller.text.trim();
                         if (text.isEmpty) return;
-
-                        chatVM.sendMessage(
-                            currentUserId, widget.friendId, text);
+                        final authVM = Provider.of<AuthViewModel>(context, listen: false);
+                        final jwt = authVM.jwtToken;
+                        if (jwt != null && jwt.isNotEmpty) {
+                          chatVM.sendMessageRemote(
+                            jwt: jwt,
+                            currentUserId: currentUserId,
+                            friendId: widget.friendId,
+                            content: text,
+                          );
+                        } else {
+                          chatVM.sendMessage(currentUserId, widget.friendId, text);
+                        }
                         _controller.clear();
                       },
                       child: Container(

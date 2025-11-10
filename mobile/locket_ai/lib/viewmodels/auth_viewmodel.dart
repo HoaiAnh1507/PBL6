@@ -54,7 +54,7 @@ class AuthViewModel extends ChangeNotifier {
         final userJson = data['user'] as Map<String, dynamic>?;
 
         if (token == null || userJson == null) {
-          _errorMessage = 'Phản hồi đăng nhập không hợp lệ từ server.';
+    _errorMessage = 'Invalid login response from server.';
           _isLoading = false;
           notifyListeners();
           return false;
@@ -63,12 +63,19 @@ class AuthViewModel extends ChangeNotifier {
         // Lưu JWT và ánh xạ user
         setJwtToken(token);
         _currentUser = _mapBackendUser(userJson);
+        // Enrich profile with full fields (e.g. email) from /api/users/profile
+        try {
+          final enriched = await userViewModel.fetchOwnProfile(token);
+          if (enriched != null) {
+            _currentUser = enriched;
+          }
+        } catch (_) {}
 
         _isLoading = false;
         notifyListeners();
         return true;
       } else {
-        String message = 'Đăng nhập thất bại: ${resp.statusCode}';
+    String message = 'Login failed: ${resp.statusCode}';
         try {
           final err = jsonDecode(resp.body);
           if (err is Map && err['message'] is String) {
@@ -141,7 +148,7 @@ class AuthViewModel extends ChangeNotifier {
         final userJson = data['user'] as Map<String, dynamic>?;
 
         if (token == null || userJson == null) {
-          _errorMessage = 'Phản hồi đăng ký không hợp lệ từ server.';
+    _errorMessage = 'Invalid registration response from server.';
           _isLoading = false;
           notifyListeners();
           return false;
@@ -150,12 +157,19 @@ class AuthViewModel extends ChangeNotifier {
         setJwtToken(token);
         _currentUser = _mapBackendUser(userJson);
         userViewModel.setCurrentUser(_currentUser!);
+        // Enrich profile with full fields from /api/users/profile
+        try {
+          final enriched = await userViewModel.fetchOwnProfile(token);
+          if (enriched != null) {
+            _currentUser = enriched;
+          }
+        } catch (_) {}
 
         _isLoading = false;
         notifyListeners();
         return true;
       } else {
-        String message = 'Đăng ký thất bại: ${resp.statusCode}';
+    String message = 'Registration failed: ${resp.statusCode}';
         try {
           final err = jsonDecode(resp.body);
           if (err is Map && err['error'] is String) message = err['error'];
@@ -177,7 +191,7 @@ class AuthViewModel extends ChangeNotifier {
   // ✅ Lấy thông tin user hiện tại từ backend (/api/auth/me)
   Future<bool> fetchMe() async {
     if (_jwtToken == null || _jwtToken!.isEmpty) {
-      _errorMessage = 'Chưa có JWT token';
+    _errorMessage = 'JWT token missing';
       notifyListeners();
       return false;
     }
@@ -195,11 +209,18 @@ class AuthViewModel extends ChangeNotifier {
         final data = jsonDecode(resp.body) as Map<String, dynamic>;
         _currentUser = _mapBackendUser(data);
         userViewModel.setCurrentUser(_currentUser!);
+        // Enrich profile from /api/users/profile to include fields missing in /api/auth/me
+        try {
+          final enriched = await userViewModel.fetchOwnProfile(_jwtToken!);
+          if (enriched != null) {
+            _currentUser = enriched;
+          }
+        } catch (_) {}
         _isLoading = false;
         notifyListeners();
         return true;
       } else {
-        _errorMessage = 'Không lấy được thông tin người dùng (${resp.statusCode})';
+    _errorMessage = 'Failed to fetch user info (${resp.statusCode})';
         _isLoading = false;
         notifyListeners();
         return false;
@@ -239,7 +260,7 @@ class AuthViewModel extends ChangeNotifier {
   // ✅ Đặt lại mật khẩu (yêu cầu JWT)
   Future<bool> resetPassword(String username, String newPassword) async {
     if (_jwtToken == null || _jwtToken!.isEmpty) {
-      _errorMessage = 'Chưa đăng nhập';
+    _errorMessage = 'Not logged in';
       return false;
     }
     try {
