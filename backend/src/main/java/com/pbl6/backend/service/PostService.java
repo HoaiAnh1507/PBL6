@@ -24,6 +24,8 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.stream.Collectors;
 
 @Service
 public class PostService {
@@ -180,6 +182,7 @@ public class PostService {
                 u.getFullName(),
                 u.getPhoneNumber(),
                 null,
+                null,
                 u.getProfilePictureUrl(),
                 u.getAccountStatus().name(),
                 u.getSubscriptionStatus().name(),
@@ -194,6 +197,7 @@ public class PostService {
                         r.getUsername(),
                         r.getFullName(),
                         r.getPhoneNumber(),
+                        null,
                         null,
                         r.getProfilePictureUrl(),
                         r.getAccountStatus().name(),
@@ -215,6 +219,44 @@ public class PostService {
                 recipientResponses,
                 Collections.<PostReactionResponse>emptyList(),
                 0);
+    }
+
+    /**
+     * Lấy feed cho người dùng: gồm bài tôi đăng và bài người khác chia sẻ cho tôi.
+     */
+    @Transactional(readOnly = true)
+    public List<PostResponse> listMyFeed(User me) {
+        List<Post> myPosts = postRepository.findByUserOrderByCreatedAtDesc(me);
+        List<Post> sharedToMe = postRepository.findPostsForUser(me);
+
+        List<Post> combined = new ArrayList<>();
+        combined.addAll(myPosts);
+        combined.addAll(sharedToMe);
+
+        // Loại trùng theo postId và sắp xếp mới nhất trước
+        List<Post> dedupSorted = combined.stream()
+                .collect(Collectors.toMap(Post::getPostId, p -> p, (p1, p2) -> p1))
+                .values()
+                .stream()
+                .sorted(Comparator.comparing(Post::getCreatedAt).reversed())
+                .collect(Collectors.toList());
+
+        return dedupSorted.stream().map(this::toResponse).collect(Collectors.toList());
+    }
+
+    /**
+     * Lấy các bài đăng được chia sẻ cho tôi từ một người dùng cụ thể.
+     */
+    @Transactional(readOnly = true)
+    public List<PostResponse> listSharedToMeFrom(User me, String fromUsername) {
+        User fromUser = userRepository.findByUsername(fromUsername)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy người dùng: " + fromUsername));
+
+        List<Post> posts = postRepository.findPostsForRecipientFromSender(me, fromUser);
+        return posts.stream()
+                .sorted(Comparator.comparing(Post::getCreatedAt).reversed())
+                .map(this::toResponse)
+                .collect(Collectors.toList());
     }
 
     private Post.MediaType parseMediaType(String mediaType) {

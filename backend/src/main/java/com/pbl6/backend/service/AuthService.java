@@ -277,6 +277,7 @@ public class AuthService {
         userResponse.setUsername(user.getUsername());
         userResponse.setFullName(user.getFullName());
         userResponse.setPhoneNumber(user.getPhoneNumber());
+        userResponse.setEmail(user.getEmail());
         userResponse.setBio(null); // User model chưa có trường bio
         userResponse.setProfilePictureUrl(user.getProfilePictureUrl());
         userResponse.setAccountStatus(user.getAccountStatus().toString());

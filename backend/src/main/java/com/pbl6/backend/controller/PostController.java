@@ -18,6 +18,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -86,5 +87,23 @@ public class PostController {
         var principal = getCurrentPrincipal();
         Post post = postService.createDirect(principal.getUser(), req);
         return ResponseEntity.ok(postService.toResponse(post));
+    }
+
+    // 3. Feed của tôi: bài tôi đăng + bài người khác chia sẻ cho tôi
+    @GetMapping("/feed")
+    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
+    public ResponseEntity<List<PostResponse>> myFeed() {
+        var principal = getCurrentPrincipal();
+        List<PostResponse> feed = postService.listMyFeed(principal.getUser());
+        return ResponseEntity.ok(feed);
+    }
+
+    // 4. Các bài được chia sẻ cho tôi từ một người dùng cụ thể
+    @GetMapping("/shared-to-me/from/{username}")
+    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
+    public ResponseEntity<List<PostResponse>> sharedToMeFrom(@PathVariable String username) {
+        var principal = getCurrentPrincipal();
+        List<PostResponse> posts = postService.listSharedToMeFrom(principal.getUser(), username);
+        return ResponseEntity.ok(posts);
     }
 }

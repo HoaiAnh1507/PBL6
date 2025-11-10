@@ -90,6 +90,15 @@ public class FriendshipController {
         return ResponseEntity.ok().build();
     }
 
+    // Hủy lời mời kết bạn do chính tôi đã gửi (người nhận chưa chấp nhận)
+    @PostMapping("/cancel/{targetUsername}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<?> cancelSentFriendRequest(@PathVariable String targetUsername) {
+        CustomUserDetailsService.CustomUserPrincipal principal = getCurrentPrincipal();
+        friendshipService.cancelSentFriendRequest(principal.getUser().getUserId(), targetUsername);
+        return ResponseEntity.ok().build();
+    }
+
     @GetMapping("/requests")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<?> listRequests() {

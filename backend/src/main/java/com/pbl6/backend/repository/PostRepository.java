@@ -34,6 +34,9 @@ public interface PostRepository extends JpaRepository<Post, String> {
     
     @Query("SELECT p FROM Post p JOIN p.recipients pr WHERE pr.recipient = :user ORDER BY p.createdAt DESC")
     Page<Post> findPostsForUser(@Param("user") User user, Pageable pageable);
+
+    @Query("SELECT p FROM Post p JOIN p.recipients pr WHERE pr.recipient = :recipient AND p.user = :sender ORDER BY p.createdAt DESC")
+    List<Post> findPostsForRecipientFromSender(@Param("recipient") User recipient, @Param("sender") User sender);
     
     @Query("SELECT COUNT(p) FROM Post p WHERE p.user = :user")
     long countByUser(@Param("user") User user);

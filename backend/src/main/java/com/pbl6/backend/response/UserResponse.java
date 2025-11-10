@@ -8,6 +8,7 @@ public class UserResponse {
     private String username;
     private String fullName;
     private String phoneNumber;
+    private String email;
     private String bio;
     private String profilePictureUrl;
     private String accountStatus;
@@ -17,13 +18,14 @@ public class UserResponse {
     // Constructors
     public UserResponse() {}
     
-    public UserResponse(String userId, String username, String fullName, String phoneNumber, 
-                       String bio, String profilePictureUrl, String accountStatus, 
+    public UserResponse(String userId, String username, String fullName, String phoneNumber,
+                       String email, String bio, String profilePictureUrl, String accountStatus,
                        String subscriptionPlan, LocalDateTime createdAt) {
         this.userId = userId;
         this.username = username;
         this.fullName = fullName;
         this.phoneNumber = phoneNumber;
+        this.email = email;
         this.bio = bio;
         this.profilePictureUrl = profilePictureUrl;
         this.accountStatus = accountStatus;
@@ -62,6 +64,14 @@ public class UserResponse {
     
     public void setPhoneNumber(String phoneNumber) {
         this.phoneNumber = phoneNumber;
+    }
+    
+    public String getEmail() {
+        return email;
+    }
+    
+    public void setEmail(String email) {
+        this.email = email;
     }
     
     public String getBio() {

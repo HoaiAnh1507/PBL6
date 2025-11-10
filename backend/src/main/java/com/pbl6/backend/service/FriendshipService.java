@@ -161,6 +161,37 @@ public class FriendshipService {
     }
 
     /**
+     * Hủy lời mời kết bạn do chính tôi đã gửi (chỉ khi trạng thái PENDING và tôi là người gửi)
+     * @param currentUserId UUID của người dùng hiện tại (người gửi lời mời)
+     * @param targetUsername Username của người nhận lời mời
+     */
+    @Transactional
+    public void cancelSentFriendRequest(String currentUserId, String targetUsername) {
+        // Tìm người dùng hiện tại theo ID
+        User currentUser = userRepository.findById(currentUserId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng hiện tại"));
+
+        // Tìm người nhận lời mời theo username
+        User targetUser = userRepository.findByUsername(targetUsername)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng được mời kết bạn"));
+
+        // Tìm mối quan hệ bạn bè (hai chiều)
+        Friendship friendship = friendshipRepository.findByUsers(currentUser, targetUser)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy lời mời kết bạn để hủy"));
+
+        // Chỉ cho phép hủy khi đang PENDING và currentUser là người gửi (userOne)
+        if (friendship.getStatus() != Friendship.FriendshipStatus.PENDING) {
+            throw new RuntimeException("Chỉ có thể hủy lời mời khi đang ở trạng thái chờ xử lý");
+        }
+        if (!currentUser.getUserId().equals(friendship.getUserOne().getUserId())) {
+            throw new RuntimeException("Chỉ người gửi mới có quyền hủy lời mời này");
+        }
+
+        // Xóa lời mời
+        friendshipRepository.delete(friendship);
+    }
+
+    /**
      * Chặn người dùng
      * @param currentUserId UUID của người dùng hiện tại
      * @param targetUsername Username của người dùng bị chặn
