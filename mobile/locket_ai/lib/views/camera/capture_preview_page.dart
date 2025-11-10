@@ -9,9 +9,12 @@ import 'package:video_player/video_player.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import '../../viewmodels/auth_viewmodel.dart';
+import '../../viewmodels/friendship_viewmodel.dart';
 import '../../core/constants/colors.dart';
 import '../../widgets/gradient_icon.dart';
 import '../../core/config/api_config.dart';
+import '../post/post_recipients_selector.dart';
+import '../../viewmodels/post_recipients_selector_viewmodel.dart';
 
 class CapturePreviewPage extends StatefulWidget {
   final String imagePath;
@@ -82,6 +85,16 @@ bool _aiGenerating = false;
           _videoController!.play();
         });
     }
+    // Sau khi build lần đầu, nếu chưa có danh sách bạn bè, thử tải từ backend (nếu có JWT)
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final authVM = Provider.of<AuthViewModel>(context, listen: false);
+      final friendshipVM = Provider.of<FriendshipViewModel>(context, listen: false);
+      final jwt = authVM.jwtToken ?? _authToken;
+      final current = authVM.currentUser;
+      if (jwt != null && jwt.isNotEmpty && current != null && friendshipVM.acceptedFriends.isEmpty) {
+        await friendshipVM.loadFriendsRemote(jwt: jwt, current: current);
+      }
+    });
   }
 
   @override
@@ -713,7 +726,9 @@ bool _aiGenerating = false;
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size.width;
 
-    return Scaffold(
+    return ChangeNotifierProvider<PostRecipientsSelectorViewModel>(
+      create: (_) => PostRecipientsSelectorViewModel(),
+      child: Scaffold(
       backgroundColor: Colors.black,
       resizeToAvoidBottomInset: false,
       body: MediaQuery.removeViewInsets(
@@ -756,6 +771,13 @@ bool _aiGenerating = false;
               ),
             ],
           ),
+        ),
+
+        Positioned(
+          bottom: 30,
+          left: 0,
+          right: 0,
+          child: const PostRecipientsSelector(height: 110),
         ),
 
         // Ảnh hoặc video preview
@@ -926,9 +948,9 @@ bool _aiGenerating = false;
                                     textInputAction: TextInputAction.done,
                                   ),
                             ),
-                          ),
-                        );
-                      },
+      ),
+    );
+  }
                     ),
                   ),
                 ],
@@ -944,7 +966,11 @@ bool _aiGenerating = false;
           bottom: 180,
           left: 0,
           right: 0,
-          child: Row(
+          child: Builder(builder: (context) {
+            final selectorVM = Provider.of<PostRecipientsSelectorViewModel>(context);
+            final bool hasSelection = selectorVM.allSelected || selectorVM.selectedIds.isNotEmpty;
+            final bool disabled = _aiGenerating || _posting || !hasSelection;
+            return Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
               GestureDetector(
@@ -963,10 +989,10 @@ bool _aiGenerating = false;
                 child: const GradientIcon(icon: Icons.cancel_outlined, size: 30),
               ),
               Opacity(
-                opacity: (_aiGenerating || _posting) ? 0.4 : 1.0,
+                opacity: disabled ? 0.4 : 1.0,
                 child: GestureDetector(
                   onTap: () async {
-                    if (_aiGenerating || _posting) return;
+                    if (disabled) return;
                     setState(() => _posting = true);
                     if (_pendingPostId != null) {
                       // AI flow: đã upload và init trước đó, chỉ cần commit
@@ -1031,7 +1057,8 @@ bool _aiGenerating = false;
                 ),
               ),
             ],
-          ),
+          );
+          }),
         ),
         if (_posting)
           Positioned.fill(
@@ -1053,7 +1080,9 @@ bool _aiGenerating = false;
             ),
           ),
           ],
-        )),
+        )
+      ),
+      )
     );
   }
 }
