@@ -36,7 +36,7 @@ class AuthViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final uri = ApiConfig.endpoint(ApiConfig.loginPath);
+      final uri = ApiConfig.endpoint(ApiConfig.authLoginPath);
       final resp = await http
           .post(
             uri,
@@ -54,7 +54,7 @@ class AuthViewModel extends ChangeNotifier {
         final userJson = data['user'] as Map<String, dynamic>?;
 
         if (token == null || userJson == null) {
-          _errorMessage = 'Phản hồi đăng nhập không hợp lệ từ server.';
+    _errorMessage = 'Invalid login response from server.';
           _isLoading = false;
           notifyListeners();
           return false;
@@ -63,12 +63,19 @@ class AuthViewModel extends ChangeNotifier {
         // Lưu JWT và ánh xạ user
         setJwtToken(token);
         _currentUser = _mapBackendUser(userJson);
+        // Enrich profile with full fields (e.g. email) from /api/users/profile
+        try {
+          final enriched = await userViewModel.fetchOwnProfile(token);
+          if (enriched != null) {
+            _currentUser = enriched;
+          }
+        } catch (_) {}
 
         _isLoading = false;
         notifyListeners();
         return true;
       } else {
-        String message = 'Đăng nhập thất bại: ${resp.statusCode}';
+    String message = 'Login failed: ${resp.statusCode}';
         try {
           final err = jsonDecode(resp.body);
           if (err is Map && err['message'] is String) {
@@ -91,10 +98,229 @@ class AuthViewModel extends ChangeNotifier {
     }
   }
 
-  // ✅ Đăng xuất
-  void logout() {
+  // ✅ Đăng xuất: gọi backend để blacklist token, rồi xóa trạng thái local
+  Future<void> logout() async {
+    try {
+      final uri = ApiConfig.endpoint(ApiConfig.authLogoutPath);
+      await http.post(
+        uri,
+        headers: ApiConfig.jsonHeaders(jwt: _jwtToken),
+      ).timeout(const Duration(seconds: 8));
+    } catch (_) {
+      // Bỏ qua lỗi, vẫn xóa local
+    }
     _currentUser = null;
+    _jwtToken = null;
     notifyListeners();
+  }
+
+  // ✅ Đăng ký tài khoản mới
+  Future<bool> register({
+    required String username,
+    required String password,
+    required String fullName,
+    required String phoneNumber,
+    required String email,
+  }) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final uri = ApiConfig.endpoint(ApiConfig.authRegisterPath);
+      final resp = await http
+          .post(
+            uri,
+            headers: ApiConfig.jsonHeaders(),
+            body: jsonEncode({
+              'username': username,
+              'password': password,
+              'fullName': fullName,
+              'phoneNumber': phoneNumber,
+              'email': email,
+            }),
+          )
+          .timeout(const Duration(seconds: 12));
+
+      if (resp.statusCode == 200) {
+        final data = jsonDecode(resp.body) as Map<String, dynamic>;
+        final token = data['token'] as String?;
+        final userJson = data['user'] as Map<String, dynamic>?;
+
+        if (token == null || userJson == null) {
+    _errorMessage = 'Invalid registration response from server.';
+          _isLoading = false;
+          notifyListeners();
+          return false;
+        }
+
+        setJwtToken(token);
+        _currentUser = _mapBackendUser(userJson);
+        userViewModel.setCurrentUser(_currentUser!);
+        // Enrich profile with full fields from /api/users/profile
+        try {
+          final enriched = await userViewModel.fetchOwnProfile(token);
+          if (enriched != null) {
+            _currentUser = enriched;
+          }
+        } catch (_) {}
+
+        _isLoading = false;
+        notifyListeners();
+        return true;
+      } else {
+    String message = 'Registration failed: ${resp.statusCode}';
+        try {
+          final err = jsonDecode(resp.body);
+          if (err is Map && err['error'] is String) message = err['error'];
+          if (err is Map && err['message'] is String) message = err['message'];
+        } catch (_) {}
+        _errorMessage = message;
+        _isLoading = false;
+        notifyListeners();
+        return false;
+      }
+    } catch (e) {
+      _errorMessage = 'Lỗi kết nối: $e';
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  // ✅ Lấy thông tin user hiện tại từ backend (/api/auth/me)
+  Future<bool> fetchMe() async {
+    if (_jwtToken == null || _jwtToken!.isEmpty) {
+    _errorMessage = 'JWT token missing';
+      notifyListeners();
+      return false;
+    }
+    _isLoading = true;
+    notifyListeners();
+    try {
+      final uri = ApiConfig.endpoint(ApiConfig.authMePath);
+      final resp = await http
+          .get(
+            uri,
+            headers: ApiConfig.jsonHeaders(jwt: _jwtToken),
+          )
+          .timeout(const Duration(seconds: 8));
+      if (resp.statusCode == 200) {
+        final data = jsonDecode(resp.body) as Map<String, dynamic>;
+        _currentUser = _mapBackendUser(data);
+        userViewModel.setCurrentUser(_currentUser!);
+        // Enrich profile from /api/users/profile to include fields missing in /api/auth/me
+        try {
+          final enriched = await userViewModel.fetchOwnProfile(_jwtToken!);
+          if (enriched != null) {
+            _currentUser = enriched;
+          }
+        } catch (_) {}
+        _isLoading = false;
+        notifyListeners();
+        return true;
+      } else {
+    _errorMessage = 'Failed to fetch user info (${resp.statusCode})';
+        _isLoading = false;
+        notifyListeners();
+        return false;
+      }
+    } catch (e) {
+      _errorMessage = 'Lỗi kết nối: $e';
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  // ✅ Quên mật khẩu
+  Future<bool> forgotPassword(String emailOrPhone) async {
+    _errorMessage = null;
+    try {
+      final uri = ApiConfig.endpoint(ApiConfig.authForgotPasswordPath);
+      final resp = await http.post(
+        uri,
+        headers: ApiConfig.jsonHeaders(),
+        body: jsonEncode({'email_or_phonenumber': emailOrPhone}),
+      );
+      if (resp.statusCode == 200) {
+        return true;
+      }
+      try {
+        final err = jsonDecode(resp.body);
+        if (err is Map && err['error'] is String) _errorMessage = err['error'];
+      } catch (_) {}
+      return false;
+    } catch (e) {
+      _errorMessage = 'Lỗi kết nối: $e';
+      return false;
+    }
+  }
+
+  // ✅ Đặt lại mật khẩu (yêu cầu JWT)
+  Future<bool> resetPassword(String username, String newPassword) async {
+    if (_jwtToken == null || _jwtToken!.isEmpty) {
+    _errorMessage = 'Not logged in';
+      return false;
+    }
+    try {
+      final uri = ApiConfig.endpoint(ApiConfig.authResetPasswordPath);
+      final resp = await http.post(
+        uri,
+        headers: ApiConfig.jsonHeaders(jwt: _jwtToken),
+        body: jsonEncode({'username': username, 'password': newPassword}),
+      );
+      return resp.statusCode == 200;
+    } catch (e) {
+      _errorMessage = 'Lỗi kết nối: $e';
+      return false;
+    }
+  }
+
+  // ✅ Xác thực OTP
+  Future<bool> verifyOtp({required String email, required String code}) async {
+    try {
+      final uri = ApiConfig.endpoint(ApiConfig.authVerifyOtpPath);
+      final resp = await http.post(
+        uri,
+        headers: ApiConfig.jsonHeaders(),
+        body: jsonEncode({'email': email, 'code': code}),
+      );
+      return resp.statusCode == 200;
+    } catch (e) {
+      _errorMessage = 'Lỗi kết nối: $e';
+      return false;
+    }
+  }
+
+  // ✅ Kiểm tra tính khả dụng của email
+  Future<bool> checkEmailAvailability(String email) async {
+    try {
+      final uri = ApiConfig.endpoint('${ApiConfig.authCheckEmailPath}?email=$email');
+      final resp = await http.get(uri, headers: ApiConfig.jsonHeaders());
+      if (resp.statusCode == 200) {
+        final data = jsonDecode(resp.body) as Map<String, dynamic>;
+        return (data['available'] == true);
+      }
+      return false;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  // ✅ Kiểm tra tính khả dụng của số điện thoại
+  Future<bool> checkPhoneAvailability(String phoneNumber) async {
+    try {
+      final uri = ApiConfig.endpoint('${ApiConfig.authCheckPhonePath}?phoneNumber=$phoneNumber');
+      final resp = await http.get(uri, headers: ApiConfig.jsonHeaders());
+      if (resp.statusCode == 200) {
+        final data = jsonDecode(resp.body) as Map<String, dynamic>;
+        return (data['available'] == true);
+      }
+      return false;
+    } catch (_) {
+      return false;
+    }
   }
 
   // ------ Helpers ------

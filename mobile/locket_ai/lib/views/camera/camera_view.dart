@@ -5,7 +5,11 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../viewmodels/feed_viewmodel.dart';
 import '../../viewmodels/auth_viewmodel.dart';
+import '../../viewmodels/friendship_viewmodel.dart';
+import '../../viewmodels/user_viewmodel.dart';
 import '../../models/post_model.dart';
+import '../../models/friendship_model.dart';
+import '../../models/user_model.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:locket_ai/views/camera/capture_preview_page.dart';
 import 'package:locket_ai/widgets/base_header.dart';
@@ -96,12 +100,12 @@ class _CameraViewState extends State<CameraView>
             const SizedBox(height: 20),
             ListTile(
               leading: const Icon(Icons.photo, color: Colors.white),
-              title: const Text("Chọn ảnh", style: TextStyle(color: Colors.white)),
+            title: const Text("Choose photo", style: TextStyle(color: Colors.white)),
               onTap: () => Navigator.pop(context, "image"),
             ),
             ListTile(
-              leading: const Icon(Icons.video_library, color: Colors.white),
-              title: const Text("Chọn video", style: TextStyle(color: Colors.white)),
+            leading: const Icon(Icons.video_library, color: Colors.white),
+            title: const Text("Choose video", style: TextStyle(color: Colors.white)),
               onTap: () => Navigator.pop(context, "video"),
             ),
           ],
@@ -189,8 +193,8 @@ class _CameraViewState extends State<CameraView>
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(isV
-                    ? 'Đăng video thành công (demo)'
-                    : 'Đăng ảnh thành công (demo)'),
+            ? 'Video posted (demo)'
+            : 'Photo posted (demo)'),
               ),
             );
           },
@@ -254,45 +258,55 @@ class _CameraViewState extends State<CameraView>
   Widget _buildHeader() {
     return BaseHeader(
       horizontalController: widget.horizontalController,
-      count: 5,
-      label: 'Friends',
+      count: _acceptedFriendsCount(),
+      label: 'Your friends',
       onTap: _showFriendsSheet
     );
   }
 
-  void _showFriendsSheet() {
+  int _acceptedFriendsCount() {
+    final authVM = Provider.of<AuthViewModel>(context, listen: false);
+    // Lắng nghe thay đổi để header cập nhật số bạn bè ngay khi state đổi
+    final friendshipVM = Provider.of<FriendshipViewModel>(context);
+    final current = authVM.currentUser;
+    if (current == null) return 0;
+    final friends = friendshipVM.friendships.where((f) =>
+      f.status == FriendshipStatus.accepted &&
+      (f.userOne?.userId == current.userId || f.userTwo?.userId == current.userId)
+    ).map((f) => f.userOne?.userId == current.userId ? f.userTwo : f.userOne).whereType<User>();
+    return friends.length;
+  }
+
+  Future<void> _showFriendsSheet() async {
+    final authVM = Provider.of<AuthViewModel>(context, listen: false);
+    final userVM = Provider.of<UserViewModel>(context, listen: false);
+    final friendshipVM = Provider.of<FriendshipViewModel>(context, listen: false);
+    final current = authVM.currentUser;
+    final jwt = authVM.jwtToken;
+
+    if (current == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('You are not logged in.')),
+      );
+      return;
+    }
+
+    // Đồng bộ bạn bè đã chấp nhận và danh sách pending từ backend trước khi hiển thị
+    if (jwt != null && jwt.isNotEmpty) {
+      await friendshipVM.loadFriendsRemote(jwt: jwt, current: current);
+      await friendshipVM.loadRequestsRemote(jwt: jwt, currentUserId: current.userId);
+    }
+
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.black.withOpacity(0.8),
+      isScrollControlled: true,
+      backgroundColor: Colors.black.withOpacity(0.85),
       shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(30))),
-      builder: (_) => Container(
-        padding: const EdgeInsets.all(20),
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          Container(
-              height: 5,
-              width: 40,
-              decoration: BoxDecoration(
-                  color: Colors.white24,
-                  borderRadius: BorderRadius.circular(10))),
-          const SizedBox(height: 16),
-          Text('Your friends',
-              style: GoogleFonts.poppins(
-                  fontSize: 18,
-                  color: Colors.white,
-                  fontWeight: FontWeight.w600)),
-          const SizedBox(height: 12),
-          ...List.generate(
-            5,
-            (i) => ListTile(
-              leading: const CircleAvatar(
-                  backgroundColor: Color(0xFFEAEAEA),
-                  child: Icon(Icons.person, color: Colors.white)),
-              title: Text('Friend ${i + 1}',
-                  style: const TextStyle(color: Colors.white)),
-            ),
-          ),
-        ]),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+      ),
+      builder: (_) => const FractionallySizedBox(
+        heightFactor: 0.95,
+        child: _FriendsSheet(),
       ),
     );
   }
@@ -420,6 +434,379 @@ class _CameraViewState extends State<CameraView>
                   decoration: TextDecoration.none)),
           const GradientIcon(icon: Icons.expand_more),
         ],
+      ),
+    );
+  }
+}
+
+// Persistent stateful sheet to keep search result when keyboard hides
+class _FriendsSheet extends StatefulWidget {
+  const _FriendsSheet();
+
+  @override
+  State<_FriendsSheet> createState() => _FriendsSheetState();
+}
+
+class _FriendsSheetState extends State<_FriendsSheet> {
+  User? _searchResult;
+  Friendship? _pendingSent;
+  String _query = '';
+  late final TextEditingController _searchController;
+  late final FocusNode _searchFocus;
+  // Guards to prevent duplicate API requests due to rapid taps
+  bool _sendingRequest = false; // for search result Add/Cancel
+  final Set<String> _busyFriendshipIds = {}; // for accept/reject/unfriend
+
+  void _safeShowSnack(BuildContext ctx, String message) {
+    final messenger = ScaffoldMessenger.maybeOf(ctx);
+    if (messenger != null && mounted) {
+      messenger.showSnackBar(SnackBar(content: Text(message)));
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _searchController = TextEditingController();
+    _searchFocus = FocusNode();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    _searchFocus.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final authVM = Provider.of<AuthViewModel>(context);
+    final userVM = Provider.of<UserViewModel>(context);
+    final friendshipVM = Provider.of<FriendshipViewModel>(context);
+    final current = authVM.currentUser!;
+    final jwt = authVM.jwtToken;
+
+    final acceptedFriends = friendshipVM.friendships.where((f) =>
+      f.status == FriendshipStatus.accepted &&
+      (f.userOne?.userId == current.userId || f.userTwo?.userId == current.userId)
+    ).toList();
+    final acceptedUsers = acceptedFriends.map((f) => f.userOne?.userId == current.userId ? f.userTwo! : f.userOne!).toList();
+
+    Future<void> _doSearch(String q) async {
+      _query = q.trim();
+      if (_query.isEmpty) {
+        setState(() {
+          _searchResult = null;
+          _pendingSent = null;
+        });
+        return;
+      }
+      if (jwt == null || jwt.isEmpty) {
+    _safeShowSnack(context, 'Missing JWT. Please log in to find new friends.');
+        return;
+      }
+      final results = await userVM.searchUsers(jwt: jwt, query: _query);
+      final exact = results.where((u) => u.username == _query).toList();
+      if (exact.isEmpty) {
+        setState(() {
+          _searchResult = null;
+          _pendingSent = null;
+        });
+      } else {
+        final candidate = exact.first;
+        final isSelf = candidate.userId == current.userId || candidate.username == current.username;
+        final alreadyFriend = acceptedUsers.any((u) => u.userId == candidate.userId);
+        if (isSelf || alreadyFriend) {
+          setState(() {
+            _searchResult = null;
+            _pendingSent = null;
+          });
+        } else {
+          final pending = friendshipVM.friendships.firstWhere(
+            (f) => f.status == FriendshipStatus.pending && f.userOne?.userId == current.userId && f.userTwo?.userId == candidate.userId,
+            orElse: () => Friendship(friendshipId: '', userOne: null, userTwo: null, status: FriendshipStatus.pending, createdAt: DateTime.now()),
+          );
+          setState(() {
+            _searchResult = candidate;
+            _pendingSent = pending.friendshipId.isEmpty ? null : pending;
+          });
+        }
+      }
+    }
+
+    final incomingRequests = friendshipVM.friendships.where((f) =>
+      f.status == FriendshipStatus.pending && f.userTwo?.userId == current.userId
+    ).toList();
+
+    return Padding(
+      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      child: SingleChildScrollView(
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  height: 5,
+                  width: 40,
+                  decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(10)),
+                ),
+              ),
+              const SizedBox(height: 14),
+              Center(
+                child: Text(
+                  'Your friends',
+                  style: GoogleFonts.poppins(fontSize: 22, color: Colors.white, fontWeight: FontWeight.w600),
+                ),
+              ),
+              const SizedBox(height: 6),
+              Center(
+                child: Text(
+                  acceptedUsers.isNotEmpty
+                      ? 'There are ${acceptedUsers.length} beside you'
+                      : 'You are alone :(',
+                  style: GoogleFonts.poppins(color: Colors.white70, fontSize: 14, fontWeight: FontWeight.w400),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white10,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: Colors.white24),
+                ),
+                child: Row(
+                  children: [
+                    const SizedBox(width: 10),
+                    const Icon(Icons.search, color: Colors.white70),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: TextField(
+                        controller: _searchController,
+                        focusNode: _searchFocus,
+                        style: GoogleFonts.poppins(color: Colors.white, fontSize: 15),
+                        decoration: InputDecoration(
+                          hintText: 'Add a new friend',
+                          hintStyle: GoogleFonts.poppins(color: Colors.white60, fontSize: 15),
+                          border: InputBorder.none,
+                        ),
+                        textInputAction: TextInputAction.search,
+                        onChanged: _doSearch,
+                        onSubmitted: _doSearch,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+
+              if (_searchResult != null)
+                ListTile(
+                  leading: Container(
+                    padding: const EdgeInsets.all(1.2),
+                    decoration: const BoxDecoration(gradient: instagramGradient, shape: BoxShape.circle),
+                    child: CircleAvatar(
+                      radius: 24,
+                      backgroundColor: Colors.grey[800],
+                      backgroundImage: (_searchResult!.profilePictureUrl != null && _searchResult!.profilePictureUrl!.isNotEmpty)
+                          ? NetworkImage(_searchResult!.profilePictureUrl!)
+                          : null,
+                    ),
+                  ),
+                  title: Text(_searchResult!.fullName, style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w600)),
+                  subtitle: Text('@${_searchResult!.username}', style: GoogleFonts.poppins(color: Colors.white70)),
+                  trailing: GestureDetector(
+                    onTap: () async {
+                      if (_sendingRequest) return; // prevent duplicate taps
+                      if (jwt == null || jwt.isEmpty) {
+    _safeShowSnack(context, 'Missing JWT. Please log in again.');
+                        return;
+                      }
+                      setState(() => _sendingRequest = true);
+                      try {
+                        if (_pendingSent != null) {
+                          final ok = await friendshipVM.cancelSentRequestRemote(jwt: jwt, from: current, to: _searchResult!);
+                          if (!ok) {
+    _safeShowSnack(context, 'Backend does not support canceling sent requests yet');
+                          }
+                          setState(() => _pendingSent = null);
+                        } else {
+                          final ok = await friendshipVM.sendFriendRequestRemote(jwt: jwt, from: current, to: _searchResult!);
+                          if (!ok) {
+    _safeShowSnack(context, 'Failed to send friend request.');
+                          }
+                          final last = friendshipVM.friendships.lastWhere(
+                            (f) => f.status == FriendshipStatus.pending && f.userOne?.userId == current.userId && f.userTwo?.userId == _searchResult!.userId,
+                            orElse: () => Friendship(friendshipId: '', userOne: null, userTwo: null, status: FriendshipStatus.pending, createdAt: DateTime.now()),
+                          );
+                          setState(() => _pendingSent = last.friendshipId.isEmpty ? null : last);
+                        }
+                      } finally {
+                        if (mounted) setState(() => _sendingRequest = false);
+                      }
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: Colors.white12,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.white24),
+                      ),
+                      child: Text(
+                        _sendingRequest
+                            ? (_pendingSent != null ? 'Cancelling...' : 'Sending...')
+                            : (_pendingSent != null ? 'Sent' : 'Add'),
+                        style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                  ),
+                ),
+
+              const SizedBox(height: 8),
+              if (incomingRequests.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8.0),
+                  child: Text('Incoming requests', style: GoogleFonts.poppins(color: Colors.white70, fontSize: 13)),
+                ),
+              ...incomingRequests.map((f) {
+                final fromUser = f.userOne!;
+                return ListTile(
+                  leading: Container(
+                    padding: const EdgeInsets.all(1.2),
+                    decoration: const BoxDecoration(gradient: instagramGradient, shape: BoxShape.circle),
+                    child: CircleAvatar(
+                      radius: 24,
+                      backgroundColor: Colors.grey[800],
+                      backgroundImage: (fromUser.profilePictureUrl != null && fromUser.profilePictureUrl!.isNotEmpty)
+                          ? NetworkImage(fromUser.profilePictureUrl!)
+                          : null,
+                    ),
+                  ),
+                  title: Text(fromUser.fullName, style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w600)),
+                  subtitle: Text('@${fromUser.username}', style: GoogleFonts.poppins(color: Colors.white70)),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      GestureDetector(
+                        onTap: () async {
+                          if (_busyFriendshipIds.contains(f.friendshipId)) return; // prevent duplicate accepts
+                          if (jwt == null || jwt.isEmpty) {
+    _safeShowSnack(context, 'Missing JWT. Please log in again.');
+                            return;
+                          }
+                          // Optimistic: move to accepted immediately
+                          _busyFriendshipIds.add(f.friendshipId);
+                          try {
+                            friendshipVM.updateFriendshipStatus(f.friendshipId, FriendshipStatus.accepted);
+                            final ok = await friendshipVM.acceptFriendRequestRemote(jwt: jwt, pending: f, current: current);
+                            if (!ok) {
+                              // Revert to pending on failure
+                              friendshipVM.updateFriendshipStatus(f.friendshipId, FriendshipStatus.pending);
+    _safeShowSnack(context, 'Failed to accept friend request.');
+                            }
+                          } finally {
+                            _busyFriendshipIds.remove(f.friendshipId);
+                          }
+                        },
+                      child: Container(
+                        width: 34,
+                        height: 34,
+                          decoration: BoxDecoration(
+                            color: Colors.white12,
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.greenAccent, width: 1.5),
+                          ),
+                          child: const Icon(Icons.check, color: Colors.greenAccent, size: 20),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      GestureDetector(
+                        onTap: () async {
+                          if (_busyFriendshipIds.contains(f.friendshipId)) return; // prevent duplicate rejects
+                          if (jwt == null || jwt.isEmpty) {
+    _safeShowSnack(context, 'Missing JWT. Please log in again.');
+                            return;
+                          }
+                          // Optimistic: remove from incoming immediately
+                          _busyFriendshipIds.add(f.friendshipId);
+                          try {
+                            friendshipVM.removeFriendship(f.friendshipId);
+                            final ok = await friendshipVM.rejectFriendRequestRemote(jwt: jwt, pending: f, current: current);
+                            if (!ok) {
+    _safeShowSnack(context, 'Failed to reject request. Resync...');
+                              // Resync from backend to restore correct state
+                              await friendshipVM.loadRequestsRemote(jwt: jwt, currentUserId: current.userId);
+                            }
+                          } finally {
+                            _busyFriendshipIds.remove(f.friendshipId);
+                          }
+                        },
+                      child: Container(
+                        width: 34,
+                        height: 34,
+                          decoration: BoxDecoration(
+                            color: Colors.white12,
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.pinkAccent, width: 1.5),
+                          ),
+                          child: const Icon(Icons.close, color: Colors.pinkAccent, size: 20),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }).toList(),
+
+              const SizedBox(height: 6),
+              if (acceptedUsers.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8.0),
+                  child: Text('Friends', style: GoogleFonts.poppins(color: Colors.white70, fontSize: 13)),
+                ),
+              ...acceptedFriends.map((f) {
+                final friend = f.userOne?.userId == current.userId ? f.userTwo! : f.userOne!;
+                return ListTile(
+                  leading: Container(
+                    padding: const EdgeInsets.all(1.2),
+                    decoration: const BoxDecoration(gradient: instagramGradient, shape: BoxShape.circle),
+                    child: CircleAvatar(
+                      radius: 24,
+                      backgroundColor: Colors.grey[800],
+                      backgroundImage: (friend.profilePictureUrl != null && friend.profilePictureUrl!.isNotEmpty)
+                          ? NetworkImage(friend.profilePictureUrl!)
+                          : null,
+                    ),
+                  ),
+                  title: Text(friend.fullName, style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w600)),
+                  subtitle: Text('@${friend.username}', style: GoogleFonts.poppins(color: Colors.white70)),
+                  trailing: GestureDetector(
+                    onTap: () async {
+                      if (_busyFriendshipIds.contains(f.friendshipId)) return; // prevent duplicate unfriend
+                      if (jwt == null || jwt.isEmpty) {
+    _safeShowSnack(context, 'Missing JWT. Please log in again.');
+                        return;
+                      }
+                      _busyFriendshipIds.add(f.friendshipId);
+                      try {
+                        final ok = await friendshipVM.unfriendRemote(jwt: jwt, current: current, target: friend);
+                        if (!ok) {
+    _safeShowSnack(context, 'Failed to unfriend.');
+                        }
+                        setState(() {});
+                      } finally {
+                        _busyFriendshipIds.remove(f.friendshipId);
+                      }
+                    },
+                    child: const Icon(Icons.close, color: Colors.white70),
+                  ),
+                );
+              }).toList(),
+              const SizedBox(height: 20),
+            ],
+          ),
+        ),
       ),
     );
   }

@@ -6,6 +6,9 @@ import '../models/conversation_model.dart';
 import '../models/post_model.dart';
 import 'user_viewmodel.dart';
 import 'friendship_viewmodel.dart';
+import '../services/conversations_api.dart';
+import '../services/messages_api.dart';
+import '../core/config/api_config.dart';
 
 class ChatViewModel extends ChangeNotifier {
   late UserViewModel userViewModel;
@@ -36,6 +39,106 @@ class ChatViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Tải hội thoại từ backend nếu có JWT, fallback mock nếu không
+  Future<void> loadRemoteConversations({
+    required String jwt,
+    required String currentUserId,
+  }) async {
+    try {
+      final api = ConversationsApi(jwt);
+      final rawList = await api.listConversations();
+      _conversations.clear();
+
+      User makeUserFromPublic(Map<String, dynamic> m) {
+        final now = DateTime.now();
+        DateTime createdAt;
+        try {
+          createdAt = DateTime.parse((m['createdAt'] ?? '').toString());
+        } catch (_) {
+          createdAt = now;
+        }
+        return User(
+          userId: (m['userId'] ?? '').toString(),
+          username: (m['username'] ?? '').toString(),
+          fullName: (m['fullName'] ?? '').toString(),
+          phoneNumber: (m['phoneNumber'] ?? '').toString(),
+          email: (m['email'] ?? '').toString(),
+          profilePictureUrl: (m['profilePictureUrl'] ?? '').toString().isNotEmpty
+              ? (m['profilePictureUrl'] as String?)
+              : null,
+          passwordHash: '',
+          subscriptionStatus: SubscriptionStatus.FREE,
+          subscriptionExpiresAt: null,
+          accountStatus: AccountStatus.ACTIVE,
+          createdAt: createdAt,
+          updatedAt: createdAt,
+        );
+      }
+
+      Message parseMessage(Map<String, dynamic> m, Conversation conv) {
+        DateTime sentAt;
+        try {
+          sentAt = DateTime.parse((m['sentAt'] ?? '').toString());
+        } catch (_) {
+          sentAt = DateTime.now();
+        }
+        final senderMap = (m['sender'] ?? {}) as Map<String, dynamic>;
+        final sender = makeUserFromPublic(senderMap);
+        return Message(
+          messageId: (m['messageId'] ?? '').toString(),
+          conversation: conv,
+          sender: sender,
+          content: (m['content'] ?? '').toString(),
+          repliedToPost: null,
+          sentAt: sentAt,
+        );
+      }
+
+      for (final item in rawList) {
+        final j = item as Map<String, dynamic>;
+        final convId = (j['conversationId'] ?? '').toString();
+        DateTime createdAt;
+        DateTime? lastMessageAt;
+        try {
+          createdAt = DateTime.parse((j['createdAt'] ?? '').toString());
+        } catch (_) {
+          createdAt = DateTime.now();
+        }
+        try {
+          final lm = (j['lastMessageAt'] ?? '').toString();
+          lastMessageAt = lm.isNotEmpty ? DateTime.parse(lm) : null;
+        } catch (_) {
+          lastMessageAt = null;
+        }
+
+        final u1 = makeUserFromPublic((j['userOne'] ?? {}) as Map<String, dynamic>);
+        final u2 = makeUserFromPublic((j['userTwo'] ?? {}) as Map<String, dynamic>);
+
+        final conv = Conversation(
+          conversationId: convId,
+          userOne: u1,
+          userTwo: u2,
+          lastMessageAt: lastMessageAt,
+          createdAt: createdAt,
+          messages: [],
+        );
+
+        final msgsRaw = (j['messages'] ?? []) as List<dynamic>;
+        for (final m in msgsRaw) {
+          try {
+            conv.messages!.add(parseMessage(m as Map<String, dynamic>, conv));
+          } catch (_) {}
+        }
+
+        _conversations[conv.conversationId] = conv;
+      }
+
+      notifyListeners();
+    } catch (e) {
+      debugPrint('loadRemoteConversations error: $e');
+    }
+  }
+
   // ------------------- 💬 FRIENDSHIP LOGIC --------------------
 
   List<User> getAcceptedFriends(String currentUserId) {
@@ -53,14 +156,24 @@ class ChatViewModel extends ChangeNotifier {
 
   // ------------------- 💬 CHAT LOGIC --------------------
 
+  // Tìm user an toàn: ưu tiên UserViewModel, fallback sang danh sách bạn bè đã accepted
+  User? _findUserById(String userId) {
+    final u = userViewModel.getUserById(userId);
+    if (u != null) return u;
+    final list = friendshipViewModel.acceptedFriends;
+    final idx = list.indexWhere((x) => x.userId == userId);
+    if (idx != -1) return list[idx];
+    return null;
+  }
+
   Conversation _createConversation(String currentUserId, String friendId) {
-    final currentUser = userViewModel.getUserById(currentUserId);
-    final friend = userViewModel.getUserById(friendId);
+    final currentUser = _findUserById(currentUserId) ?? userViewModel.currentUser;
+    final friend = _findUserById(friendId);
 
     if (currentUser == null || friend == null) {
       debugPrint(
-          "⚠️ Không thể tạo conversation vì user không tồn tại: $currentUserId, $friendId");
-      throw Exception("User không tồn tại trong hệ thống");
+    "⚠️ Cannot create conversation because user does not exist: $currentUserId, $friendId");
+    throw Exception("User does not exist in the system");
     }
 
     final newConv = Conversation(
@@ -97,7 +210,7 @@ class ChatViewModel extends ChangeNotifier {
       orElse: () => _createConversation(currentUserId, friendId),
     );
 
-    final sender = userViewModel.getUserById(currentUserId);
+    final sender = _findUserById(currentUserId);
     if (sender == null) return;
 
     final msg = Message(
@@ -110,6 +223,151 @@ class ChatViewModel extends ChangeNotifier {
 
     conv.messages?.add(msg);
     notifyListeners();
+  }
+
+  /// Gửi tin nhắn qua backend nếu có hội thoại từ server
+  Future<bool> sendMessageRemote({
+    required String jwt,
+    required String currentUserId,
+    required String friendId,
+    required String content,
+  }) async {
+    try {
+      final conv = _conversations.values.firstWhere(
+        (c) =>
+            (c.userOne.userId == currentUserId && c.userTwo.userId == friendId) ||
+            (c.userTwo.userId == currentUserId && c.userOne.userId == friendId),
+      );
+      final api = MessagesApi(jwt);
+      final resp = await api.sendMessage(
+        conversationId: conv.conversationId,
+        content: content,
+      );
+      if (resp == null) return false;
+
+      // Map response to Message and append
+      DateTime sentAt;
+      try {
+        sentAt = DateTime.parse((resp['sentAt'] ?? '').toString());
+      } catch (_) {
+        sentAt = DateTime.now();
+      }
+      final senderMap = (resp['sender'] ?? {}) as Map<String, dynamic>;
+      final sender = User(
+        userId: (senderMap['userId'] ?? '').toString(),
+        username: (senderMap['username'] ?? '').toString(),
+        fullName: (senderMap['fullName'] ?? '').toString(),
+        phoneNumber: (senderMap['phoneNumber'] ?? '').toString(),
+        email: (senderMap['email'] ?? '').toString(),
+        profilePictureUrl: (senderMap['profilePictureUrl'] ?? '').toString().isNotEmpty
+            ? (senderMap['profilePictureUrl'] as String?)
+            : null,
+        passwordHash: '',
+        subscriptionStatus: SubscriptionStatus.FREE,
+        subscriptionExpiresAt: null,
+        accountStatus: AccountStatus.ACTIVE,
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      );
+
+      final msg = Message(
+        messageId: (resp['messageId'] ?? '').toString(),
+        conversation: conv,
+        sender: sender,
+        content: (resp['content'] ?? '').toString(),
+        repliedToPost: null,
+        sentAt: sentAt,
+      );
+
+      conv.messages?.add(msg);
+      notifyListeners();
+      return true;
+    } catch (e) {
+      debugPrint('sendMessageRemote error: $e');
+      return false;
+    }
+  }
+
+  /// Nạp danh sách message từ backend cho cặp (currentUserId, friendId)
+  Future<void> loadRemoteMessagesForPair({
+    required String jwt,
+    required String currentUserId,
+    required String friendId,
+  }) async {
+    try {
+      var conv = _conversations.values.firstWhere(
+        (c) =>
+            (c.userOne.userId == currentUserId && c.userTwo.userId == friendId) ||
+            (c.userTwo.userId == currentUserId && c.userOne.userId == friendId),
+      );
+      final api = ConversationsApi(jwt);
+      final j = await api.getConversationById(conv.conversationId);
+      if (j == null) return;
+
+      DateTime? lastMessageAt;
+      try {
+        final lm = (j['lastMessageAt'] ?? '').toString();
+        lastMessageAt = lm.isNotEmpty ? DateTime.parse(lm) : null;
+      } catch (_) {
+        lastMessageAt = null;
+      }
+      // messages là field final → không thể gán trực tiếp.
+      // Tạo bản sao conversation với danh sách messages rỗng và cập nhật vào map.
+      conv = conv.copyWith(messages: []);
+      _conversations[conv.conversationId] = conv;
+
+      List<dynamic> msgsRaw = [];
+      try {
+        msgsRaw = (j['messages'] ?? []) as List<dynamic>;
+      } catch (_) {}
+      for (final m in msgsRaw) {
+        try {
+          final mm = m as Map<String, dynamic>;
+          DateTime sentAt;
+          try {
+            sentAt = DateTime.parse((mm['sentAt'] ?? '').toString());
+          } catch (_) {
+            sentAt = DateTime.now();
+          }
+          final senderMap = (mm['sender'] ?? {}) as Map<String, dynamic>;
+          final sender = User(
+            userId: (senderMap['userId'] ?? '').toString(),
+            username: (senderMap['username'] ?? '').toString(),
+            fullName: (senderMap['fullName'] ?? '').toString(),
+            phoneNumber: (senderMap['phoneNumber'] ?? '').toString(),
+            email: (senderMap['email'] ?? '').toString(),
+            profilePictureUrl: (senderMap['profilePictureUrl'] ?? '').toString().isNotEmpty
+                ? (senderMap['profilePictureUrl'] as String?)
+                : null,
+            passwordHash: '',
+            subscriptionStatus: SubscriptionStatus.FREE,
+            subscriptionExpiresAt: null,
+            accountStatus: AccountStatus.ACTIVE,
+            createdAt: DateTime.now(),
+            updatedAt: DateTime.now(),
+          );
+          conv.messages!.add(
+            Message(
+              messageId: (mm['messageId'] ?? '').toString(),
+              conversation: conv,
+              sender: sender,
+              content: (mm['content'] ?? '').toString(),
+              repliedToPost: null,
+              sentAt: sentAt,
+            ),
+          );
+        } catch (_) {}
+      }
+      // Cập nhật lastMessageAt nếu có
+      if (lastMessageAt != null) {
+        _conversations[conv.conversationId] = conv.copyWith(
+          lastMessageAt: lastMessageAt,
+        );
+      }
+      notifyListeners();
+    } catch (e) {
+      debugPrint('loadRemoteMessagesForPair error: $e');
+    }
   }
 
   /// Gửi tin nhắn kèm post được reply (dùng khi gửi từ FeedView)
@@ -176,7 +434,7 @@ class ChatViewModel extends ChangeNotifier {
             messageId: 'm1_${conv.conversationId}',
             conversation: conv,
             sender: friend,
-            content: "Đi đá bóng cuối tuần không?",
+      content: "Wanna play soccer this weekend?",
             sentAt: now.subtract(const Duration(hours: 5)),
           ),
           Message(
@@ -208,21 +466,21 @@ class ChatViewModel extends ChangeNotifier {
             messageId: 'm1_${conv.conversationId}',
             conversation: conv,
             sender: friend,
-            content: "Game mới ra chưa? Có đáng chơi không?",
+      content: "Is the new game out? Worth playing?",
             sentAt: now.subtract(const Duration(days: 1, hours: 2)),
           ),
           Message(
             messageId: 'm2_${conv.conversationId}',
             conversation: conv,
             sender: user,
-            content: "Ra rồi, story khá hay. Tối rảnh không?",
+      content: "Yes, story is good. Free tonight?",
             sentAt: now.subtract(const Duration(days: 1, hours: 1, minutes: 20)),
           ),
           Message(
             messageId: 'm3_${conv.conversationId}',
             conversation: conv,
             sender: friend,
-            content: "Rảnh, làm vài màn co-op nhé!",
+      content: "Free, let's do some co-op levels!",
             sentAt: now.subtract(const Duration(days: 1, hours: 1)),
           ),
         ];
@@ -241,7 +499,7 @@ class ChatViewModel extends ChangeNotifier {
             messageId: 'm2_${conv.conversationId}',
             conversation: conv,
             sender: user,
-            content: "Đẹp thiệt, có đi Bà Nà Hills không?",
+      content: "Looks great, shall we visit Ba Na Hills?",
             sentAt: now.subtract(const Duration(days: 9, hours: 22)),
           ),
           Message(
@@ -255,7 +513,7 @@ class ChatViewModel extends ChangeNotifier {
             messageId: 'm4_${conv.conversationId}',
             conversation: conv,
             sender: friend,
-            content: "Xem không, để tí nữa gửi thêm ảnh cho mà coi.",
+      content: "Wanna see? I’ll send more photos later.",
             sentAt: now.subtract(const Duration(days: 9, hours: 20, minutes: 30, seconds: 10)),
           ),
           Message(

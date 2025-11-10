@@ -47,6 +47,8 @@ bool _aiGenerating = false;
   // AI cancellation and generation tracking
   int _aiGenerationId = 0;
   bool _aiCancelRequested = false;
+  // Lưu postId được tạo từ AI init để có thể xóa khi người dùng cancel
+  String? _pendingPostId;
 
   // ------------------- Backend Config -------------------
   // Lấy cấu hình từ ApiConfig (không hardcode base URL hoặc container)
@@ -370,9 +372,9 @@ bool _aiGenerating = false;
           _aiPhaseText = 'AI is tired now :(';
           _aiGenerating = false;
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Upload thất bại')),
-        );
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Upload failed')),
+      );
         return;
       }
 
@@ -384,13 +386,15 @@ bool _aiGenerating = false;
           _aiPhaseText = 'AI is tired now :(';
           _aiGenerating = false;
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Khởi tạo AI thất bại')),
-        );
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('AI init failed')),
+      );
         return;
       }
 
       final String postId = initResp['postId'] as String;
+      // Lưu lại postId để nếu người dùng bấm cancel (không đăng) thì gọi delete
+      _pendingPostId = postId;
       // Bắt đầu vòng thinking chạy liên tục cho đến khi polling kết thúc
       _aiPhaseFallback = ' ';
       _aiCurrentPhrase = 'AI is thinking...';
@@ -398,7 +402,7 @@ bool _aiGenerating = false;
       unawaited(_loopTypingUntilCompleter('AI is thinking...', thinkingDone, genId));
 
       // Bước 3: Poll caption-status (tối đa 3 lần: 0s, +10s, +20s)
-      final caption = await _pollCaptionStatusWithRetries(postId, maxRetries: 3, retryDelaySeconds: 10);
+      final caption = await _pollCaptionStatusWithRetries(postId, maxRetries: 6, retryDelaySeconds: 10);
       // Kết thúc vòng thinking khi polling xong
       if (!thinkingDone.isCompleted) thinkingDone.complete();
       if (!mounted || genId != _aiGenerationId || _aiCancelRequested) return;
@@ -445,7 +449,7 @@ bool _aiGenerating = false;
       final token = authVM.jwtToken ?? _authToken;
       if (token == null || token.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Thiếu JWT. Vui lòng đăng nhập backend hoặc set token.')),
+      const SnackBar(content: Text('Missing JWT. Please log in to backend or set token.')),
         );
         return null;
       }
@@ -466,7 +470,7 @@ bool _aiGenerating = false;
       if (res.statusCode != 200) {
         final bodyText = res.body.isNotEmpty ? res.body : '(no body)';
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Lấy SAS thất bại: ${res.statusCode} $bodyText')),
+      SnackBar(content: Text('Get SAS failed: ${res.statusCode} $bodyText')),
         );
         return null;
       }
@@ -493,11 +497,42 @@ bool _aiGenerating = false;
       }
       final putBody = putResp.body.isNotEmpty ? putResp.body : '(no body)';
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Azure PUT thất bại: ${putResp.statusCode} $putBody')),
+      SnackBar(content: Text('Azure PUT failed: ${putResp.statusCode} $putBody')),
       );
       return null;
     } catch (_) {
       return null;
+    }
+  }
+
+  Future<void> _deletePendingPostIfAny() async {
+    final toDelete = _pendingPostId;
+    if (toDelete == null || toDelete.isEmpty) return;
+    try {
+      final authVM = Provider.of<AuthViewModel>(context, listen: false);
+      final token = authVM.jwtToken ?? _authToken;
+      if (token == null || token.isEmpty) {
+        // Không có JWT thì bỏ qua xóa, tránh gọi lỗi
+        return;
+      }
+      final uri = ApiConfig.endpoint(ApiConfig.postDeletePath(toDelete));
+      final headers = <String, String>{
+        'Authorization': 'Bearer $token',
+      };
+      final res = await http.delete(uri, headers: headers);
+      if (res.statusCode != 200) {
+        final bodyText = res.body.isNotEmpty ? res.body : '(no body)';
+        ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Failed to cancel post: ${res.statusCode} $bodyText')),
+        );
+      } else {
+        // Thành công: xóa postId pending
+        _pendingPostId = null;
+      }
+    } catch (_) {
+      // Nuốt lỗi để không chặn việc rời khỏi màn hình
+    } finally {
+      _pendingPostId = null;
     }
   }
 
@@ -515,7 +550,7 @@ bool _aiGenerating = false;
       final token = authVM.jwtToken ?? _authToken;
       if (token == null || token.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Thiếu JWT. Vui lòng đăng nhập backend hoặc set token.')),
+      const SnackBar(content: Text('Missing JWT. Please log in to backend or set token.')),
         );
         return null;
       }
@@ -533,7 +568,7 @@ bool _aiGenerating = false;
       if (res.statusCode != 200) {
         final bodyText = res.body.isNotEmpty ? res.body : '(no body)';
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('ai/init thất bại: ${res.statusCode} $bodyText')),
+      SnackBar(content: Text('ai/init failed: ${res.statusCode} $bodyText')),
         );
         return null;
       }
@@ -545,8 +580,79 @@ bool _aiGenerating = false;
     }
   }
 
+  Future<Map<String, dynamic>?> _createDirectPost(String mediaUrl, String finalCaption) async {
+    try {
+      final authVM = Provider.of<AuthViewModel>(context, listen: false);
+      final token = authVM.jwtToken ?? _authToken;
+      if (token == null || token.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Missing JWT. Please log in to backend or set token.')),
+        );
+        return null;
+      }
+      final uri = ApiConfig.endpoint(ApiConfig.postsBasePath);
+      final headers = <String, String>{
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      };
+      final body = jsonEncode({
+        'mediaType': widget.isVideo ? 'VIDEO' : 'PHOTO',
+        'mediaUrl': mediaUrl,
+        'finalCaption': finalCaption.isNotEmpty ? finalCaption : null,
+        'recipientIds': null,
+      });
+      final res = await http.post(uri, headers: headers, body: body);
+      if (res.statusCode != 200) {
+        final bodyText = res.body.isNotEmpty ? res.body : '(no body)';
+        ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Post failed: ${res.statusCode} $bodyText')),
+        );
+        return null;
+      }
+      final data = jsonDecode(res.body) as Map<String, dynamic>;
+      return data;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<Map<String, dynamic>?> _commitAiPost(String postId, String finalCaption) async {
+    try {
+      final authVM = Provider.of<AuthViewModel>(context, listen: false);
+      final token = authVM.jwtToken ?? _authToken;
+      if (token == null || token.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Thiếu JWT. Vui lòng đăng nhập backend hoặc set token.')),
+        );
+        return null;
+      }
+      final uri = ApiConfig.endpoint(ApiConfig.postsAiCommitPath);
+      final headers = <String, String>{
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      };
+      final body = jsonEncode({
+        'postId': postId,
+        'finalCaption': finalCaption.isNotEmpty ? finalCaption : null,
+        'recipientIds': null,
+      });
+      final res = await http.post(uri, headers: headers, body: body);
+      if (res.statusCode != 200) {
+        final bodyText = res.body.isNotEmpty ? res.body : '(no body)';
+        ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Commit AI failed: ${res.statusCode} $bodyText')),
+        );
+        return null;
+      }
+      final data = jsonDecode(res.body) as Map<String, dynamic>;
+      return data;
+    } catch (_) {
+      return null;
+    }
+  }
+
   Future<String?> _pollCaptionStatusWithRetries(String postId,
-      {int maxRetries = 3, int retryDelaySeconds = 10}) async {
+      {int maxRetries = 6, int retryDelaySeconds = 10}) async {
     for (int attempt = 0; attempt < maxRetries; attempt++) {
       final caption = await _getCaptionStatusOnce(postId);
       if (caption != null) return caption;
@@ -574,7 +680,7 @@ bool _aiGenerating = false;
       if (res.statusCode != 200) {
         final bodyText = res.body.isNotEmpty ? res.body : '(no body)';
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('caption-status thất bại: ${res.statusCode} $bodyText')),
+      SnackBar(content: Text('caption-status failed: ${res.statusCode} $bodyText')),
         );
         return null;
       }
@@ -638,7 +744,7 @@ bool _aiGenerating = false;
                   try {
                     File(widget.imagePath);
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('File đã được lưu (demo)')),
+      const SnackBar(content: Text('File saved (demo)')),
                     );
                   } catch (e) {
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -725,13 +831,13 @@ bool _aiGenerating = false;
                         final String measureBase = _aiGenerating
                             ? (_aiCurrentPhrase.isNotEmpty
                                 ? _aiCurrentPhrase
-                                : (_captionController.text.isEmpty ? 'Share your thought' : _captionController.text))
+                                : (_captionController.text.isEmpty ? 'Share your thoughts' : _captionController.text))
                             : (_captionController.text.isEmpty
-                                ? 'Share your thought'
+                                ? 'Share your thoughts'
                                 : _captionController.text);
                         final String displayText = _aiGenerating
                             ? (_aiPhaseText.isNotEmpty ? _aiPhaseText : _aiPhaseFallback)
-                            : (_captionController.text.isEmpty ? 'Share your thought' : _captionController.text);
+                            : (_captionController.text.isEmpty ? 'Share your thoughts' : _captionController.text);
 
                         // Tính độ rộng theo nội dung
                         final lines = measureBase.split('\n');
@@ -842,13 +948,15 @@ bool _aiGenerating = false;
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
               GestureDetector(
-                onTap: () {
+                onTap: () async {
                   if (_aiGenerating) {
                     _cancelAIGeneration();
                   } else if (_posting) {
                     // đang đăng, không cho thoát để hiển thị loading
                     return;
                   } else {
+                    // Người dùng cancel khi không dùng AI → gọi delete nếu có postId pending
+                    await _deletePendingPostIfAny();
                     Navigator.pop(context);
                   }
                 },
@@ -860,11 +968,44 @@ bool _aiGenerating = false;
                   onTap: () async {
                     if (_aiGenerating || _posting) return;
                     setState(() => _posting = true);
-                    // gọi onPost để thêm bài vào feed
-                    widget.onPost(_captionController.text, widget.imagePath, widget.isVideo);
-                    // giả lập loading trước khi quay lại Feed
-                    await Future.delayed(const Duration(milliseconds: 700));
-                    if (mounted) Navigator.pop(context);
+                    if (_pendingPostId != null) {
+                      // AI flow: đã upload và init trước đó, chỉ cần commit
+                      final resp = await _commitAiPost(_pendingPostId!, _captionController.text);
+                      if (resp != null) {
+                        _pendingPostId = null; // tránh xóa nhầm khi quay lại
+                        try {
+                          widget.onPost(_captionController.text, widget.imagePath, widget.isVideo);
+                        } catch (_) {}
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('AI post succeeded')),
+                          );
+                          Navigator.pop(context);
+                        }
+                      }
+                      setState(() => _posting = false);
+                      return;
+                    } else {
+                      // Non-AI flow: upload rồi tạo post trực tiếp
+                      final mediaUrl = await _uploadMediaToAzure();
+                      if (mediaUrl == null) {
+                        setState(() => _posting = false);
+                        return;
+                      }
+                      final resp = await _createDirectPost(mediaUrl, _captionController.text);
+                      if (resp != null) {
+                        try {
+                          widget.onPost(_captionController.text, widget.imagePath, widget.isVideo);
+                        } catch (_) {}
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Post succeeded')),
+                          );
+                          Navigator.pop(context);
+                        }
+                      }
+                      setState(() => _posting = false);
+                    }
                   },
                   child: Container(
                     height: 90,

@@ -17,29 +17,41 @@ from config import (
     AZURE_QUEUE_NAME,
     BACKEND_CALLBACK_SECRET,
     MAX_PROCESSING_TIME,
+    PREFETCH_COUNT,
 )
-from caption_models import caption_generator
+
+# Don't import caption_generator at module level - causes pickling issues
+# from caption_models import caption_generator
 
 
 class QueueWorker:
-    def __init__(self):
+    def __init__(self, worker_id: int = 1):
+        self.worker_id = worker_id
         self.client = None
         self.receiver = None
         self.running = True
         self.processed_count = 0
 
-        # Setup signal handlers for graceful shutdown
-        signal.signal(signal.SIGINT, self._signal_handler)
-        signal.signal(signal.SIGTERM, self._signal_handler)
+        # Note: Signal handlers will be set up in initialize() to avoid pickling issues
 
     def _signal_handler(self, signum, frame):
         """Handle shutdown signals"""
-        print(f"\n🛑 Received signal {signum}, shutting down gracefully...")
+        print(
+            f"\n🛑 [Worker {self.worker_id}] Received signal {signum}, shutting down gracefully..."
+        )
         self.running = False
+
+    def _log(self, message: str):
+        """Log with worker ID prefix"""
+        print(f"[Worker {self.worker_id}] {message}")
 
     def initialize(self):
         """Initialize Azure Service Bus client and AI models"""
-        print("🚀 Initializing Queue Worker...")
+        # Setup signal handlers AFTER process is spawned (avoid pickling issues)
+        signal.signal(signal.SIGINT, self._signal_handler)
+        signal.signal(signal.SIGTERM, self._signal_handler)
+
+        self._log("🚀 Initializing Queue Worker...")
 
         # Debug connection string (hide sensitive parts)
         masked_conn = (
@@ -47,36 +59,42 @@ class QueueWorker:
             if len(AZURE_SERVICEBUS_CONNECTION_STRING) > 50
             else AZURE_SERVICEBUS_CONNECTION_STRING
         )
-        print(f"🔗 Connection: {masked_conn}")
-        print(f"📦 Queue Name: {AZURE_QUEUE_NAME}")
+        self._log(f"🔗 Connection: {masked_conn}")
+        self._log(f"📦 Queue Name: {AZURE_QUEUE_NAME}")
+        self._log(f"⚙️  Prefetch Count: {PREFETCH_COUNT}")
 
-        # Initialize AI models first (takes time)
-        caption_generator.initialize()
+        # Initialize AI models first (import here to avoid pickling issues)
+        self._log("🤖 Loading AI models...")
+        from caption_models import caption_generator
+
+        self.caption_generator = caption_generator
+        self.caption_generator.initialize()
 
         # Initialize Azure Service Bus
-        print("📡 Connecting to Azure Service Bus...")
+        self._log("📡 Connecting to Azure Service Bus...")
         try:
             self.client = ServiceBusClient.from_connection_string(
                 AZURE_SERVICEBUS_CONNECTION_STRING
             )
             self.receiver = self.client.get_queue_receiver(
                 queue_name=AZURE_QUEUE_NAME,
-                max_wait_time=5,  # Reduce timeout to avoid AMQP issues
+                max_wait_time=5,
+                prefetch_count=PREFETCH_COUNT,  # ✨ Enable prefetching for better throughput
             )
-            print(f"✅ Connected to queue: {AZURE_QUEUE_NAME}")
+            self._log(f"✅ Connected to queue: {AZURE_QUEUE_NAME}")
         except Exception as e:
-            print(f"❌ Failed to connect to Azure Service Bus: {e}")
-            print(
+            self._log(f"❌ Failed to connect to Azure Service Bus: {e}")
+            self._log(
                 f"🔍 Connection string length: {len(AZURE_SERVICEBUS_CONNECTION_STRING)}"
             )
-            print(f"🔍 Queue name: '{AZURE_QUEUE_NAME}'")
+            self._log(f"🔍 Queue name: '{AZURE_QUEUE_NAME}'")
             raise
 
     def run(self):
         """Main worker loop"""
-        print("🔄 Starting queue worker loop...")
-        print(f"📊 Max processing time: {MAX_PROCESSING_TIME}s")
-        print("=" * 70)
+        self._log("🔄 Starting queue worker loop...")
+        self._log(f"📊 Max processing time: {MAX_PROCESSING_TIME}s")
+        self._log("=" * 70)
 
         try:
             while self.running:
@@ -139,8 +157,8 @@ class QueueWorker:
             mood = job_data.get("mood", "neutral")
             callback_url = job_data.get("callback_url")
 
-            print(
-                f"\n📥 Processing job | ID: {job_id} | Post: {post_id} | Mood: {mood}"
+            self._log(
+                f"📥 Processing job | ID: {job_id[:8]}... | Post: {post_id} | Mood: {mood}"
             )
 
             # Validate required fields
@@ -165,14 +183,14 @@ class QueueWorker:
 
                 try:
                     # Generate caption (this is the main work)
-                    caption = caption_generator.process_video(video_url, mood)
+                    caption = self.caption_generator.process_video(video_url, mood)
 
                     # Clear timeout
                     signal.alarm(0)
 
                     processing_time = time.time() - start_time
 
-                    print(
+                    self._log(
                         f"✅ Caption generated in {processing_time:.1f}s: {caption[:50]}..."
                     )
 

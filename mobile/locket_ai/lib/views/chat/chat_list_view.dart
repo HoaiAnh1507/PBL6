@@ -4,12 +4,50 @@ import 'package:locket_ai/core/constants/colors.dart';
 import 'package:provider/provider.dart';
 import '../../viewmodels/chat_viewmodel.dart';
 import '../../viewmodels/user_viewmodel.dart';
+import '../../viewmodels/auth_viewmodel.dart';
+import '../../viewmodels/friendship_viewmodel.dart';
 import 'chat_room_view.dart';
 
-class ChatListView extends StatelessWidget {
+class ChatListView extends StatefulWidget {
   final String currentUserId; // ví dụ: 'u1'
 
   const ChatListView({super.key, required this.currentUserId});
+
+  @override
+  State<ChatListView> createState() => _ChatListViewState();
+}
+
+class _ChatListViewState extends State<ChatListView> {
+  bool _initialized = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Sau khi build lần đầu, nạp danh sách bạn bè từ backend và chuẩn bị dữ liệu chat
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (_initialized) return;
+      final authVM = Provider.of<AuthViewModel>(context, listen: false);
+      final friendshipVM = Provider.of<FriendshipViewModel>(context, listen: false);
+      final chatVM = Provider.of<ChatViewModel>(context, listen: false);
+
+      final current = authVM.currentUser;
+      final jwt = authVM.jwtToken;
+
+      if (current != null) {
+        if (jwt != null && jwt.isNotEmpty) {
+          await friendshipVM.loadFriendsRemote(jwt: jwt, current: current);
+          await chatVM.loadRemoteConversations(jwt: jwt, currentUserId: current.userId);
+        } else {
+          // Fallback: dùng mock nếu chưa có JWT
+          await friendshipVM.loadFriendships(current);
+          // Sau khi có danh sách bạn bè, tạo conversations/mock tin nhắn tương ứng
+          chatVM.loadDataForCurrentUser();
+        }
+      }
+
+      if (mounted) setState(() => _initialized = true);
+    });
+  }
 
   String _formatTime(DateTime dateTime) {
     final now = DateTime.now();
@@ -51,21 +89,37 @@ class ChatListView extends StatelessWidget {
         centerTitle: true,
       ),
       body: SafeArea(
-        child: Consumer2<ChatViewModel, UserViewModel>(
-          builder: (context, chatVM, userVM, _) {
-            final friends = chatVM.getAcceptedFriends(currentUserId);
+        child: Consumer3<ChatViewModel, UserViewModel, FriendshipViewModel>(
+          builder: (context, chatVM, userVM, friendshipVM, _) {
+            final friends = chatVM.getAcceptedFriends(widget.currentUserId);
 
             // Sắp xếp bạn bè theo thời gian tin nhắn gần nhất (mới nhất lên trước)
             final sortedFriends = List.of(friends)
               ..sort((a, b) {
-                final latestA = chatVM.getLatestMessage(currentUserId, a.userId)?.sentAt;
-                final latestB = chatVM.getLatestMessage(currentUserId, b.userId)?.sentAt;
+                final msgA = chatVM.getLatestMessage(widget.currentUserId, a.userId);
+                final msgB = chatVM.getLatestMessage(widget.currentUserId, b.userId);
+                final convA = chatVM.getConversation(widget.currentUserId, a.userId);
+                final convB = chatVM.getConversation(widget.currentUserId, b.userId);
+                final latestA = msgA?.sentAt ?? convA?.lastMessageAt;
+                final latestB = msgB?.sentAt ?? convB?.lastMessageAt;
 
                 if (latestA == null && latestB == null) return 0;
                 if (latestA == null) return 1; // A không có tin → sau B
                 if (latestB == null) return -1; // B không có tin → sau A
                 return latestB.compareTo(latestA); // mới nhất trước
               });
+
+            if (friendshipVM.loading && friends.isEmpty) {
+              return Center(
+                child: Text(
+                  'Đang tải bạn bè...',
+                  style: GoogleFonts.poppins(
+                    color: Colors.white54,
+                    fontSize: 16,
+                  ),
+                ),
+              );
+            }
 
             if (friends.isEmpty) {
               return Center(
@@ -84,8 +138,9 @@ class ChatListView extends StatelessWidget {
               itemCount: sortedFriends.length,
               itemBuilder: (context, index) {
                 final user = sortedFriends[index];
-                final latestMessage = chatVM.getLatestMessage(currentUserId, user.userId);
-
+                final latestMessage = chatVM.getLatestMessage(widget.currentUserId, user.userId);
+                final conv = chatVM.getConversation(widget.currentUserId, user.userId);
+                
                 return ListTile(
                   contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   onTap: () {
@@ -126,10 +181,10 @@ class ChatListView extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        // Nếu chưa có tin nhắn → dùng DateTime.now()
-                        latestMessage == null
-                            ? ''
-                            : _formatTime(latestMessage.sentAt),
+                        // Nếu chưa có tin nhắn → fallback lastMessageAt từ conversation
+                        latestMessage != null
+                            ? _formatTime(latestMessage.sentAt)
+                            : (conv?.lastMessageAt != null ? _formatTime(conv!.lastMessageAt!) : ''),
                         style: GoogleFonts.poppins(
                           color: Color.fromARGB(179, 130, 130, 130),
                           fontWeight: FontWeight.w500,
@@ -139,8 +194,8 @@ class ChatListView extends StatelessWidget {
                     ],
                   ),
                   subtitle: Text(
-                    // Nếu chưa có tin nhắn → hiển thị "Start a conversation"
-                    latestMessage?.content ?? 'Start a conversation',
+                    // Nếu chưa có tin nhắn: hiển thị gợi ý
+                    latestMessage?.content ?? (conv?.lastMessageAt != null ? 'New activity' : 'Start a conversation'),
                     style: GoogleFonts.poppins(
                       color: Color.fromARGB(179, 130, 130, 130),
                       fontWeight: FontWeight.w500,
