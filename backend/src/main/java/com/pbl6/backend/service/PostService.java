@@ -1,9 +1,11 @@
 package com.pbl6.backend.service;
 
 import com.pbl6.backend.model.Post;
+import com.pbl6.backend.model.PostReaction;
 import com.pbl6.backend.model.User;
 import com.pbl6.backend.repository.PostRepository;
 import com.pbl6.backend.repository.PostRecipientRepository;
+import com.pbl6.backend.repository.PostReactionRepository;
 import com.pbl6.backend.repository.UserRepository;
 import com.pbl6.backend.request.AiCaptionInitRequest;
 import com.pbl6.backend.request.PostDirectCreateRequest;
@@ -12,6 +14,11 @@ import com.pbl6.backend.response.AiCaptionInitResponse;
 import com.pbl6.backend.response.CaptionStatusResponse;
 import com.pbl6.backend.response.PostReactionResponse;
 import com.pbl6.backend.response.PostResponse;
+// removed unused stats response
+import com.pbl6.backend.response.PostOwnReactionsResponse;
+import com.pbl6.backend.response.PostReactionsDetailedResponse;
+import com.pbl6.backend.response.PostUserReactions;
+import com.pbl6.backend.request.PostReactionRequest;
 import com.pbl6.backend.response.UserResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,6 +41,7 @@ public class PostService {
     private final PostRepository postRepository;
     private final UserRepository userRepository;
     private final PostRecipientRepository postRecipientRepository;
+    private final PostReactionRepository postReactionRepository;
     private final AzureQueueService azureQueueService;
 
     @Value("${server.port:8080}")
@@ -42,11 +50,13 @@ public class PostService {
     public PostService(PostRepository postRepository,
             UserRepository userRepository,
             PostRecipientRepository postRecipientRepository,
-            AzureQueueService azureQueueService) {
+            AzureQueueService azureQueueService,
+            PostReactionRepository postReactionRepository) {
         this.postRepository = postRepository;
         this.userRepository = userRepository;
         this.postRecipientRepository = postRecipientRepository;
         this.azureQueueService = azureQueueService;
+        this.postReactionRepository = postReactionRepository;
     }
 
     @Transactional
@@ -297,5 +307,122 @@ public class PostService {
             added++;
         }
         log.info("Đã set {} recipients cho post {}", added, post.getPostId());
+    }
+
+    // --- Reactions ---
+
+    @Transactional
+    public PostOwnReactionsResponse reactToPost(User reactor, String postId, String emojiType) {
+        String normalized = normalizeEmojiType(emojiType);
+
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy post với id=" + postId));
+
+        // Không cho react bài post của chính mình
+        if (reactor.getUserId().equals(post.getUser().getUserId())) {
+            throw new RuntimeException("Bạn không thể react bài đăng của chính mình");
+        }
+        // Chỉ cho phép người nhận
+        boolean allowed = postRecipientRepository.existsByPostAndRecipient(post, reactor);
+        if (!allowed) {
+            throw new RuntimeException("Bạn không có quyền react bài đăng này");
+        }
+
+        // Nếu đã có reaction trùng loại bởi user trên post này -> no-op, trả về reactions của chính người dùng
+        if (postReactionRepository.existsByPostAndUserAndEmojiType(post, reactor, normalized)) {
+            return getOwnReactionsForPost(reactor, postId);
+        }
+
+        // Giới hạn tối đa 3 reaction cho mỗi (post, user)
+        List<PostReaction> myReactions = postReactionRepository.findAllByPostAndUser(post, reactor);
+        if (myReactions.size() >= 3) {
+            // Xóa reaction cũ nhất
+            myReactions.stream()
+                    .sorted(java.util.Comparator.comparing(PostReaction::getCreatedAt))
+                    .findFirst()
+                    .ifPresent(old -> postReactionRepository.deleteById(old.getReactionId()));
+        }
+
+        // Thêm reaction mới
+        PostReaction pr = new PostReaction(post, reactor, normalized);
+        postReactionRepository.save(pr);
+
+        return getOwnReactionsForPost(reactor, postId);
+    }
+
+    // Removed owner stats endpoints per new requirements (chỉ hiển thị reaction của bản thân)
+
+    private String normalizeEmojiType(String emojiType) {
+        if (emojiType == null) {
+            throw new IllegalArgumentException("emojiType không được để trống");
+        }
+        String v = emojiType.trim().toLowerCase();
+        java.util.Set<String> allowed = java.util.Set.of("like", "love", "haha", "wow", "sad",
+                "angry", "care", "fire", "clap", "100", "star", "cry_laugh", "heart_broken", "party", "mind_blown");
+        if (!allowed.contains(v)) {
+            throw new IllegalArgumentException("emojiType không hợp lệ: " + emojiType);
+        }
+        return v;
+    }
+
+    // --- Own reactions by viewer ---
+    @Transactional(readOnly = true)
+    public PostOwnReactionsResponse getOwnReactionsForPost(User viewer, String postId) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy post với id=" + postId));
+
+        // Người xem phải là chủ bài đăng hoặc nằm trong recipients
+        boolean allowed = post.getUser().getUserId().equals(viewer.getUserId())
+                || postRecipientRepository.existsByPostAndRecipient(post, viewer);
+        if (!allowed) {
+            throw new RuntimeException("Bạn không có quyền xem reactions của mình trên bài đăng này");
+        }
+
+        List<PostReaction> myReactions = postReactionRepository.findAllByPostAndUser(post, viewer);
+        java.util.List<String> types = myReactions.stream()
+                .sorted(java.util.Comparator.comparing(PostReaction::getCreatedAt))
+                .map(PostReaction::getEmojiType)
+                .collect(java.util.stream.Collectors.toList());
+
+        return new PostOwnReactionsResponse(post.getPostId(), types);
+    }
+
+    // --- All reactions for owner ---
+    @Transactional(readOnly = true)
+    public PostReactionsDetailedResponse getAllReactionsForOwner(User viewer, String postId) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy post với id=" + postId));
+
+        boolean isOwner = post.getUser().getUserId().equals(viewer.getUserId());
+        if (!isOwner) {
+            throw new RuntimeException("Chỉ chủ bài đăng mới được xem tất cả reactions");
+        }
+
+        java.util.List<PostReaction> reactions = postReactionRepository.findByPost(post);
+        reactions.sort(java.util.Comparator.comparing(PostReaction::getCreatedAt));
+
+        java.util.Map<String, java.util.List<String>> emojisByUser = new java.util.HashMap<>();
+        java.util.Map<String, com.pbl6.backend.model.User> userById = new java.util.HashMap<>();
+        for (PostReaction r : reactions) {
+            com.pbl6.backend.model.User u = r.getUser();
+            String uid = u.getUserId();
+            userById.putIfAbsent(uid, u);
+            emojisByUser.computeIfAbsent(uid, k -> new java.util.ArrayList<>()).add(r.getEmojiType());
+        }
+
+        java.util.List<PostUserReactions> items = new java.util.ArrayList<>();
+        for (java.util.Map.Entry<String, java.util.List<String>> e : emojisByUser.entrySet()) {
+            com.pbl6.backend.model.User u = userById.get(e.getKey());
+            items.add(new PostUserReactions(
+                    u.getUserId(),
+                    u.getUsername(),
+                    u.getFullName(),
+                    u.getProfilePictureUrl(),
+                    e.getValue()
+            ));
+        }
+        // Tuỳ chọn: có thể sắp xếp danh sách users theo tên hoặc số lượng reactions
+
+        return new PostReactionsDetailedResponse(post.getPostId(), items);
     }
 }

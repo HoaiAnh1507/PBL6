@@ -89,6 +89,55 @@ public class PostController {
         return ResponseEntity.ok(postService.toResponse(post));
     }
 
+    // POST /api/posts/{id}/reactions: thả cảm xúc vào bài đăng của bạn bè
+    @PostMapping("/{postId}/reactions")
+    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
+    public ResponseEntity<?> addReaction(@PathVariable String postId,
+                                         @Valid @RequestBody com.pbl6.backend.request.PostReactionRequest req) {
+        var principal = getCurrentPrincipal();
+        try {
+            var own = postService.reactToPost(principal.getUser(), postId, req.getEmojiType());
+            return ResponseEntity.ok(own);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN)
+                    .body(Map.of("error", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Đã xảy ra lỗi khi thêm reaction"));
+        }
+    }
+
+    // GET /api/posts/{id}/reactions: chủ bài xem tất cả, người khác chỉ xem của bản thân
+    @GetMapping("/{postId}/reactions")
+    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
+    public ResponseEntity<?> getReactionStats(@PathVariable String postId) {
+        var principal = getCurrentPrincipal();
+        try {
+            // Nếu là chủ bài đăng: trả về tất cả reactions theo danh sách đối tượng chi tiết
+            try {
+                var all = postService.getAllReactionsForOwner(principal.getUser(), postId);
+                return ResponseEntity.ok(all);
+            } catch (RuntimeException ownerOnly) {
+                // Không phải chủ -> trả về reactions của chính người xem
+                if (ownerOnly.getMessage() != null && ownerOnly.getMessage().contains("Chỉ chủ bài đăng")) {
+                    var own = postService.getOwnReactionsForPost(principal.getUser(), postId);
+                    return ResponseEntity.ok(own);
+                }
+                throw ownerOnly;
+            }
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN)
+                    .body(Map.of("error", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Đã xảy ra lỗi khi lấy reactions của bạn"));
+        }
+    }
+
     // 3. Feed của tôi: bài tôi đăng + bài người khác chia sẻ cho tôi
     @GetMapping("/feed")
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
