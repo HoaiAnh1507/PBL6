@@ -2,7 +2,6 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:http_parser/http_parser.dart';
 import 'dart:convert';
 import '../models/user_model.dart';
 import '../core/config/api_config.dart';
@@ -10,12 +9,19 @@ import '../core/config/api_config.dart';
 class UserViewModel extends ChangeNotifier {
   final List<User> _users = [];
   User? _currentUser;
+  String? lastUploadError;
+  final Map<String, String?> _displayUrlCache = {};
 
   List<User> get users => List.unmodifiable(_users);
   User? get currentUser => _currentUser;
 
   UserViewModel() {
     _loadMockData();
+  }
+
+  // ✅ Xóa cache URL hiển thị (SAS) để buộc tải lại avatar sau khi cập nhật
+  void clearDisplayUrlCache() {
+    _displayUrlCache.clear();
   }
 
   void _loadMockData() {
@@ -261,8 +267,44 @@ class UserViewModel extends ChangeNotifier {
         final data = jsonDecode(resp.body) as Map<String, dynamic>;
         return data; // { uploadUrl, fileKey, method, expiresIn, headers }
       }
+      final bodyText = resp.body.isNotEmpty ? resp.body : '(no body)';
+      lastUploadError = 'getAvatarUploadUrl failed: status=' + resp.statusCode.toString() + ' body=' + bodyText;
       return null;
-    } catch (_) {
+    } catch (e) {
+      lastUploadError = 'getAvatarUploadUrl error: ' + e.toString();
+      return null;
+    }
+  }
+
+  // ✅ Lấy SAS upload cho container 'avatar' từ backend
+  Future<Map<String, dynamic>?> getAvatarSasUpload({
+    required String jwt,
+    required String blobName,
+    required String contentType,
+  }) async {
+    try {
+      final uri = ApiConfig.endpoint(ApiConfig.storageSasPath);
+      final resp = await http.post(
+        uri,
+        headers: ApiConfig.jsonHeaders(jwt: jwt),
+        body: jsonEncode({
+          // Align with media upload request body which uses `containerName`
+          'containerName': 'avatar',
+          'access': 'upload',
+          'expiresInSeconds': 300,
+          'mediaType': 'PHOTO',
+        }),
+      );
+      if (resp.statusCode == 200) {
+        final data = jsonDecode(resp.body) as Map<String, dynamic>;
+        // Expected: { uploadUrl, blobUrl, expiresAt }
+        return data;
+      }
+      final bodyText = resp.body.isNotEmpty ? resp.body : '(no body)';
+      lastUploadError = 'getAvatarSasUpload failed: status=' + resp.statusCode.toString() + ' body=' + bodyText;
+      return null;
+    } catch (e) {
+      lastUploadError = 'getAvatarSasUpload error: ' + e.toString();
       return null;
     }
   }
@@ -273,53 +315,106 @@ class UserViewModel extends ChangeNotifier {
     required File file,
   }) async {
     try {
-      final fileName = file.path.split(Platform.pathSeparator).last;
       final contentType = _guessMimeType(file.path);
-      final data = await getAvatarUploadUrl(jwt: jwt, fileName: fileName, contentType: contentType);
-      if (data == null) return null;
-      final uploadUrl = data['uploadUrl']?.toString();
-      final fileKey = data['fileKey']?.toString();
-      final headersDynamic = data['headers'];
-      final headers = <String, String>{};
-      if (headersDynamic is Map) {
-        headers.addAll(headersDynamic.map((k, v) => MapEntry(k.toString(), v.toString())));
+
+      // Use SAS flow like PostService: request SAS, then PUT directly to Azure
+      final uri = ApiConfig.endpoint(ApiConfig.storageSasPath);
+      final sasResp = await http.post(
+        uri,
+        headers: ApiConfig.jsonHeaders(jwt: jwt),
+        body: jsonEncode({
+          'containerName': 'avatar',
+          'access': 'upload',
+          'expiresInSeconds': 300,
+          'mediaType': 'PHOTO',
+        }),
+      );
+      if (sasResp.statusCode != 200) {
+        final bodyText = sasResp.body.isNotEmpty ? sasResp.body : '(no body)';
+        lastUploadError = 'getAvatarSasUpload failed: status=${sasResp.statusCode} body=$bodyText';
+        debugPrint('Avatar SAS request failed: $lastUploadError');
+        return null;
       }
-      // Fallback ensure Content-Type is present
-      headers.putIfAbsent('Content-Type', () => contentType);
-      // Azure Blob SAS often requires x-ms-blob-type
-      if (uploadUrl != null && uploadUrl.contains('blob.core.windows.net') && !headers.containsKey('x-ms-blob-type')) {
-        headers['x-ms-blob-type'] = 'BlockBlob';
+      final data = jsonDecode(sasResp.body) as Map<String, dynamic>;
+      final signedUrl = (data['uploadUrl']?.toString()) ?? (data['signedUrl']?.toString());
+      if (signedUrl == null) {
+        lastUploadError = 'getAvatarSasUpload missing signedUrl/uploadUrl';
+        return null;
       }
+
       final bytes = await file.readAsBytes();
-      final method = (data['method']?.toString().toUpperCase() ?? 'PUT');
-      http.Response putResp;
-      if (method == 'POST') {
-        // Support presigned POST (e.g., S3) with multipart form fields
-        final fieldsDynamic = data['fields'];
-        if (fieldsDynamic is Map) {
-          final req = http.MultipartRequest('POST', Uri.parse(uploadUrl!));
-          fieldsDynamic.forEach((k, v) => req.fields[k.toString()] = v.toString());
-          req.files.add(http.MultipartFile.fromBytes('file', bytes, filename: fileName, contentType: MediaType.parse(contentType)));
-          headers.forEach((k, v) => req.headers[k] = v);
-          final streamed = await req.send();
-          final respBytes = await streamed.stream.toBytes();
-          putResp = http.Response.bytes(respBytes, streamed.statusCode, headers: streamed.headers, request: streamed.request);
-        } else {
-          // Generic POST with raw body
-          putResp = await http.post(Uri.parse(uploadUrl!), headers: headers, body: bytes);
-        }
-      } else {
-        putResp = await http.put(Uri.parse(uploadUrl!), headers: headers, body: bytes);
-      }
-      // Accept common success codes: 200 (OK), 201 (Created), 204 (No Content)
+      final putHeaders = <String, String>{
+        'x-ms-blob-type': 'BlockBlob',
+        'x-ms-version': '2020-10-02',
+        'x-ms-blob-content-type': contentType,
+        'Content-Type': contentType,
+      };
+      final putResp = await http.put(Uri.parse(signedUrl), headers: putHeaders, body: bytes);
       if (putResp.statusCode == 200 || putResp.statusCode == 201 || putResp.statusCode == 204) {
-        return fileKey; // return storage key to be saved as profilePictureUrl
+        lastUploadError = null;
+        final blobUrl = signedUrl.split('?').first;
+        return blobUrl;
       }
-      debugPrint('Avatar upload failed: ${putResp.statusCode} ${putResp.reasonPhrase}');
+      final bodyText = putResp.body.isNotEmpty ? putResp.body : '(no body)';
+      final shortHeaders = putHeaders.entries.map((e) => '${e.key}=${e.value}').join('; ');
+      lastUploadError = 'Azure PUT failed: status=${putResp.statusCode} reason=${putResp.reasonPhrase} url=$signedUrl headers=$shortHeaders body=$bodyText';
+      debugPrint('Avatar Azure PUT failed: $lastUploadError');
       return null;
     } catch (e) {
+      lastUploadError = 'uploadAvatarFromFile exception: ' + e.toString();
       debugPrint('Avatar upload error: $e');
       return null;
+    }
+  }
+
+  // ✅ Resolve displayable URL for a blob: if private Azure blob URL (no query), request READ SAS
+  Future<String?> resolveDisplayUrl({
+    required String jwt,
+    required String? url,
+  }) async {
+    try {
+      if (url == null || url.isEmpty) return null;
+      final cacheKey = jwt + '|' + url;
+      if (_displayUrlCache.containsKey(cacheKey)) {
+        return _displayUrlCache[cacheKey];
+      }
+      // If already has query or is not azure blob, use as-is
+      if (!url.contains('blob.core.windows.net') || url.contains('?')) {
+        _displayUrlCache[cacheKey] = url;
+        return url;
+      }
+      // Parse container and blobName from URL
+      final u = Uri.parse(url);
+      if (u.pathSegments.isEmpty) return url;
+      final container = u.pathSegments.first;
+      final blobName = u.pathSegments.sublist(1).join('/');
+      if (blobName.isEmpty) return url;
+
+      final uri = ApiConfig.endpoint(ApiConfig.storageSasPath);
+      final resp = await http.post(
+        uri,
+        headers: ApiConfig.jsonHeaders(jwt: jwt),
+        body: jsonEncode({
+          'containerName': container,
+          'access': 'read',
+          'blobName': blobName,
+          'expiresInSeconds': 300,
+        }),
+      );
+      if (resp.statusCode == 200) {
+        final data = jsonDecode(resp.body) as Map<String, dynamic>;
+        final resolved = (data['signedUrl']?.toString()) ?? (data['uploadUrl']?.toString()) ?? url;
+        _displayUrlCache[cacheKey] = resolved;
+        return resolved;
+      }
+      // Fall back to original URL if cannot get SAS
+      final bodyText = resp.body.isNotEmpty ? resp.body : '(no body)';
+      lastUploadError = 'resolveDisplayUrl failed: status=${resp.statusCode} body=$bodyText';
+      _displayUrlCache[cacheKey] = url;
+      return url;
+    } catch (e) {
+      lastUploadError = 'resolveDisplayUrl error: ' + e.toString();
+      return url;
     }
   }
 

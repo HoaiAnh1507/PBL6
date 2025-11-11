@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:locket_ai/widgets/async_avatar.dart';
 import 'package:provider/provider.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
@@ -53,18 +54,17 @@ class _EditProfileViewState extends State<EditProfileView> {
             // Avatar preview + change button
             Row(
               children: [
-                CircleAvatar(
-                  radius: 32,
-                  backgroundColor: Colors.white24,
-                  backgroundImage: _avatarFile != null
-                      ? FileImage(_avatarFile!)
-                      : (authVM.currentUser?.profilePictureUrl != null
-                          ? NetworkImage(authVM.currentUser!.profilePictureUrl!)
-                          : null) as ImageProvider<Object>?,
-                  child: (_avatarFile == null && authVM.currentUser?.profilePictureUrl == null)
-                      ? const Icon(Icons.person, color: Colors.white70)
-                      : null,
-                ),
+                _avatarFile != null
+                    ? CircleAvatar(
+                        radius: 32,
+                        backgroundColor: Colors.white24,
+                        backgroundImage: FileImage(_avatarFile!),
+                      )
+                    : AsyncAvatar(
+                        url: authVM.currentUser?.profilePictureUrl,
+                        radius: 32,
+                        fallbackKey: authVM.currentUser?.userId,
+                      ),
                 const SizedBox(width: 12),
                 ElevatedButton.icon(
                   onPressed: () async {
@@ -110,7 +110,11 @@ class _EditProfileViewState extends State<EditProfileView> {
                           avatarKey = await userVM.uploadAvatarFromFile(jwt: jwt, file: _avatarFile!);
                           if (avatarKey == null) {
                             if (!mounted) return; 
-                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Avatar upload failed')));
+                            final more = userVM.lastUploadError;
+                            final msg = more != null && more.isNotEmpty
+                                ? 'Avatar upload failed: ' + more
+                                : 'Avatar upload failed';
+                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
                           }
                         }
                         final updated = await userVM.updateProfile(
@@ -118,10 +122,15 @@ class _EditProfileViewState extends State<EditProfileView> {
                           fullName: _fullNameCtrl.text.trim(),
                           phoneNumber: _phoneCtrl.text.trim(),
                           email: _emailCtrl.text.trim(),
+                          // Save either blobUrl or fileKey as profile picture URL, depending on backend
                           profilePictureUrl: avatarKey,
                         );
                         setState(() => _saving = false);
                         if (updated != null) {
+                          // Xóa cache URL hiển thị để avatar mới tải ngay
+                          userVM.clearDisplayUrlCache();
+                          // Đồng bộ lại AuthViewModel để SettingsView và nơi khác cập nhật ngay
+                          authVM.updateCurrentUser(updated);
                           if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Profile updated')),

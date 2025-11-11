@@ -8,13 +8,13 @@ import 'user_viewmodel.dart';
 import 'friendship_viewmodel.dart';
 import '../services/conversations_api.dart';
 import '../services/messages_api.dart';
-import '../core/config/api_config.dart';
 
 class ChatViewModel extends ChangeNotifier {
   late UserViewModel userViewModel;
   late FriendshipViewModel friendshipViewModel;
 
   final Map<String, Conversation> _conversations = {};
+  final Set<String> _prefetchedPairs = <String>{};
 
   ChatViewModel();
 
@@ -47,7 +47,8 @@ class ChatViewModel extends ChangeNotifier {
     try {
       final api = ConversationsApi(jwt);
       final rawList = await api.listConversations();
-      _conversations.clear();
+      // Không xóa toàn bộ cache hội thoại nữa để tránh mất tin nhắn đang có.
+      // Thay vào đó, hợp nhất dữ liệu từ server với dữ liệu hiện có.
 
       User makeUserFromPublic(Map<String, dynamic> m) {
         final now = DateTime.now();
@@ -130,12 +131,76 @@ class ChatViewModel extends ChangeNotifier {
           } catch (_) {}
         }
 
-        _conversations[conv.conversationId] = conv;
+        // Hợp nhất với hội thoại hiện có theo cặp (userOne, userTwo)
+        Conversation? existing;
+        try {
+          existing = _conversations.values.firstWhere(
+            (c) =>
+                (c.userOne.userId == u1.userId && c.userTwo.userId == u2.userId) ||
+                (c.userOne.userId == u2.userId && c.userTwo.userId == u1.userId),
+          );
+        } catch (_) {
+          existing = null;
+        }
+
+        // Nếu server không trả messages (hoặc rỗng) nhưng cache đang có → giữ lại cache
+        if ((msgsRaw.isEmpty) && existing != null && (existing.messages != null) && existing.messages!.isNotEmpty) {
+          final preserved = existing.copyWith(
+            conversationId: conv.conversationId,
+            lastMessageAt: lastMessageAt ?? existing.lastMessageAt,
+            createdAt: createdAt,
+          );
+          // Xóa hội thoại cũ theo cặp để tránh duplicate
+          final keysToRemove = _conversations.entries
+              .where((e) =>
+                  (e.value.userOne.userId == u1.userId && e.value.userTwo.userId == u2.userId) ||
+                  (e.value.userOne.userId == u2.userId && e.value.userTwo.userId == u1.userId))
+              .map((e) => e.key)
+              .toList();
+          for (final k in keysToRemove) {
+            _conversations.remove(k);
+          }
+          _conversations[preserved.conversationId] = preserved;
+        } else {
+          // Có messages từ server hoặc chưa có cache → dùng dữ liệu mới nhất từ server
+          final keysToRemove = _conversations.entries
+              .where((e) =>
+                  (e.value.userOne.userId == u1.userId && e.value.userTwo.userId == u2.userId) ||
+                  (e.value.userOne.userId == u2.userId && e.value.userTwo.userId == u1.userId))
+              .map((e) => e.key)
+              .toList();
+          for (final k in keysToRemove) {
+            _conversations.remove(k);
+          }
+          _conversations[conv.conversationId] = conv;
+        }
       }
 
       notifyListeners();
     } catch (e) {
       debugPrint('loadRemoteConversations error: $e');
+    }
+  }
+
+  /// Prefetch latest messages for all conversations so ChatListView can show content immediately
+  Future<void> prefetchLatestMessagesForAll({
+    required String jwt,
+    required String currentUserId,
+  }) async {
+    try {
+      final convs = _conversations.values.toList();
+      await Future.wait(convs.map((conv) async {
+        final friendId = (conv.userOne.userId == currentUserId)
+            ? conv.userTwo.userId
+            : conv.userOne.userId;
+        await loadRemoteMessagesForPair(
+          jwt: jwt,
+          currentUserId: currentUserId,
+          friendId: friendId,
+        );
+      }));
+    } catch (e) {
+      debugPrint('prefetchLatestMessagesForAll error: $e');
     }
   }
 
@@ -418,6 +483,31 @@ class ChatViewModel extends ChangeNotifier {
     if (conv == null || conv.messages == null || conv.messages!.isEmpty) return null;
     conv.messages!.sort((a, b) => b.sentAt.compareTo(a.sentAt));
     return conv.messages!.first;
+  }
+
+  /// Prefetch messages for all accepted friends of the current user
+  Future<void> prefetchAllMessagesForCurrentUser({
+    required String jwt,
+    required String currentUserId,
+  }) async {
+    final friends = getAcceptedFriends(currentUserId);
+    if (friends.isEmpty) return;
+    final futures = <Future<void>>[];
+    for (final friend in friends) {
+      final key = currentUserId + '|' + friend.userId;
+      if (_prefetchedPairs.contains(key)) continue;
+      _prefetchedPairs.add(key);
+      futures.add(loadRemoteMessagesForPair(
+        jwt: jwt,
+        currentUserId: currentUserId,
+        friendId: friend.userId,
+      ));
+    }
+    if (futures.isNotEmpty) {
+      try {
+        await Future.wait(futures);
+      } catch (_) {}
+    }
   }
 
   // ------------------- 🧪 MOCK DATA --------------------

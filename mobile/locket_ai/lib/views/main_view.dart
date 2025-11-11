@@ -5,6 +5,8 @@ import 'package:locket_ai/views/camera/camera_view.dart';
 import 'package:locket_ai/views/chat/chat_list_view.dart';
 import 'package:locket_ai/views/settings/settings_view.dart';
 import '../../viewmodels/auth_viewmodel.dart';
+import '../../viewmodels/friendship_viewmodel.dart';
+import '../../viewmodels/chat_viewmodel.dart';
 
 class MainView extends StatefulWidget {
   const MainView({super.key});
@@ -17,11 +19,47 @@ class _MainViewState extends State<MainView> {
   final PageController _hCtrl = PageController(initialPage: 1);
   final PageController _vCtrl = PageController(initialPage: 0);
   final FocusNode _messageFocus = FocusNode();
+  bool _bootstrapped = false;
 
   @override
   void initState() {
     super.initState();
     _messageFocus.addListener(() => setState(() {}));
+
+    // Ngay sau khi vào MainView (đăng nhập thành công), tiền tải dữ liệu chat
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (_bootstrapped) return;
+      final authVM = Provider.of<AuthViewModel>(context, listen: false);
+      final friendshipVM = Provider.of<FriendshipViewModel>(context, listen: false);
+      final chatVM = Provider.of<ChatViewModel>(context, listen: false);
+
+      final current = authVM.currentUser;
+      final jwt = authVM.jwtToken;
+
+      if (current != null) {
+        if (jwt != null && jwt.isNotEmpty) {
+          try {
+            await friendshipVM.loadFriendsRemote(jwt: jwt, current: current);
+          } catch (_) {}
+          try {
+            await chatVM.loadRemoteConversations(jwt: jwt, currentUserId: current.userId);
+          } catch (_) {}
+          try {
+            await chatVM.prefetchAllMessagesForCurrentUser(jwt: jwt, currentUserId: current.userId);
+          } catch (_) {}
+        } else {
+          // Fallback khi chưa có JWT: dùng dữ liệu mock
+          try {
+            await friendshipVM.loadFriendships(current);
+          } catch (_) {}
+          try {
+            chatVM.loadDataForCurrentUser();
+          } catch (_) {}
+        }
+      }
+
+      _bootstrapped = true;
+    });
   }
 
   @override

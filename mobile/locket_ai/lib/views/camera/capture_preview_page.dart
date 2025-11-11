@@ -45,8 +45,6 @@ bool _aiGenerating = false;
   String _aiPhaseFallback = 'AI is thinking...';
   String _aiCurrentPhrase = '';
   Timer? _typingTimer;
-  final String _aiTargetCaption = 'This is AI generated caption';
-  int _typingIndex = 0;
   // AI cancellation and generation tracking
   int _aiGenerationId = 0;
   bool _aiCancelRequested = false;
@@ -57,22 +55,6 @@ bool _aiGenerating = false;
   // Lấy cấu hình từ ApiConfig (không hardcode base URL hoặc container)
   // Nếu có JWT thì gắn vào đây hoặc lấy từ AuthViewModel
   String? _authToken;
-
-  String _wrapPerLine(String text, int maxChars) {
-    final lines = text.split('\n');
-    final wrapped = <String>[];
-    for (final line in lines) {
-      if (line.length <= maxChars) {
-        wrapped.add(line);
-      } else {
-        for (int i = 0; i < line.length; i += maxChars) {
-          final end = (i + maxChars) > line.length ? line.length : (i + maxChars);
-          wrapped.add(line.substring(i, end));
-        }
-      }
-    }
-    return wrapped.join('\n');
-  }
 
   @override
   void initState() {
@@ -127,19 +109,6 @@ bool _aiGenerating = false;
       if (mounted) setState(() {});
       await Future.delayed(Duration(milliseconds: speedMs));
       if ((genId != null && genId != _aiGenerationId) || _aiCancelRequested || (shouldStop?.call() ?? false)) return;
-    }
-  }
-
-  Future<void> _loopThinkingUntil(DateTime until, int genId) async {
-    // Thinking: giữ fallback là chính cụm "AI is thinking..." để tránh khoảng trống
-    _aiPhaseFallback = 'AI is thinking...';
-    while (DateTime.now().isBefore(until)) {
-      if (!mounted || genId != _aiGenerationId || _aiCancelRequested) return;
-      await _typeText('AI is thinking...', (s) => _aiPhaseText = s, genId: genId);
-      if (!mounted || genId != _aiGenerationId || _aiCancelRequested) return;
-      await Future.delayed(const Duration(milliseconds: 350));
-      if (!mounted || genId != _aiGenerationId || _aiCancelRequested) return;
-      await _eraseText(_aiPhaseText, (s) => _aiPhaseText = s, genId: genId);
     }
   }
 
@@ -887,11 +856,11 @@ bool _aiGenerating = false;
                         final bool contentHasNewline = displayText.contains('\n');
                         final bool isSingleLineContent = !contentHasNewline && measuredWidth <= maxChipWidth;
                         final double chipWidth = isSingleLineContent
-                            ? (measuredWidth.clamp(120.0, maxChipWidth) as double)
+                            ? measuredWidth.clamp(120.0, maxChipWidth)
                             : maxChipWidth;
 
                         final double chipRadius = isSingleLineContent
-                            ? ((18.0 + (longestLen / 35.0) * 12).clamp(18.0, 30.0) as double)
+                            ? (18.0 + (longestLen / 35.0) * 12).clamp(18.0, 30.0)
                             : 30.0;
 
                         // Lift only the caption chip when keyboard opens and TextField has focus

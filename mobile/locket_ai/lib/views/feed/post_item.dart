@@ -6,6 +6,7 @@ import 'package:video_player/video_player.dart';
 import 'package:chewie/chewie.dart';
 import 'package:intl/intl.dart';
 import '../../models/post_model.dart';
+import 'package:locket_ai/widgets/async_avatar.dart';
 
 class PostItem extends StatefulWidget {
   final Post post;
@@ -173,14 +174,13 @@ class _PostItemState extends State<PostItem> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                CircleAvatar(
-                    backgroundColor: Colors.grey[800],
-                    backgroundImage: NetworkImage(
-                      (user.profilePictureUrl != null && user.profilePictureUrl!.isNotEmpty)
-                          ? user.profilePictureUrl!
-                          : 'https://i.pravatar.cc/150?u=${user.userId}',
-                    ),
-                  ),
+                AsyncAvatar(
+                  url: (user.profilePictureUrl != null && user.profilePictureUrl!.isNotEmpty)
+                      ? user.profilePictureUrl
+                      : 'https://i.pravatar.cc/150?u=${user.userId}',
+                  radius: 20, // default CircleAvatar radius was small here
+                  fallbackKey: user.userId,
+                ),
                 const SizedBox(width: 10),
                 Text(
                   user.username,

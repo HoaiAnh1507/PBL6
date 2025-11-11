@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:locket_ai/core/constants/colors.dart';
+import 'package:locket_ai/widgets/async_avatar.dart';
 import 'package:provider/provider.dart';
 import '../../viewmodels/chat_viewmodel.dart';
 import '../../viewmodels/auth_viewmodel.dart';
@@ -78,19 +79,42 @@ class _ChatRoomViewState extends State<ChatRoomView> {
     }
     // Sắp xếp tin nhắn theo thời gian tăng dần (cũ → mới)
     final messages = List.of(initialMessages)..sort((a, b) => a.sentAt.compareTo(b.sentAt));
+    // Lấy thông tin bạn bè để hiển thị username dưới fullname
+    final conv = chatVM.getConversation(currentUserId, widget.friendId);
+    final friendUser = conv?.userOne.userId == currentUserId ? conv?.userTwo : conv?.userOne;
+    final friendUsername = friendUser?.username;
 
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: AppColors.background,
         elevation: 0,
-        title: Text(
-          widget.friendName,
-          style: GoogleFonts.poppins(
-            fontWeight: FontWeight.w600,
-            fontSize: 18,
-            color: Colors.white,
+        title: Padding(
+          padding: const EdgeInsets.only(top: 4),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                widget.friendName,
+                style: GoogleFonts.poppins(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 18,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                friendUsername != null && friendUsername.isNotEmpty ? '@$friendUsername' : '',
+                style: GoogleFonts.poppins(
+                  fontWeight: FontWeight.w500,
+                  fontSize: 13,
+                  color: Colors.white70,
+                ),
+              ),
+            ],
           ),
         ),
-        centerTitle: true,
+        centerTitle: false,
       ),
       body: GestureDetector(
         behavior: HitTestBehavior.translucent,
@@ -220,9 +244,10 @@ class _ChatRoomViewState extends State<ChatRoomView> {
                                           offset: const Offset(0, -_avatarLift),
                                           child: Padding(
                                             padding: const EdgeInsets.symmetric(vertical: 4), // khớp margin của bubble
-                                            child: CircleAvatar(
+                                            child: AsyncAvatar(
+                                              url: avatarUrl,
                                               radius: avatarRadius,
-                                              backgroundImage: NetworkImage(avatarUrl),
+                                              fallbackKey: msg.sender?.userId,
                                             ),
                                           ),
                                         );
@@ -473,9 +498,10 @@ class _ChatPostEmbedState extends State<ChatPostEmbed> {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      CircleAvatar(
+                      AsyncAvatar(
+                        url: avatarUrl,
                         radius: 12,
-                        backgroundImage: NetworkImage(avatarUrl),
+                        fallbackKey: post.user.userId,
                       ),
                       const SizedBox(width: 10),
                       Text(

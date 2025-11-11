@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:locket_ai/widgets/base_footer.dart';
+import 'package:locket_ai/core/constants/colors.dart';
 import 'package:locket_ai/widgets/base_header.dart';
 import 'package:locket_ai/widgets/message_bar.dart';
 import 'package:provider/provider.dart';
@@ -159,6 +160,7 @@ class _FeedViewState extends State<FeedView> {
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
+        backgroundColor: AppColors.background,
         resizeToAvoidBottomInset: false, 
         body: Stack(
           children: [

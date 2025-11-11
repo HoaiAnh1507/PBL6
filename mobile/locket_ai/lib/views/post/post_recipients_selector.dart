@@ -7,6 +7,7 @@ import '../../viewmodels/post_recipients_selector_viewmodel.dart';
 import '../../models/user_model.dart';
 import '../../viewmodels/auth_viewmodel.dart';
 import '../../core/constants/colors.dart';
+import 'package:locket_ai/widgets/async_avatar.dart';
 
 class PostRecipientsSelector extends StatelessWidget {
   final double height;
@@ -134,9 +135,6 @@ class _FriendTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Viền gradient giống ChatListView, chỉ hiển thị khi chọn
-    final avatarProvider = (user.profilePictureUrl != null && user.profilePictureUrl!.isNotEmpty)
-        ? NetworkImage(user.profilePictureUrl!)
-        : null;
 
     // Avatar giữ nguyên kích thước, chỉ có viền gradient khi chọn
     const double avatarSize = 52;
@@ -171,15 +169,10 @@ class _FriendTile extends StatelessWidget {
                     gradient: instagramGradient,
                     child: child!,
                   ),
-                  child: CircleAvatar(
-                    backgroundColor: Colors.white12,
-                    backgroundImage: avatarProvider,
-                    child: avatarProvider == null
-                        ? Text(
-                            (user.username.isNotEmpty ? user.username[0] : '?').toUpperCase(),
-                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                          )
-                        : null,
+                  child: AsyncAvatar(
+                    url: user.profilePictureUrl,
+                    radius: avatarSize / 2,
+                    fallbackKey: user.userId,
                   ),
                 ),
               ),
@@ -210,7 +203,6 @@ class _GradientRing extends StatelessWidget {
   final Widget child;
 
   const _GradientRing({
-    super.key,
     required this.size,
     required this.innerSize,
     required this.thickness,

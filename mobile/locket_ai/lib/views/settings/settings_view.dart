@@ -5,6 +5,7 @@ import '../../viewmodels/auth_viewmodel.dart';
 import '../../viewmodels/user_viewmodel.dart';
 import '../../core/constants/colors.dart';
 import '../profile/profile_view.dart';
+import 'package:locket_ai/widgets/async_avatar.dart';
 
 class SettingsView extends StatelessWidget {
   const SettingsView({Key? key}) : super(key: key);
@@ -31,18 +32,10 @@ class SettingsView extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  CircleAvatar(
+                  AsyncAvatar(
+                    url: current?.profilePictureUrl,
                     radius: 40,
-                    backgroundColor: Colors.white24,
-                    backgroundImage: (current?.profilePictureUrl != null)
-                        ? NetworkImage(current!.profilePictureUrl!)
-                        : null,
-                    child: (current?.profilePictureUrl == null)
-                        ? Text(
-                            (vm.username.isNotEmpty ? vm.username[0] : 'U'),
-                            style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
-                          )
-                        : null,
+                    fallbackKey: current?.userId,
                   ),
                   const SizedBox(height: 12),
                   Text(

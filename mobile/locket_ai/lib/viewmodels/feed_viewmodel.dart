@@ -4,6 +4,7 @@ import 'package:locket_ai/models/user_model.dart';
 import '../models/post_model.dart';
 import 'user_viewmodel.dart';
 import 'friendship_viewmodel.dart';
+import 'package:locket_ai/services/posts_api.dart';
 
 class FeedViewModel extends ChangeNotifier {
   late UserViewModel userVM;
@@ -70,6 +71,77 @@ class FeedViewModel extends ChangeNotifier {
     loading = false;
     _hasLoadedSamples = true;
     notifyListeners();
+  }
+
+  /// Tải feed từ backend và gán vào `posts`
+  Future<void> loadRemoteFeed({required String jwt, required User current}) async {
+    loading = true;
+    notifyListeners();
+
+    try {
+      final api = PostsApi(jwt: jwt);
+      final raw = await api.listPosts();
+
+      final mapped = <Post>[];
+      for (final item in raw) {
+        if (item is Map<String, dynamic>) {
+          try {
+            // Ưu tiên parse theo Post.fromJson nếu cấu trúc chuẩn
+            if (item.containsKey('postId') && item.containsKey('user')) {
+              mapped.add(Post.fromJson(item));
+              continue;
+            }
+
+            // Fallback: map thủ công với các khóa phổ biến
+            final userJson = (item['user'] ?? item['author'] ?? {}) as Map<String, dynamic>;
+            Map<String, dynamic> normalizedUser = {
+              'userId': userJson['userId'] ?? userJson['id'] ?? (item['userId'] ?? item['authorId'] ?? 'unknown'),
+              'phoneNumber': userJson['phoneNumber'] ?? '',
+              'username': userJson['username'] ?? userJson['name'] ?? 'unknown',
+              'email': userJson['email'] ?? '',
+              'fullName': userJson['fullName'] ?? userJson['username'] ?? 'unknown',
+              'profilePictureUrl': userJson['profilePictureUrl'] ?? userJson['avatarUrl'] ?? userJson['avatar'],
+              'passwordHash': userJson['passwordHash'] ?? '',
+              'subscriptionStatus': userJson['subscriptionStatus'] ?? 'FREE',
+              'subscriptionExpiresAt': userJson['subscriptionExpiresAt'],
+              'accountStatus': userJson['accountStatus'] ?? 'ACTIVE',
+              'createdAt': userJson['createdAt'] ?? DateTime.now().toIso8601String(),
+              'updatedAt': userJson['updatedAt'] ?? DateTime.now().toIso8601String(),
+            };
+
+            final typeStr = (item['mediaType'] ?? item['type'] ?? 'PHOTO').toString().toUpperCase();
+            final statusStr = (item['captionStatus'] ?? item['status'] ?? 'PENDING').toString().toUpperCase();
+            final createdStr = item['createdAt'] ?? item['created_at'] ?? DateTime.now().toIso8601String();
+
+            final post = Post(
+              postId: item['postId']?.toString() ?? item['id']?.toString() ?? 'unknown',
+              user: User.fromJson(normalizedUser),
+              mediaType: MediaType.values.firstWhere(
+                (e) => e.name == typeStr,
+                orElse: () => MediaType.PHOTO,
+              ),
+              mediaUrl: item['mediaUrl']?.toString() ?? item['url']?.toString() ?? item['contentUrl']?.toString() ?? '',
+              generatedCaption: item['generatedCaption']?.toString() ?? item['caption']?.toString(),
+              captionStatus: CaptionStatus.values.firstWhere(
+                (e) => e.name == statusStr,
+                orElse: () => CaptionStatus.PENDING,
+              ),
+              userEditedCaption: item['userEditedCaption']?.toString(),
+              createdAt: DateTime.tryParse(createdStr) ?? DateTime.now(),
+            );
+            mapped.add(post);
+          } catch (_) {
+            // Bỏ qua bài đăng lỗi cấu trúc
+          }
+        }
+      }
+
+      posts = mapped;
+    } finally {
+      loading = false;
+      _hasLoadedSamples = true; // Tránh tải sample ghi đè
+      notifyListeners();
+    }
   }
 
   void addPost(Post post) {

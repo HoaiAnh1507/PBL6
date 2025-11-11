@@ -114,6 +114,16 @@ class AuthViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  // ✅ Cập nhật thông tin currentUser sau khi chỉnh sửa hồ sơ
+  void updateCurrentUser(User updated) {
+    _currentUser = updated;
+    try {
+      // Giữ đồng bộ với UserViewModel
+      userViewModel.setCurrentUser(updated);
+    } catch (_) {}
+    notifyListeners();
+  }
+
   // ✅ Đăng ký tài khoản mới
   Future<bool> register({
     required String username,
