@@ -448,7 +448,9 @@ bool _aiGenerating = false;
         'expiresInSeconds': 300,
         'mediaType': widget.isVideo ? 'VIDEO' : 'PHOTO',
       });
-      final res = await http.post(uri, headers: headers, body: body);
+      final res = await http
+          .post(uri, headers: headers, body: body)
+          .timeout(const Duration(seconds: 20));
       if (res.statusCode != 200) {
         final bodyText = res.body.isNotEmpty ? res.body : '(no body)';
         ScaffoldMessenger.of(context).showSnackBar(
@@ -472,7 +474,9 @@ bool _aiGenerating = false;
         'x-ms-blob-content-type': contentType,
         'Content-Type': contentType,
       };
-      final putResp = await http.put(Uri.parse(signedUrl), headers: putHeaders, body: bytes);
+      final putResp = await http
+          .put(Uri.parse(signedUrl), headers: putHeaders, body: bytes)
+          .timeout(const Duration(seconds: 45));
       if (putResp.statusCode == 201 || putResp.statusCode == 200) {
         // Trả về signedUrl (có SAS) để AI dùng đọc file
         return signedUrl;
@@ -482,7 +486,15 @@ bool _aiGenerating = false;
       SnackBar(content: Text('Azure PUT failed: ${putResp.statusCode} $putBody')),
       );
       return null;
-    } catch (_) {
+    } on TimeoutException {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Upload timed out. Please check your network and try again.')),
+      );
+      return null;
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Upload error: $e')),
+      );
       return null;
     }
   }
@@ -562,7 +574,8 @@ bool _aiGenerating = false;
     }
   }
 
-  Future<Map<String, dynamic>?> _createDirectPost(String mediaUrl, String finalCaption) async {
+  Future<Map<String, dynamic>?> _createDirectPost(
+      String mediaUrl, String finalCaption, List<String>? recipientIds) async {
     try {
       final authVM = Provider.of<AuthViewModel>(context, listen: false);
       final token = authVM.jwtToken ?? _authToken;
@@ -581,9 +594,11 @@ bool _aiGenerating = false;
         'mediaType': widget.isVideo ? 'VIDEO' : 'PHOTO',
         'mediaUrl': mediaUrl,
         'finalCaption': finalCaption.isNotEmpty ? finalCaption : null,
-        'recipientIds': null,
+        'recipientIds': recipientIds,
       });
-      final res = await http.post(uri, headers: headers, body: body);
+      final res = await http
+          .post(uri, headers: headers, body: body)
+          .timeout(const Duration(seconds: 20));
       if (res.statusCode != 200) {
         final bodyText = res.body.isNotEmpty ? res.body : '(no body)';
         ScaffoldMessenger.of(context).showSnackBar(
@@ -593,12 +608,21 @@ bool _aiGenerating = false;
       }
       final data = jsonDecode(res.body) as Map<String, dynamic>;
       return data;
-    } catch (_) {
+    } on TimeoutException {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Post request timed out. Please try again.')),
+      );
+      return null;
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Post error: $e')),
+      );
       return null;
     }
   }
 
-  Future<Map<String, dynamic>?> _commitAiPost(String postId, String finalCaption) async {
+  Future<Map<String, dynamic>?> _commitAiPost(
+      String postId, String finalCaption, List<String>? recipientIds) async {
     try {
       final authVM = Provider.of<AuthViewModel>(context, listen: false);
       final token = authVM.jwtToken ?? _authToken;
@@ -616,9 +640,11 @@ bool _aiGenerating = false;
       final body = jsonEncode({
         'postId': postId,
         'finalCaption': finalCaption.isNotEmpty ? finalCaption : null,
-        'recipientIds': null,
+        'recipientIds': recipientIds,
       });
-      final res = await http.post(uri, headers: headers, body: body);
+      final res = await http
+          .post(uri, headers: headers, body: body)
+          .timeout(const Duration(seconds: 20));
       if (res.statusCode != 200) {
         final bodyText = res.body.isNotEmpty ? res.body : '(no body)';
         ScaffoldMessenger.of(context).showSnackBar(
@@ -628,7 +654,15 @@ bool _aiGenerating = false;
       }
       final data = jsonDecode(res.body) as Map<String, dynamic>;
       return data;
-    } catch (_) {
+    } on TimeoutException {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Commit request timed out. Please try again.')),
+      );
+      return null;
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Commit error: $e')),
+      );
       return null;
     }
   }
@@ -963,9 +997,12 @@ bool _aiGenerating = false;
                   onTap: () async {
                     if (disabled) return;
                     setState(() => _posting = true);
+                    // Lấy recipientIds từ selectorVM ở context con nằm dưới Provider
+                    final List<String>? recipientIds = selectorVM.recipientIdsForApi();
                     if (_pendingPostId != null) {
                       // AI flow: đã upload và init trước đó, chỉ cần commit
-                      final resp = await _commitAiPost(_pendingPostId!, _captionController.text);
+                      final resp = await _commitAiPost(
+                          _pendingPostId!, _captionController.text, recipientIds);
                       if (resp != null) {
                         _pendingPostId = null; // tránh xóa nhầm khi quay lại
                         try {
@@ -987,7 +1024,8 @@ bool _aiGenerating = false;
                         setState(() => _posting = false);
                         return;
                       }
-                      final resp = await _createDirectPost(mediaUrl, _captionController.text);
+                      final resp = await _createDirectPost(
+                          mediaUrl, _captionController.text, recipientIds);
                       if (resp != null) {
                         try {
                           widget.onPost(_captionController.text, widget.imagePath, widget.isVideo);

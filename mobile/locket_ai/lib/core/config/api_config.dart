@@ -31,6 +31,8 @@ class ApiConfig {
 
   // Posts
   static const String postsBasePath = '/api/posts';
+  static const String postsFeedPath = '/api/posts/feed';
+  static String postsSharedToMeFromPath(String username) => '/api/posts/shared-to-me/from/$username';
   static const String postsAiInitPath = '/api/posts/ai/init';
   static const String postsAiCommitPath = '/api/posts/ai/commit';
   static String postDeletePath(String postId) => '/api/posts/$postId';

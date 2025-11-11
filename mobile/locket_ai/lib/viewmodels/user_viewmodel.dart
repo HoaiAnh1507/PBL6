@@ -15,89 +15,16 @@ class UserViewModel extends ChangeNotifier {
   List<User> get users => List.unmodifiable(_users);
   User? get currentUser => _currentUser;
 
-  UserViewModel() {
-    _loadMockData();
-  }
+  UserViewModel();
 
   // ✅ Xóa cache URL hiển thị (SAS) để buộc tải lại avatar sau khi cập nhật
   void clearDisplayUrlCache() {
     _displayUrlCache.clear();
   }
 
-  void _loadMockData() {
-    final now = DateTime.now();
+  
 
-    _users.addAll([
-      User(
-        userId: 'u0',
-        phoneNumber: '0900000000',
-        username: 'me',
-        email: 'me@example.com',
-        fullName: 'Tôi',
-        profilePictureUrl: 'https://i.pravatar.cc/150?img=5',
-        passwordHash: 'me',
-        subscriptionStatus: SubscriptionStatus.FREE,
-        subscriptionExpiresAt: null,
-        accountStatus: AccountStatus.ACTIVE,
-        createdAt: now,
-        updatedAt: now,
-      ),
-      User(
-        userId: 'u1',
-        phoneNumber: '0900000001',
-        username: 'tuan',
-        email: 'tuan@example.com',
-        fullName: 'Nguyen Van Tuan',
-        profilePictureUrl: 'https://i.pravatar.cc/150?img=1',
-        passwordHash: 'hash1',
-        subscriptionStatus: SubscriptionStatus.FREE,
-        subscriptionExpiresAt: null,
-        accountStatus: AccountStatus.ACTIVE,
-        createdAt: now.subtract(const Duration(days: 30)),
-        updatedAt: now,
-      ),
-      User(
-        userId: 'u2',
-        phoneNumber: '0900000002',
-        username: 'hieu',
-        email: 'hieu@example.com',
-        fullName: 'Tran Van Hieu',
-        profilePictureUrl: 'https://i.pravatar.cc/150?img=2',
-        passwordHash: 'hash2',
-        subscriptionStatus: SubscriptionStatus.GOLD,
-        subscriptionExpiresAt: now.add(const Duration(days: 15)),
-        accountStatus: AccountStatus.ACTIVE,
-        createdAt: now.subtract(const Duration(days: 25)),
-        updatedAt: now,
-      ),
-      User(
-        userId: 'u3',
-        phoneNumber: '0900000003',
-        username: 'rin',
-        email: 'rin@example.com',
-        fullName: 'Nguyen Thi Rin',
-        profilePictureUrl: 'https://i.pravatar.cc/150?img=3',
-        passwordHash: 'hash3',
-        subscriptionStatus: SubscriptionStatus.FREE,
-        subscriptionExpiresAt: null,
-        accountStatus: AccountStatus.SUSPENDED,
-        createdAt: now.subtract(const Duration(days: 20)),
-        updatedAt: now,
-      ),
-    ]);
-
-    notifyListeners();
-  }
-
-  // ✅ Login
-  void login(String userId) {
-    final found = _users.firstWhere(
-      (u) => u.userId == userId,
-      orElse: () => throw Exception("User not found $userId"),
-    );
-    _currentUser = found;
-    notifyListeners();
-  }
+  // Login mock đã được loại bỏ. Hãy sử dụng AuthViewModel và backend.
 
   // ✅ Set current user từ Auth (thêm vào danh sách nếu chưa có)
   void setCurrentUser(User user) {
@@ -114,6 +41,15 @@ class UserViewModel extends ChangeNotifier {
   // ✅ Logout
   void logout() {
     _currentUser = null;
+    notifyListeners();
+  }
+
+  // ✅ Xóa toàn bộ dữ liệu đã fetch của tài khoản (cache, danh sách users, trạng thái hiện tại)
+  void clearAll() {
+    _users.clear();
+    _currentUser = null;
+    lastUploadError = null;
+    _displayUrlCache.clear();
     notifyListeners();
   }
 
@@ -367,7 +303,7 @@ class UserViewModel extends ChangeNotifier {
     }
   }
 
-  // ✅ Resolve displayable URL for a blob: if private Azure blob URL (no query), request READ SAS
+  // ✅ Resolve displayable URL for a blob: always request READ SAS for Azure blobs
   Future<String?> resolveDisplayUrl({
     required String jwt,
     required String? url,
@@ -378,13 +314,14 @@ class UserViewModel extends ChangeNotifier {
       if (_displayUrlCache.containsKey(cacheKey)) {
         return _displayUrlCache[cacheKey];
       }
-      // If already has query or is not azure blob, use as-is
-      if (!url.contains('blob.core.windows.net') || url.contains('?')) {
+      // Chỉ resolve nếu là Azure blob URL; ngược lại dùng nguyên URL
+      if (!url.contains('blob.core.windows.net')) {
         _displayUrlCache[cacheKey] = url;
         return url;
       }
-      // Parse container and blobName from URL
-      final u = Uri.parse(url);
+      // Luôn strip query để tránh dùng SAS hết hạn và xin SAS đọc mới
+      final baseUrl = url.split('?').first;
+      final u = Uri.parse(baseUrl);
       if (u.pathSegments.isEmpty) return url;
       final container = u.pathSegments.first;
       final blobName = u.pathSegments.sublist(1).join('/');

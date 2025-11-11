@@ -119,10 +119,7 @@ class LoginView extends StatefulWidget {
                                 await chatVM.loadRemoteConversations(jwt: jwt, currentUserId: current.userId);
                                 await chatVM.prefetchLatestMessagesForAll(jwt: jwt, currentUserId: current.userId);
                               } else {
-                                // Fallback: mock
-                                await friendshipVM.loadFriendships(current);
-                                chatVM.loadDataForCurrentUser();
-                                // Giữ sample posts nếu không có JWT
+                                // Không dùng mock khi chưa có JWT. Bỏ qua nạp dữ liệu.
                               }
 
                               if (!mounted) return;

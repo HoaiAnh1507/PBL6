@@ -7,6 +7,9 @@ import 'package:chewie/chewie.dart';
 import 'package:intl/intl.dart';
 import '../../models/post_model.dart';
 import 'package:locket_ai/widgets/async_avatar.dart';
+import 'package:provider/provider.dart';
+import '../../viewmodels/auth_viewmodel.dart';
+import '../../viewmodels/user_viewmodel.dart';
 
 class PostItem extends StatefulWidget {
   final Post post;
@@ -31,9 +34,19 @@ class _PostItemState extends State<PostItem> {
   Future<void> _initVideo() async {
     try {
       final path = widget.post.mediaUrl;
-      _v = path.startsWith('http')
-          ? VideoPlayerController.network(path)
-          : VideoPlayerController.file(File(path));
+      String source = path;
+      if (path.startsWith('http')) {
+        final authVM = Provider.of<AuthViewModel>(context, listen: false);
+        final userVM = Provider.of<UserViewModel>(context, listen: false);
+        final jwt = authVM.jwtToken;
+        if (jwt != null && jwt.isNotEmpty) {
+          final resolved = await userVM.resolveDisplayUrl(jwt: jwt, url: path);
+          source = resolved ?? path;
+        }
+      }
+      _v = source.startsWith('http')
+          ? VideoPlayerController.network(source)
+          : VideoPlayerController.file(File(source));
       await _v!.initialize();
       _v!.setLooping(true);
       _chewie = ChewieController(
@@ -94,20 +107,36 @@ class _PostItemState extends State<PostItem> {
                 color: Colors.black,
                 child: post.mediaType == MediaType.PHOTO
                   ? (post.mediaUrl.startsWith('http')
-                      ? Image.network(
-                          post.mediaUrl,
-                          fit: BoxFit.cover,
-                          width: double.infinity,
-                          height: double.infinity,
-                          loadingBuilder: (context, child, loadingProgress) {
-                            if (loadingProgress == null) return child;
-                            return const Center(
-                              child: CircularProgressIndicator(color: Colors.pinkAccent),
-                            );
-                          },
-                          errorBuilder: (context, error, stackTrace) {
-                            return const Center(
-                              child: Icon(Icons.broken_image, color: Colors.white54, size: 40),
+                      ? Builder(
+                          builder: (context) {
+                            final authVM = Provider.of<AuthViewModel>(context, listen: false);
+                            final userVM = Provider.of<UserViewModel>(context, listen: false);
+                            final jwt = authVM.jwtToken;
+                            final future = (jwt != null && jwt.isNotEmpty)
+                                ? userVM.resolveDisplayUrl(jwt: jwt, url: post.mediaUrl)
+                                : Future<String?>.value(post.mediaUrl);
+                            return FutureBuilder<String?>(
+                              future: future,
+                              builder: (context, snapshot) {
+                                final resolved = snapshot.data ?? post.mediaUrl;
+                                return Image.network(
+                                  resolved,
+                                  fit: BoxFit.cover,
+                                  width: double.infinity,
+                                  height: double.infinity,
+                                  loadingBuilder: (context, child, loadingProgress) {
+                                    if (loadingProgress == null) return child;
+                                    return const Center(
+                                      child: CircularProgressIndicator(color: Colors.pinkAccent),
+                                    );
+                                  },
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return const Center(
+                                      child: Icon(Icons.broken_image, color: Colors.white54, size: 40),
+                                    );
+                                  },
+                                );
+                              },
                             );
                           },
                         )

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:locket_ai/core/constants/colors.dart';
+import 'package:locket_ai/viewmodels/user_viewmodel.dart';
 import 'package:locket_ai/widgets/async_avatar.dart';
 import 'package:provider/provider.dart';
 import '../../viewmodels/chat_viewmodel.dart';
@@ -429,20 +430,36 @@ class _ChatPostEmbedState extends State<ChatPostEmbed> {
     if (post.mediaType == MediaType.PHOTO) {
       final isNetwork = post.mediaUrl.startsWith('http');
       media = isNetwork
-          ? Image.network(
-              post.mediaUrl,
-              fit: BoxFit.cover,
-              width: double.infinity,
-              height: double.infinity,
-              loadingBuilder: (context, child, loadingProgress) {
-                if (loadingProgress == null) return child;
-                return const Center(
-                  child: CircularProgressIndicator(color: Colors.pinkAccent),
-                );
-              },
-              errorBuilder: (context, error, stackTrace) {
-                return const Center(
-                  child: Icon(Icons.broken_image, color: Colors.white54, size: 40),
+          ? Builder(
+              builder: (context) {
+                final authVM = Provider.of<AuthViewModel>(context, listen: false);
+                final userVM = Provider.of<UserViewModel>(context, listen: false);
+                final jwt = authVM.jwtToken;
+                final future = (jwt != null && jwt.isNotEmpty)
+                    ? userVM.resolveDisplayUrl(jwt: jwt, url: post.mediaUrl)
+                    : Future<String?>.value(post.mediaUrl);
+                return FutureBuilder<String?>(
+                  future: future,
+                  builder: (context, snapshot) {
+                    final resolved = snapshot.data ?? post.mediaUrl;
+                    return Image.network(
+                      resolved,
+                      fit: BoxFit.cover,
+                      width: double.infinity,
+                      height: double.infinity,
+                      loadingBuilder: (context, child, loadingProgress) {
+                        if (loadingProgress == null) return child;
+                        return const Center(
+                          child: CircularProgressIndicator(color: Colors.pinkAccent),
+                        );
+                      },
+                      errorBuilder: (context, error, stackTrace) {
+                        return const Center(
+                          child: Icon(Icons.broken_image, color: Colors.white54, size: 40),
+                        );
+                      },
+                    );
+                  },
                 );
               },
             )

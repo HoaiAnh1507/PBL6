@@ -7,6 +7,9 @@ import 'package:locket_ai/widgets/message_bar.dart';
 import 'package:provider/provider.dart';
 import '../../viewmodels/feed_viewmodel.dart';
 import '../../viewmodels/chat_viewmodel.dart';
+import '../../viewmodels/friendship_viewmodel.dart';
+import '../../models/friendship_model.dart';
+import '../../widgets/async_avatar.dart';
 import '../feed/post_item.dart';
 import '../../models/user_model.dart';
 
@@ -35,9 +38,14 @@ class _FeedViewState extends State<FeedView> {
   final FocusNode _messageFocus = FocusNode();
 
   int _currentIndex = 0;
+  bool _listenersAttached = false;
 
   @override
   void dispose() {
+    if (_listenersAttached) {
+      widget.verticalController.removeListener(_onPagePositionChanged);
+      widget.horizontalController.removeListener(_onPagePositionChanged);
+    }
     _scrollCtrl.dispose();
     _pageCtrl.dispose();
     _messageCtrl.dispose();
@@ -51,55 +59,155 @@ class _FeedViewState extends State<FeedView> {
     _messageFocus.addListener(() {
       setState(() {});
     });
+
+    // Gắn listener vào cả 2 PageController để reset filter về All khi rời FeedView
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (!_listenersAttached) {
+        widget.verticalController.addListener(_onPagePositionChanged);
+        widget.horizontalController.addListener(_onPagePositionChanged);
+        _listenersAttached = true;
+      }
+      // Đảm bảo lần đầu vào, nhãn là 'All'
+      final feedVm = Provider.of<FeedViewModel>(context, listen: false);
+      if (feedVm.filterType != FeedFilterType.all) {
+        feedVm.setFilterAll();
+      }
+    });
+  }
+
+  void _onPagePositionChanged() {
+    if (!mounted) return;
+    final feedVm = Provider.of<FeedViewModel>(context, listen: false);
+    final hPage = widget.horizontalController.hasClients
+        ? (widget.horizontalController.page ?? 1.0).round()
+        : 1;
+    final vPage = widget.verticalController.hasClients
+        ? (widget.verticalController.page ?? 0.0).round()
+        : 0;
+    final isFeedVisible = (hPage == 1 && vPage == 1);
+    if (!isFeedVisible && feedVm.filterType != FeedFilterType.all) {
+      // Rời FeedView: reset filter về mặc định All
+      feedVm.setFilterAll();
+    }
   }
 
   Widget _buildHeader() {
+    final friendshipVM = Provider.of<FriendshipViewModel>(context);
+    final friendsCount = _acceptedFriendsCount(friendshipVM);
+    final feedVm = Provider.of<FeedViewModel>(context);
     return BaseHeader(
       horizontalController: widget.horizontalController,
-      count: 5,
-      label: 'Friends',
-      onTap: _showFriendsSheet
+      count: friendsCount,
+      label: feedVm.filterLabel,
+      showCount: false,
+      onTap: _showFriendsSheet,
     );
   }
 
   void _showFriendsSheet() async {
+    final friendshipVM = Provider.of<FriendshipViewModel>(context, listen: false);
+    final feedVm = Provider.of<FeedViewModel>(context, listen: false);
+    final current = widget.currentUser;
+
+    // Build accepted friends list
+    final acceptedUsers = friendshipVM.friendships
+        .where((f) => f.status == FriendshipStatus.accepted &&
+            (f.userOne?.userId == current.userId || f.userTwo?.userId == current.userId))
+        .map((f) => f.userOne?.userId == current.userId ? f.userTwo : f.userOne)
+        .whereType<User>()
+        .toList();
+
     await showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.black.withOpacity(0.8),
+      backgroundColor: Colors.black.withOpacity(0.85),
       shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(30))),
-      builder: (_) => Container(
-        padding: const EdgeInsets.all(20),
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          Container(
-              height: 5,
-              width: 40,
-              decoration: BoxDecoration(
-                  color: Colors.white24,
-                  borderRadius: BorderRadius.circular(10))),
-          const SizedBox(height: 16),
-          Text('Your friends',
-              style: GoogleFonts.poppins(
-                  fontSize: 18,
-                  color: Colors.white,
-                  fontWeight: FontWeight.w600)),
-          const SizedBox(height: 12),
-          ...List.generate(
-            5,
-            (i) => ListTile(
-              leading: const CircleAvatar(
-                  backgroundColor: Color(0xFFEAEAEA),
-                  child: Icon(Icons.person, color: Colors.white)),
-              title: Text('Friend ${i + 1}',
-                  style: const TextStyle(color: Colors.white)),
+      builder: (_) => Padding(
+        padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+        child: SingleChildScrollView(
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    height: 5,
+                    width: 40,
+                    decoration: BoxDecoration(
+                        color: Colors.white24,
+                        borderRadius: BorderRadius.circular(10)),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Center(
+                  child: Text(
+                    'Your friends',
+                    style: GoogleFonts.poppins(
+                        fontSize: 18,
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600),
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // Option: All (match avatar size)
+                ListTile(
+                  leading: const CircleAvatar(
+                    radius: 20,
+                    backgroundColor: Colors.white24,
+                    child: Icon(Icons.public, color: Colors.white70, size: 20),
+                  ),
+                  title: Text('All', style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w600)),
+                  onTap: () {
+                    feedVm.setFilterAll();
+                    Navigator.of(context).pop();
+                  },
+                ),
+                // Option: me
+                ListTile(
+                  leading: AsyncAvatar(url: current.profilePictureUrl, radius: 20, fallbackKey: current.userId),
+                  title: Text('Me', style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w600)),
+                  onTap: () {
+                    feedVm.setFilterMe();
+                    Navigator.of(context).pop();
+                  },
+                ),
+                const Divider(color: Colors.white24),
+
+                // List accepted friends
+                ...acceptedUsers.map((u) => ListTile(
+                      leading: AsyncAvatar(url: u.profilePictureUrl, radius: 20, fallbackKey: u.userId),
+                      title: Text(u.fullName.isNotEmpty ? u.fullName : '@${u.username}',
+                          style: GoogleFonts.poppins(color: Colors.white)),
+                      subtitle: Text('@${u.username}', style: GoogleFonts.poppins(color: Colors.white54)),
+                      onTap: () {
+                        feedVm.setFilterFriend(u);
+                        Navigator.of(context).pop();
+                      },
+                    )),
+              ],
             ),
           ),
-        ]),
+        ),
       ),
     );
     // Unfocus again after modal is dismissed to prevent message bar from popping up
     _messageFocus.unfocus();
+  }
+
+  int _acceptedFriendsCount(FriendshipViewModel friendshipVM) {
+    final current = widget.currentUser;
+    final friends = friendshipVM.friendships
+        .where((f) => f.status == FriendshipStatus.accepted &&
+            (f.userOne?.userId == current.userId || f.userTwo?.userId == current.userId))
+        .map((f) => f.userOne?.userId == current.userId ? f.userTwo : f.userOne)
+        .whereType<User>()
+        .length;
+    return friends;
   }
 
   Widget _buildMessageBar() {
@@ -242,7 +350,7 @@ class _FeedViewState extends State<FeedView> {
                     opacity: animation,
                     child: child,
                   ),
-                  child: isOwnPost
+                  child: (isOwnPost || posts.isEmpty)
                       ? const SizedBox.shrink()
                       : _buildMessageBar(),
                 ),

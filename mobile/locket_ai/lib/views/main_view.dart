@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:locket_ai/viewmodels/feed_viewmodel.dart';
 import 'package:provider/provider.dart';
 import 'package:locket_ai/views/feed/feed_view.dart';
 import 'package:locket_ai/views/camera/camera_view.dart';
@@ -32,6 +33,7 @@ class _MainViewState extends State<MainView> {
       final authVM = Provider.of<AuthViewModel>(context, listen: false);
       final friendshipVM = Provider.of<FriendshipViewModel>(context, listen: false);
       final chatVM = Provider.of<ChatViewModel>(context, listen: false);
+      final feedVM = Provider.of<FeedViewModel>(context, listen: false);
 
       final current = authVM.currentUser;
       final jwt = authVM.jwtToken;
@@ -47,14 +49,11 @@ class _MainViewState extends State<MainView> {
           try {
             await chatVM.prefetchAllMessagesForCurrentUser(jwt: jwt, currentUserId: current.userId);
           } catch (_) {}
+          try {
+            await feedVM.loadRemoteFeed(jwt: jwt, current: current);
+          } catch (_) {}
         } else {
-          // Fallback khi chưa có JWT: dùng dữ liệu mock
-          try {
-            await friendshipVM.loadFriendships(current);
-          } catch (_) {}
-          try {
-            chatVM.loadDataForCurrentUser();
-          } catch (_) {}
+          // Không dùng mock khi chưa có JWT. Bỏ qua nạp dữ liệu.
         }
       }
 

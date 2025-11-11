@@ -40,10 +40,7 @@ class _ChatListViewState extends State<ChatListView> {
           await chatVM.loadRemoteConversations(jwt: jwt, currentUserId: current.userId);
           await chatVM.prefetchAllMessagesForCurrentUser(jwt: jwt, currentUserId: current.userId);
         } else {
-          // Fallback: dùng mock nếu chưa có JWT
-          await friendshipVM.loadFriendships(current);
-          // Sau khi có danh sách bạn bè, tạo conversations/mock tin nhắn tương ứng
-          chatVM.loadDataForCurrentUser();
+          // Không dùng mock khi chưa có JWT. Bỏ qua nạp dữ liệu.
         }
       }
 
