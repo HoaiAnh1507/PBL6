@@ -7,12 +7,17 @@ class PostRecipientsSelectorViewModel extends ChangeNotifier {
   bool get allSelected => _allSelected;
   List<String> get selectedIds => List.unmodifiable(_selectedIds);
 
-  void toggleAll() {
+  /// Bật/tắt All. Khi bật, thêm toàn bộ friendIds vào _selectedIds để gửi backend.
+  void toggleAll({List<String>? friendIds}) {
     if (_allSelected) {
       _allSelected = false;
+      _selectedIds.clear();
     } else {
       _allSelected = true;
       _selectedIds.clear();
+      if (friendIds != null && friendIds.isNotEmpty) {
+        _selectedIds.addAll(friendIds);
+      }
     }
     notifyListeners();
   }
@@ -29,8 +34,8 @@ class PostRecipientsSelectorViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  List<String>? recipientIdsForApi() {
-    if (_allSelected) return null;
+  /// Trả về danh sách recipientIds để backend xử lý, gồm cả khi All được bật.
+  List<String> recipientIdsForApi() {
     return _selectedIds.toList();
   }
 }

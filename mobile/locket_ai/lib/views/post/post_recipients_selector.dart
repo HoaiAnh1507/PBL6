@@ -54,13 +54,15 @@ class PostRecipientsSelector extends StatelessWidget {
               padding: const EdgeInsets.only(right: 18),
               child: _AllTile(
                 selected: selectorVM.allSelected,
-                onTap: selectorVM.toggleAll,
+                onTap: () => selectorVM.toggleAll(
+                  friendIds: friends.map((u) => u.userId).toList(),
+                ),
                 labelStyle: authTextStyle,
               ),
             ),
             ...friends.map((u) => _FriendTile(
                   user: u,
-                  selected: selectorVM.selectedIds.contains(u.userId),
+                  selected: selectorVM.allSelected ? false : selectorVM.selectedIds.contains(u.userId),
                   onTap: () => selectorVM.toggleFriend(u.userId),
                   labelStyle: authTextStyle,
                 )),
