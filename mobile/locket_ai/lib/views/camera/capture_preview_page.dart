@@ -9,9 +9,12 @@ import 'package:video_player/video_player.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import '../../viewmodels/auth_viewmodel.dart';
+import '../../viewmodels/friendship_viewmodel.dart';
 import '../../core/constants/colors.dart';
 import '../../widgets/gradient_icon.dart';
 import '../../core/config/api_config.dart';
+import '../post/post_recipients_selector.dart';
+import '../../viewmodels/post_recipients_selector_viewmodel.dart';
 
 class CapturePreviewPage extends StatefulWidget {
   final String imagePath;
@@ -42,8 +45,6 @@ bool _aiGenerating = false;
   String _aiPhaseFallback = 'AI is thinking...';
   String _aiCurrentPhrase = '';
   Timer? _typingTimer;
-  final String _aiTargetCaption = 'This is AI generated caption';
-  int _typingIndex = 0;
   // AI cancellation and generation tracking
   int _aiGenerationId = 0;
   bool _aiCancelRequested = false;
@@ -54,22 +55,6 @@ bool _aiGenerating = false;
   // Lấy cấu hình từ ApiConfig (không hardcode base URL hoặc container)
   // Nếu có JWT thì gắn vào đây hoặc lấy từ AuthViewModel
   String? _authToken;
-
-  String _wrapPerLine(String text, int maxChars) {
-    final lines = text.split('\n');
-    final wrapped = <String>[];
-    for (final line in lines) {
-      if (line.length <= maxChars) {
-        wrapped.add(line);
-      } else {
-        for (int i = 0; i < line.length; i += maxChars) {
-          final end = (i + maxChars) > line.length ? line.length : (i + maxChars);
-          wrapped.add(line.substring(i, end));
-        }
-      }
-    }
-    return wrapped.join('\n');
-  }
 
   @override
   void initState() {
@@ -82,6 +67,16 @@ bool _aiGenerating = false;
           _videoController!.play();
         });
     }
+    // Sau khi build lần đầu, nếu chưa có danh sách bạn bè, thử tải từ backend (nếu có JWT)
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final authVM = Provider.of<AuthViewModel>(context, listen: false);
+      final friendshipVM = Provider.of<FriendshipViewModel>(context, listen: false);
+      final jwt = authVM.jwtToken ?? _authToken;
+      final current = authVM.currentUser;
+      if (jwt != null && jwt.isNotEmpty && current != null && friendshipVM.acceptedFriends.isEmpty) {
+        await friendshipVM.loadFriendsRemote(jwt: jwt, current: current);
+      }
+    });
   }
 
   @override
@@ -114,19 +109,6 @@ bool _aiGenerating = false;
       if (mounted) setState(() {});
       await Future.delayed(Duration(milliseconds: speedMs));
       if ((genId != null && genId != _aiGenerationId) || _aiCancelRequested || (shouldStop?.call() ?? false)) return;
-    }
-  }
-
-  Future<void> _loopThinkingUntil(DateTime until, int genId) async {
-    // Thinking: giữ fallback là chính cụm "AI is thinking..." để tránh khoảng trống
-    _aiPhaseFallback = 'AI is thinking...';
-    while (DateTime.now().isBefore(until)) {
-      if (!mounted || genId != _aiGenerationId || _aiCancelRequested) return;
-      await _typeText('AI is thinking...', (s) => _aiPhaseText = s, genId: genId);
-      if (!mounted || genId != _aiGenerationId || _aiCancelRequested) return;
-      await Future.delayed(const Duration(milliseconds: 350));
-      if (!mounted || genId != _aiGenerationId || _aiCancelRequested) return;
-      await _eraseText(_aiPhaseText, (s) => _aiPhaseText = s, genId: genId);
     }
   }
 
@@ -466,7 +448,9 @@ bool _aiGenerating = false;
         'expiresInSeconds': 300,
         'mediaType': widget.isVideo ? 'VIDEO' : 'PHOTO',
       });
-      final res = await http.post(uri, headers: headers, body: body);
+      final res = await http
+          .post(uri, headers: headers, body: body)
+          .timeout(const Duration(seconds: 20));
       if (res.statusCode != 200) {
         final bodyText = res.body.isNotEmpty ? res.body : '(no body)';
         ScaffoldMessenger.of(context).showSnackBar(
@@ -490,7 +474,9 @@ bool _aiGenerating = false;
         'x-ms-blob-content-type': contentType,
         'Content-Type': contentType,
       };
-      final putResp = await http.put(Uri.parse(signedUrl), headers: putHeaders, body: bytes);
+      final putResp = await http
+          .put(Uri.parse(signedUrl), headers: putHeaders, body: bytes)
+          .timeout(const Duration(seconds: 45));
       if (putResp.statusCode == 201 || putResp.statusCode == 200) {
         // Trả về signedUrl (có SAS) để AI dùng đọc file
         return signedUrl;
@@ -500,7 +486,15 @@ bool _aiGenerating = false;
       SnackBar(content: Text('Azure PUT failed: ${putResp.statusCode} $putBody')),
       );
       return null;
-    } catch (_) {
+    } on TimeoutException {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Upload timed out. Please check your network and try again.')),
+      );
+      return null;
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Upload error: $e')),
+      );
       return null;
     }
   }
@@ -580,7 +574,8 @@ bool _aiGenerating = false;
     }
   }
 
-  Future<Map<String, dynamic>?> _createDirectPost(String mediaUrl, String finalCaption) async {
+  Future<Map<String, dynamic>?> _createDirectPost(
+      String mediaUrl, String finalCaption, List<String>? recipientIds) async {
     try {
       final authVM = Provider.of<AuthViewModel>(context, listen: false);
       final token = authVM.jwtToken ?? _authToken;
@@ -599,9 +594,11 @@ bool _aiGenerating = false;
         'mediaType': widget.isVideo ? 'VIDEO' : 'PHOTO',
         'mediaUrl': mediaUrl,
         'finalCaption': finalCaption.isNotEmpty ? finalCaption : null,
-        'recipientIds': null,
+        'recipientIds': recipientIds,
       });
-      final res = await http.post(uri, headers: headers, body: body);
+      final res = await http
+          .post(uri, headers: headers, body: body)
+          .timeout(const Duration(seconds: 20));
       if (res.statusCode != 200) {
         final bodyText = res.body.isNotEmpty ? res.body : '(no body)';
         ScaffoldMessenger.of(context).showSnackBar(
@@ -611,12 +608,21 @@ bool _aiGenerating = false;
       }
       final data = jsonDecode(res.body) as Map<String, dynamic>;
       return data;
-    } catch (_) {
+    } on TimeoutException {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Post request timed out. Please try again.')),
+      );
+      return null;
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Post error: $e')),
+      );
       return null;
     }
   }
 
-  Future<Map<String, dynamic>?> _commitAiPost(String postId, String finalCaption) async {
+  Future<Map<String, dynamic>?> _commitAiPost(
+      String postId, String finalCaption, List<String>? recipientIds) async {
     try {
       final authVM = Provider.of<AuthViewModel>(context, listen: false);
       final token = authVM.jwtToken ?? _authToken;
@@ -634,9 +640,11 @@ bool _aiGenerating = false;
       final body = jsonEncode({
         'postId': postId,
         'finalCaption': finalCaption.isNotEmpty ? finalCaption : null,
-        'recipientIds': null,
+        'recipientIds': recipientIds,
       });
-      final res = await http.post(uri, headers: headers, body: body);
+      final res = await http
+          .post(uri, headers: headers, body: body)
+          .timeout(const Duration(seconds: 20));
       if (res.statusCode != 200) {
         final bodyText = res.body.isNotEmpty ? res.body : '(no body)';
         ScaffoldMessenger.of(context).showSnackBar(
@@ -646,7 +654,15 @@ bool _aiGenerating = false;
       }
       final data = jsonDecode(res.body) as Map<String, dynamic>;
       return data;
-    } catch (_) {
+    } on TimeoutException {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Commit request timed out. Please try again.')),
+      );
+      return null;
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Commit error: $e')),
+      );
       return null;
     }
   }
@@ -713,7 +729,9 @@ bool _aiGenerating = false;
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size.width;
 
-    return Scaffold(
+    return ChangeNotifierProvider<PostRecipientsSelectorViewModel>(
+      create: (_) => PostRecipientsSelectorViewModel(),
+      child: Scaffold(
       backgroundColor: Colors.black,
       resizeToAvoidBottomInset: false,
       body: MediaQuery.removeViewInsets(
@@ -756,6 +774,13 @@ bool _aiGenerating = false;
               ),
             ],
           ),
+        ),
+
+        Positioned(
+          bottom: 30,
+          left: 0,
+          right: 0,
+          child: const PostRecipientsSelector(height: 110),
         ),
 
         // Ảnh hoặc video preview
@@ -865,11 +890,11 @@ bool _aiGenerating = false;
                         final bool contentHasNewline = displayText.contains('\n');
                         final bool isSingleLineContent = !contentHasNewline && measuredWidth <= maxChipWidth;
                         final double chipWidth = isSingleLineContent
-                            ? (measuredWidth.clamp(120.0, maxChipWidth) as double)
+                            ? measuredWidth.clamp(120.0, maxChipWidth)
                             : maxChipWidth;
 
                         final double chipRadius = isSingleLineContent
-                            ? ((18.0 + (longestLen / 35.0) * 12).clamp(18.0, 30.0) as double)
+                            ? (18.0 + (longestLen / 35.0) * 12).clamp(18.0, 30.0)
                             : 30.0;
 
                         // Lift only the caption chip when keyboard opens and TextField has focus
@@ -926,9 +951,9 @@ bool _aiGenerating = false;
                                     textInputAction: TextInputAction.done,
                                   ),
                             ),
-                          ),
-                        );
-                      },
+      ),
+    );
+  }
                     ),
                   ),
                 ],
@@ -944,7 +969,11 @@ bool _aiGenerating = false;
           bottom: 180,
           left: 0,
           right: 0,
-          child: Row(
+          child: Builder(builder: (context) {
+            final selectorVM = Provider.of<PostRecipientsSelectorViewModel>(context);
+            final bool hasSelection = selectorVM.allSelected || selectorVM.selectedIds.isNotEmpty;
+            final bool disabled = _aiGenerating || _posting || !hasSelection;
+            return Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
               GestureDetector(
@@ -963,14 +992,17 @@ bool _aiGenerating = false;
                 child: const GradientIcon(icon: Icons.cancel_outlined, size: 30),
               ),
               Opacity(
-                opacity: (_aiGenerating || _posting) ? 0.4 : 1.0,
+                opacity: disabled ? 0.4 : 1.0,
                 child: GestureDetector(
                   onTap: () async {
-                    if (_aiGenerating || _posting) return;
+                    if (disabled) return;
                     setState(() => _posting = true);
+                    // Lấy recipientIds từ selectorVM ở context con nằm dưới Provider
+                    final List<String>? recipientIds = selectorVM.recipientIdsForApi();
                     if (_pendingPostId != null) {
                       // AI flow: đã upload và init trước đó, chỉ cần commit
-                      final resp = await _commitAiPost(_pendingPostId!, _captionController.text);
+                      final resp = await _commitAiPost(
+                          _pendingPostId!, _captionController.text, recipientIds);
                       if (resp != null) {
                         _pendingPostId = null; // tránh xóa nhầm khi quay lại
                         try {
@@ -992,7 +1024,8 @@ bool _aiGenerating = false;
                         setState(() => _posting = false);
                         return;
                       }
-                      final resp = await _createDirectPost(mediaUrl, _captionController.text);
+                      final resp = await _createDirectPost(
+                          mediaUrl, _captionController.text, recipientIds);
                       if (resp != null) {
                         try {
                           widget.onPost(_captionController.text, widget.imagePath, widget.isVideo);
@@ -1031,7 +1064,8 @@ bool _aiGenerating = false;
                 ),
               ),
             ],
-          ),
+          );
+          }),
         ),
         if (_posting)
           Positioned.fill(
@@ -1053,7 +1087,9 @@ bool _aiGenerating = false;
             ),
           ),
           ],
-        )),
+        )
+      ),
+      )
     );
   }
 }

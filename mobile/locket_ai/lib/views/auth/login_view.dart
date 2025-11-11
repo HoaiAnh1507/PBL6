@@ -5,6 +5,7 @@ import '../../viewmodels/auth_viewmodel.dart';
 import '../../viewmodels/friendship_viewmodel.dart';
 import '../../viewmodels/chat_viewmodel.dart';
 import '../../viewmodels/user_viewmodel.dart';
+import '../../viewmodels/feed_viewmodel.dart';
 
 class LoginView extends StatefulWidget {
   const LoginView({super.key});
@@ -100,6 +101,7 @@ class LoginView extends StatefulWidget {
                               final friendshipVM = Provider.of<FriendshipViewModel>(context, listen: false);
                               final chatVM = Provider.of<ChatViewModel>(context, listen: false);
                               final userVM = Provider.of<UserViewModel>(context, listen: false);
+                              final feedVM = Provider.of<FeedViewModel>(context, listen: false);
 
                               // Đồng bộ currentUser (từ backend) vào UserViewModel
                               userVM.setCurrentUser(authVM.currentUser!);
@@ -108,12 +110,16 @@ class LoginView extends StatefulWidget {
                               final jwt = authVM.jwtToken;
                               final current = authVM.currentUser!;
                               if (jwt != null && jwt.isNotEmpty) {
-                                await friendshipVM.loadFriendsRemote(jwt: jwt, current: current);
+                                // Chạy song song friends + feed, còn chat thì nạp tuần tự: hội thoại → tin nhắn
+                                await Future.wait([
+                                  friendshipVM.loadFriendsRemote(jwt: jwt, current: current),
+                                  friendshipVM.loadRequestsRemote(jwt: jwt, currentUserId: current.userId),
+                                  feedVM.loadRemoteFeed(jwt: jwt, current: current),
+                                ]);
                                 await chatVM.loadRemoteConversations(jwt: jwt, currentUserId: current.userId);
+                                await chatVM.prefetchLatestMessagesForAll(jwt: jwt, currentUserId: current.userId);
                               } else {
-                                // Fallback: mock
-                                await friendshipVM.loadFriendships(current);
-                                chatVM.loadDataForCurrentUser();
+                                // Không dùng mock khi chưa có JWT. Bỏ qua nạp dữ liệu.
                               }
 
                               if (!mounted) return;

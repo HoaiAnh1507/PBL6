@@ -7,6 +7,7 @@ import '../../viewmodels/user_viewmodel.dart';
 import '../../viewmodels/auth_viewmodel.dart';
 import '../../viewmodels/friendship_viewmodel.dart';
 import 'chat_room_view.dart';
+import 'package:locket_ai/widgets/async_avatar.dart';
 
 class ChatListView extends StatefulWidget {
   final String currentUserId; // ví dụ: 'u1'
@@ -37,11 +38,9 @@ class _ChatListViewState extends State<ChatListView> {
         if (jwt != null && jwt.isNotEmpty) {
           await friendshipVM.loadFriendsRemote(jwt: jwt, current: current);
           await chatVM.loadRemoteConversations(jwt: jwt, currentUserId: current.userId);
+          await chatVM.prefetchAllMessagesForCurrentUser(jwt: jwt, currentUserId: current.userId);
         } else {
-          // Fallback: dùng mock nếu chưa có JWT
-          await friendshipVM.loadFriendships(current);
-          // Sau khi có danh sách bạn bè, tạo conversations/mock tin nhắn tương ứng
-          chatVM.loadDataForCurrentUser();
+          // Không dùng mock khi chưa có JWT. Bỏ qua nạp dữ liệu.
         }
       }
 
@@ -76,7 +75,9 @@ class _ChatListViewState extends State<ChatListView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.background,
       appBar: AppBar(
+        backgroundColor: AppColors.background,
         elevation: 0,
         title: Text(
           'Messengers',
@@ -159,14 +160,12 @@ class _ChatListViewState extends State<ChatListView> {
                       gradient: instagramGradient,
                       shape: BoxShape.circle,
                     ),
-                    child: CircleAvatar(
+                    child: AsyncAvatar(
+                      url: (user.profilePictureUrl != null && user.profilePictureUrl!.isNotEmpty)
+                          ? user.profilePictureUrl
+                          : 'https://i.pravatar.cc/150?u=${user.userId}',
                       radius: 30,
-                      backgroundColor: Colors.grey[800],
-                      backgroundImage: NetworkImage(
-                        (user.profilePictureUrl != null && user.profilePictureUrl!.isNotEmpty)
-                            ? user.profilePictureUrl!
-                            : 'https://i.pravatar.cc/150?u=${user.userId}',
-                      ),
+                      fallbackKey: user.userId,
                     ),
                   ),
                   title: Row(
@@ -194,8 +193,8 @@ class _ChatListViewState extends State<ChatListView> {
                     ],
                   ),
                   subtitle: Text(
-                    // Nếu chưa có tin nhắn: hiển thị gợi ý
-                    latestMessage?.content ?? (conv?.lastMessageAt != null ? 'New activity' : 'Start a conversation'),
+                    // Không hiển thị "New activity" nữa; nếu chưa có tin nhắn → gợi ý
+                    latestMessage?.content ?? 'Start a conversation',
                     style: GoogleFonts.poppins(
                       color: Color.fromARGB(179, 130, 130, 130),
                       fontWeight: FontWeight.w500,

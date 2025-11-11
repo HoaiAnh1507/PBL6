@@ -6,12 +6,14 @@ class FriendsButton extends StatelessWidget {
   final int count;
   final String label;
   final VoidCallback onTap;
+  final bool showCount;
 
   const FriendsButton({
     super.key,
     required this.count,
     required this.label,
     required this.onTap,
+    this.showCount = true,
   });
 
   @override
@@ -36,16 +38,18 @@ class FriendsButton extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 8),
-            Text(
-              count.toString(),
-              style: GoogleFonts.poppins(
-                color: Colors.white,
-                fontWeight: FontWeight.w600,
-                fontSize: 16,
-                decoration: TextDecoration.none,
+            if (showCount) ...[
+              Text(
+                count.toString(),
+                style: GoogleFonts.poppins(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 16,
+                  decoration: TextDecoration.none,
+                ),
               ),
-            ),
-            const SizedBox(width: 6),
+              const SizedBox(width: 6),
+            ],
             Text(
               label,
               style: GoogleFonts.poppins(

@@ -33,27 +33,29 @@ class User extends Equatable {
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
+    final createdStr = json['createdAt']?.toString() ?? DateTime.now().toIso8601String();
+    final updatedStr = json['updatedAt']?.toString() ?? createdStr;
     return User(
-      userId: json['userId'],
-      phoneNumber: json['phoneNumber'],
-      username: json['username'],
-      email: json['email'],
-      fullName: json['fullName'],
-      profilePictureUrl: json['profilePictureUrl'],
-      passwordHash: json['passwordHash'],
+      userId: (json['userId'] ?? json['id'] ?? '').toString(),
+      phoneNumber: (json['phoneNumber'] ?? '').toString(),
+      username: (json['username'] ?? '').toString(),
+      email: (json['email'] ?? '').toString(),
+      fullName: (json['fullName'] ?? json['username'] ?? '').toString(),
+      profilePictureUrl: json['profilePictureUrl']?.toString(),
+      passwordHash: (json['passwordHash'] ?? '').toString(),
       subscriptionStatus: SubscriptionStatus.values.firstWhere(
-        (e) => e.name == (json['subscriptionStatus'] ?? 'FREE'),
+        (e) => e.name == ((json['subscriptionStatus'] ?? 'FREE').toString()),
         orElse: () => SubscriptionStatus.FREE,
       ),
       subscriptionExpiresAt: json['subscriptionExpiresAt'] != null
-          ? DateTime.parse(json['subscriptionExpiresAt'])
+          ? DateTime.tryParse(json['subscriptionExpiresAt'].toString())
           : null,
       accountStatus: AccountStatus.values.firstWhere(
-        (e) => e.name == (json['accountStatus'] ?? 'ACTIVE'),
+        (e) => e.name == ((json['accountStatus'] ?? 'ACTIVE').toString()),
         orElse: () => AccountStatus.ACTIVE,
       ),
-      createdAt: DateTime.parse(json['createdAt']),
-      updatedAt: DateTime.parse(json['updatedAt']),
+      createdAt: DateTime.tryParse(createdStr) ?? DateTime.now(),
+      updatedAt: DateTime.tryParse(updatedStr) ?? DateTime.tryParse(createdStr) ?? DateTime.now(),
     );
   }
 

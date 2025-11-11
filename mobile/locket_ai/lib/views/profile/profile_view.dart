@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:locket_ai/widgets/async_avatar.dart';
 import 'package:provider/provider.dart';
 import '../../models/user_model.dart';
 import '../../viewmodels/auth_viewmodel.dart';
@@ -46,16 +47,10 @@ class ProfileView extends StatelessWidget {
                   ),
                   child: Column(
                     children: [
-                      CircleAvatar(
+                      AsyncAvatar(
+                        url: user.profilePictureUrl,
                         radius: 48,
-                        backgroundColor: Colors.white24,
-                        backgroundImage: (user.profilePictureUrl != null) ? NetworkImage(user.profilePictureUrl!) : null,
-                        child: (user.profilePictureUrl == null)
-                            ? Text(
-                                (user.fullName.isNotEmpty ? user.fullName[0] : 'U'),
-                                style: const TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold),
-                              )
-                            : null,
+                        fallbackKey: user.userId,
                       ),
                       const SizedBox(height: 12),
                       Text(user.fullName, style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.white, fontWeight: FontWeight.w600)),

@@ -3,8 +3,12 @@ import 'package:provider/provider.dart';
 import '../../viewmodels/settings_viewmodel.dart';
 import '../../viewmodels/auth_viewmodel.dart';
 import '../../viewmodels/user_viewmodel.dart';
+import '../../viewmodels/feed_viewmodel.dart';
+import '../../viewmodels/friendship_viewmodel.dart';
+import '../../viewmodels/chat_viewmodel.dart';
 import '../../core/constants/colors.dart';
 import '../profile/profile_view.dart';
+import 'package:locket_ai/widgets/async_avatar.dart';
 
 class SettingsView extends StatelessWidget {
   const SettingsView({Key? key}) : super(key: key);
@@ -31,18 +35,10 @@ class SettingsView extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  CircleAvatar(
+                  AsyncAvatar(
+                    url: current?.profilePictureUrl,
                     radius: 40,
-                    backgroundColor: Colors.white24,
-                    backgroundImage: (current?.profilePictureUrl != null)
-                        ? NetworkImage(current!.profilePictureUrl!)
-                        : null,
-                    child: (current?.profilePictureUrl == null)
-                        ? Text(
-                            (vm.username.isNotEmpty ? vm.username[0] : 'U'),
-                            style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
-                          )
-                        : null,
+                    fallbackKey: current?.userId,
                   ),
                   const SizedBox(height: 12),
                   Text(
@@ -90,9 +86,23 @@ class SettingsView extends StatelessWidget {
             title: 'Log Out',
                 color: Colors.redAccent,
                 onTap: () async {
+                  // Xoá toàn bộ dữ liệu đã fetch của tài khoản
+                  final userVM = Provider.of<UserViewModel>(context, listen: false);
+                  final feedVM = Provider.of<FeedViewModel>(context, listen: false);
+                  final friendshipVM = Provider.of<FriendshipViewModel>(context, listen: false);
+                  final chatVM = Provider.of<ChatViewModel>(context, listen: false);
+
+                  // Đăng xuất khỏi backend và xoá JWT/currentUser
                   await authVM.logout();
+
+                  // Dọn sạch các ViewModel về trạng thái rỗng
+                  userVM.clearAll();
+                  feedVM.clearAll();
+                  friendshipVM.clearAll();
+                  chatVM.clearAll();
+
                   ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Logged out')),
+                    const SnackBar(content: Text('Logged out and cleared local data')),
                   );
                 },
               ),

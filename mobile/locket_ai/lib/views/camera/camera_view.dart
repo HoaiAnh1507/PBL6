@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:locket_ai/widgets/async_avatar.dart';
 import 'package:provider/provider.dart';
 import '../../viewmodels/feed_viewmodel.dart';
 import '../../viewmodels/auth_viewmodel.dart';
@@ -279,7 +280,7 @@ class _CameraViewState extends State<CameraView>
 
   Future<void> _showFriendsSheet() async {
     final authVM = Provider.of<AuthViewModel>(context, listen: false);
-    final userVM = Provider.of<UserViewModel>(context, listen: false);
+    Provider.of<UserViewModel>(context, listen: false);
     final friendshipVM = Provider.of<FriendshipViewModel>(context, listen: false);
     final current = authVM.currentUser;
     final jwt = authVM.jwtToken;
@@ -607,12 +608,10 @@ class _FriendsSheetState extends State<_FriendsSheet> {
                   leading: Container(
                     padding: const EdgeInsets.all(1.2),
                     decoration: const BoxDecoration(gradient: instagramGradient, shape: BoxShape.circle),
-                    child: CircleAvatar(
+                    child: AsyncAvatar(
+                      url: _searchResult!.profilePictureUrl,
                       radius: 24,
-                      backgroundColor: Colors.grey[800],
-                      backgroundImage: (_searchResult!.profilePictureUrl != null && _searchResult!.profilePictureUrl!.isNotEmpty)
-                          ? NetworkImage(_searchResult!.profilePictureUrl!)
-                          : null,
+                      fallbackKey: _searchResult!.userId,
                     ),
                   ),
                   title: Text(_searchResult!.fullName, style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w600)),
@@ -676,12 +675,10 @@ class _FriendsSheetState extends State<_FriendsSheet> {
                   leading: Container(
                     padding: const EdgeInsets.all(1.2),
                     decoration: const BoxDecoration(gradient: instagramGradient, shape: BoxShape.circle),
-                    child: CircleAvatar(
+                    child: AsyncAvatar(
+                      url: fromUser.profilePictureUrl,
                       radius: 24,
-                      backgroundColor: Colors.grey[800],
-                      backgroundImage: (fromUser.profilePictureUrl != null && fromUser.profilePictureUrl!.isNotEmpty)
-                          ? NetworkImage(fromUser.profilePictureUrl!)
-                          : null,
+                      fallbackKey: fromUser.userId,
                     ),
                   ),
                   title: Text(fromUser.fullName, style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w600)),
@@ -771,12 +768,10 @@ class _FriendsSheetState extends State<_FriendsSheet> {
                   leading: Container(
                     padding: const EdgeInsets.all(1.2),
                     decoration: const BoxDecoration(gradient: instagramGradient, shape: BoxShape.circle),
-                    child: CircleAvatar(
+                    child: AsyncAvatar(
+                      url: friend.profilePictureUrl,
                       radius: 24,
-                      backgroundColor: Colors.grey[800],
-                      backgroundImage: (friend.profilePictureUrl != null && friend.profilePictureUrl!.isNotEmpty)
-                          ? NetworkImage(friend.profilePictureUrl!)
-                          : null,
+                      fallbackKey: friend.userId,
                     ),
                   ),
                   title: Text(friend.fullName, style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w600)),

@@ -7,6 +7,7 @@ class BaseHeader extends StatelessWidget {
   final int count;
   final String label;
   final VoidCallback onTap;
+  final bool showCount;
 
   const BaseHeader({
     super.key,
@@ -14,6 +15,7 @@ class BaseHeader extends StatelessWidget {
     required this.count,
     required this.label,
     required this.onTap,
+    this.showCount = true,
   });
 
   void _navigateToPage(int index) {
@@ -35,6 +37,7 @@ class BaseHeader extends StatelessWidget {
           count: count,
           label: label,
           onTap: onTap,
+          showCount: showCount,
         ),
       ),
     );
