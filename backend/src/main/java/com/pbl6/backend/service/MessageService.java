@@ -99,4 +99,15 @@ public class MessageService {
                 m.getSentAt()
         );
     }
+
+    @Transactional
+    public void markAsRead(User currentUser, String messageId) {
+        Message msg = messageRepository.findById(messageId)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy tin nhắn với id=" + messageId));
+        ensureMember(msg.getConversation(), currentUser);
+        if (!msg.isRead()) {
+            msg.setRead(true);
+            messageRepository.save(msg);
+        }
+    }
 }

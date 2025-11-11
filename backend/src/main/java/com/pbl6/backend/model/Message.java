@@ -37,6 +37,9 @@ public class Message {
     
     @Column(name = "sent_at", nullable = false, updatable = false)
     private LocalDateTime sentAt;
+
+    @Column(name = "is_read", nullable = false)
+    private boolean read = false;
     
     @PrePersist
     protected void onCreate() {
@@ -106,5 +109,13 @@ public class Message {
     
     public void setSentAt(LocalDateTime sentAt) {
         this.sentAt = sentAt;
+    }
+
+    public boolean isRead() {
+        return read;
+    }
+
+    public void setRead(boolean read) {
+        this.read = read;
     }
 }
