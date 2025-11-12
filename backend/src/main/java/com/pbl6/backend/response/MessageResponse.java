@@ -10,18 +10,20 @@ public class MessageResponse {
     private String content;
     private PostResponse repliedToPost;
     private LocalDateTime sentAt;
+    private boolean read;
     
     // Constructors
     public MessageResponse() {}
     
     public MessageResponse(String messageId, String conversationId, UserResponse sender, 
-                          String content, PostResponse repliedToPost, LocalDateTime sentAt) {
+                          String content, PostResponse repliedToPost, LocalDateTime sentAt, boolean read) {
         this.messageId = messageId;
         this.conversationId = conversationId;
         this.sender = sender;
         this.content = content;
         this.repliedToPost = repliedToPost;
         this.sentAt = sentAt;
+        this.read = read;
     }
     
     // Getters and Setters
@@ -40,6 +42,15 @@ public class MessageResponse {
     public void setConversationId(String conversationId) {
         this.conversationId = conversationId;
     }
+    
+    public boolean isRead() {
+        return read;
+    }
+    
+    public void setRead(boolean read) {
+        this.read = read;
+    }
+    
     
     public UserResponse getSender() {
         return sender;
