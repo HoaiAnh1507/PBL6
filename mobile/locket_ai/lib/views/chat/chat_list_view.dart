@@ -144,12 +144,10 @@ class _ChatListViewState extends State<ChatListView> {
                 final user = sortedFriends[index];
                 final latestMessage = chatVM.getLatestMessage(currentUserId, user.userId);
                 final conv = chatVM.getConversation(currentUserId, user.userId);
-                final bool isUnread = (conv?.messages ?? [])
-                    .any((m) {
-                  final isIncoming = (m.sender != null) && (m.sender!.userId != currentUserId);
-                  final isUnreadMsg = m.read == false;
-                  return isIncoming && isUnreadMsg;
-                });
+                // Chỉ highlight/chấm xanh nếu tin nhắn CUỐI CÙNG là tin nhắn đến và chưa đọc
+                final bool isLatestIncoming = latestMessage != null &&
+                    ((latestMessage!.sender?.userId ?? '') != currentUserId);
+                final bool isUnread = isLatestIncoming && (latestMessage.read == false);
                 
                 return ListTile(
                   contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),

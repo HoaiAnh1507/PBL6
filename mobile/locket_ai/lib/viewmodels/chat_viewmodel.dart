@@ -71,7 +71,7 @@ class ChatViewModel extends ChangeNotifier {
         }
         final senderMap = (m['sender'] ?? {}) as Map<String, dynamic>;
         final sender = makeUserFromPublic(senderMap);
-        final readFlag = ((m['read'] ?? m['isRead'] ?? false) == true);
+        final readFlag = ((m['read'] ?? m['isRead'] ?? m['is_read'] ?? false) == true);
         return Message(
           messageId: (m['messageId'] ?? '').toString(),
           conversation: conv,
@@ -401,7 +401,7 @@ class ChatViewModel extends ChangeNotifier {
             createdAt: DateTime.now(),
             updatedAt: DateTime.now(),
           );
-          final readFlag = ((mm['read'] ?? mm['isRead'] ?? false) == true);
+          final readFlag = ((mm['read'] ?? mm['isRead'] ?? mm['is_read'] ?? false) == true);
           conv.messages!.add(
             Message(
               messageId: (mm['messageId'] ?? '').toString(),
