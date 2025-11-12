@@ -96,7 +96,8 @@ public class MessageService {
                 sender,
                 m.getContent(),
                 replied,
-                m.getSentAt()
+                m.getSentAt(),
+                m.isRead()
         );
     }
 
