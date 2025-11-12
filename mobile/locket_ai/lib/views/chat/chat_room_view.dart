@@ -35,6 +35,30 @@ class _ChatRoomViewState extends State<ChatRoomView> {
     return authVM.currentUser!.userId;
   }
 
+  @override
+  void initState() {
+    super.initState();
+    // After first frame, mark latest incoming unread message as read
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      try {
+        final chatVM = Provider.of<ChatViewModel>(context, listen: false);
+        final authVM = Provider.of<AuthViewModel>(context, listen: false);
+        final currentUserId = _currentUserId(context);
+        final conv = chatVM.getConversation(currentUserId, widget.friendId);
+        final unreadIds = (conv?.messages ?? [])
+            .where((m) => m.sender?.userId != currentUserId && m.read == false)
+            .map((m) => m.messageId)
+            .toList();
+        final jwt = authVM.jwtToken;
+        if (jwt != null && jwt.isNotEmpty && unreadIds.isNotEmpty) {
+          for (final id in unreadIds) {
+            await chatVM.markMessageReadRemote(jwt: jwt, messageId: id);
+          }
+        }
+      } catch (_) {}
+    });
+  }
+
   bool _isSameDay(DateTime a, DateTime b) {
     return a.year == b.year && a.month == b.month && a.day == b.day;
   }

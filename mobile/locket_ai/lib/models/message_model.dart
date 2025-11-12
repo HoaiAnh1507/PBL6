@@ -10,6 +10,7 @@ class Message extends Equatable {
   final String content;
   final Post? repliedToPost;
   final DateTime sentAt;
+  final bool read;
 
   const Message({
     required this.messageId,
@@ -18,6 +19,7 @@ class Message extends Equatable {
     required this.content,
     this.repliedToPost,
     required this.sentAt,
+    this.read = false,
   });
 
   factory Message.fromJson(Map<String, dynamic> json) {
@@ -32,6 +34,7 @@ class Message extends Equatable {
           ? Post.fromJson(json['repliedToPost'])
           : null,
       sentAt: DateTime.parse(json['sentAt']),
+      read: ((json['read'] ?? json['isRead'] ?? false) == true),
     );
   }
 
@@ -43,6 +46,7 @@ class Message extends Equatable {
       'content': content,
       'repliedToPost': repliedToPost?.toJson(),
       'sentAt': sentAt.toIso8601String(),
+      'read': read,
     };
   }
 
@@ -53,6 +57,7 @@ class Message extends Equatable {
     String? content,
     Post? repliedToPost,
     DateTime? sentAt,
+    bool? read,
   }) {
     return Message(
       messageId: messageId ?? this.messageId,
@@ -61,10 +66,11 @@ class Message extends Equatable {
       content: content ?? this.content,
       repliedToPost: repliedToPost ?? this.repliedToPost,
       sentAt: sentAt ?? this.sentAt,
+      read: read ?? this.read,
     );
   }
 
   @override
   List<Object?> get props =>
-      [messageId, conversation, sender, content, repliedToPost, sentAt];
+      [messageId, conversation, sender, content, repliedToPost, sentAt, read];
 }

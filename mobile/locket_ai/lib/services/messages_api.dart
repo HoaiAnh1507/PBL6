@@ -52,4 +52,17 @@ class MessagesApi {
     );
     return resp.statusCode == 200;
   }
+
+  // Patch: mark a message as read
+  Future<bool> markMessageAsRead({
+    required String messageId,
+  }) async {
+    final path = ApiConfig.messagesBasePath + '/$messageId/read';
+    final uri = ApiConfig.endpoint(path);
+    final resp = await http.patch(
+      uri,
+      headers: _headers,
+    );
+    return resp.statusCode == 200;
+  }
 }

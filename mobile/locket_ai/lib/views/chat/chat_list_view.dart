@@ -92,15 +92,18 @@ class _ChatListViewState extends State<ChatListView> {
       body: SafeArea(
         child: Consumer3<ChatViewModel, UserViewModel, FriendshipViewModel>(
           builder: (context, chatVM, userVM, friendshipVM, _) {
-            final friends = chatVM.getAcceptedFriends(widget.currentUserId);
+            // Lấy currentUserId từ AuthViewModel để tránh lệch sau logout/login
+            final authVM = Provider.of<AuthViewModel>(context, listen: false);
+            final currentUserId = authVM.currentUser?.userId ?? widget.currentUserId;
+            final friends = chatVM.getAcceptedFriends(currentUserId);
 
             // Sắp xếp bạn bè theo thời gian tin nhắn gần nhất (mới nhất lên trước)
             final sortedFriends = List.of(friends)
               ..sort((a, b) {
-                final msgA = chatVM.getLatestMessage(widget.currentUserId, a.userId);
-                final msgB = chatVM.getLatestMessage(widget.currentUserId, b.userId);
-                final convA = chatVM.getConversation(widget.currentUserId, a.userId);
-                final convB = chatVM.getConversation(widget.currentUserId, b.userId);
+                final msgA = chatVM.getLatestMessage(currentUserId, a.userId);
+                final msgB = chatVM.getLatestMessage(currentUserId, b.userId);
+                final convA = chatVM.getConversation(currentUserId, a.userId);
+                final convB = chatVM.getConversation(currentUserId, b.userId);
                 final latestA = msgA?.sentAt ?? convA?.lastMessageAt;
                 final latestB = msgB?.sentAt ?? convB?.lastMessageAt;
 
@@ -139,8 +142,14 @@ class _ChatListViewState extends State<ChatListView> {
               itemCount: sortedFriends.length,
               itemBuilder: (context, index) {
                 final user = sortedFriends[index];
-                final latestMessage = chatVM.getLatestMessage(widget.currentUserId, user.userId);
-                final conv = chatVM.getConversation(widget.currentUserId, user.userId);
+                final latestMessage = chatVM.getLatestMessage(currentUserId, user.userId);
+                final conv = chatVM.getConversation(currentUserId, user.userId);
+                final bool isUnread = (conv?.messages ?? [])
+                    .any((m) {
+                  final isIncoming = (m.sender != null) && (m.sender!.userId != currentUserId);
+                  final isUnreadMsg = m.read == false;
+                  return isIncoming && isUnreadMsg;
+                });
                 
                 return ListTile(
                   contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -196,18 +205,32 @@ class _ChatListViewState extends State<ChatListView> {
                     // Không hiển thị "New activity" nữa; nếu chưa có tin nhắn → gợi ý
                     latestMessage?.content ?? 'Start a conversation',
                     style: GoogleFonts.poppins(
-                      color: Color.fromARGB(179, 130, 130, 130),
-                      fontWeight: FontWeight.w500,
+                      color: isUnread ? Colors.white : Color.fromARGB(179, 130, 130, 130),
+                      fontWeight: isUnread ? FontWeight.w700 : FontWeight.w500,
                       fontSize: 15,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  trailing: Icon(
-                    Icons.arrow_forward_ios,
-                    color: Color.fromARGB(179, 130, 130, 130),
-                    fontWeight: FontWeight.w500,
-                    size: 16,
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (isUnread)
+                        Container(
+                          width: 10,
+                          height: 10,
+                          margin: const EdgeInsets.only(right: 8),
+                          decoration: const BoxDecoration(
+                            color: Colors.blueAccent,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                      Icon(
+                        Icons.arrow_forward_ios,
+                        color: Color.fromARGB(179, 130, 130, 130),
+                        size: 16,
+                      ),
+                    ],
                   ),
                 );
               },

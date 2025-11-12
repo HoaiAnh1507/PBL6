@@ -71,6 +71,7 @@ class ChatViewModel extends ChangeNotifier {
         }
         final senderMap = (m['sender'] ?? {}) as Map<String, dynamic>;
         final sender = makeUserFromPublic(senderMap);
+        final readFlag = ((m['read'] ?? m['isRead'] ?? false) == true);
         return Message(
           messageId: (m['messageId'] ?? '').toString(),
           conversation: conv,
@@ -78,6 +79,7 @@ class ChatViewModel extends ChangeNotifier {
           content: (m['content'] ?? '').toString(),
           repliedToPost: null,
           sentAt: sentAt,
+          read: readFlag,
         );
       }
 
@@ -328,6 +330,8 @@ class ChatViewModel extends ChangeNotifier {
         content: (resp['content'] ?? '').toString(),
         repliedToPost: null,
         sentAt: sentAt,
+        // Own message should be considered read
+        read: true,
       );
 
       conv.messages?.add(msg);
@@ -397,6 +401,7 @@ class ChatViewModel extends ChangeNotifier {
             createdAt: DateTime.now(),
             updatedAt: DateTime.now(),
           );
+          final readFlag = ((mm['read'] ?? mm['isRead'] ?? false) == true);
           conv.messages!.add(
             Message(
               messageId: (mm['messageId'] ?? '').toString(),
@@ -405,6 +410,7 @@ class ChatViewModel extends ChangeNotifier {
               content: (mm['content'] ?? '').toString(),
               repliedToPost: null,
               sentAt: sentAt,
+              read: readFlag,
             ),
           );
         } catch (_) {}
@@ -469,6 +475,33 @@ class ChatViewModel extends ChangeNotifier {
     if (conv == null || conv.messages == null || conv.messages!.isEmpty) return null;
     conv.messages!.sort((a, b) => b.sentAt.compareTo(a.sentAt));
     return conv.messages!.first;
+  }
+
+  /// Mark message as read on backend and update local state
+  Future<bool> markMessageReadRemote({
+    required String jwt,
+    required String messageId,
+  }) async {
+    try {
+      final api = MessagesApi(jwt);
+      final ok = await api.markMessageAsRead(messageId: messageId);
+      if (!ok) return false;
+      // Update local message state
+      for (final entry in _conversations.entries) {
+        final conv = entry.value;
+        final idx = conv.messages?.indexWhere((m) => m.messageId == messageId) ?? -1;
+        if (idx != -1) {
+          final msg = conv.messages![idx];
+          conv.messages![idx] = msg.copyWith(read: true);
+          notifyListeners();
+          break;
+        }
+      }
+      return true;
+    } catch (e) {
+      debugPrint('markMessageReadRemote error: $e');
+      return false;
+    }
   }
 
   /// Prefetch messages for all accepted friends of the current user
