@@ -104,6 +104,7 @@ class _ChatRoomViewState extends State<ChatRoomView> {
     }
     // Sắp xếp tin nhắn theo thời gian tăng dần (cũ → mới)
     final messages = List.of(initialMessages)..sort((a, b) => a.sentAt.compareTo(b.sentAt));
+    final messes = messages;
     // Lấy thông tin bạn bè để hiển thị username dưới fullname
     final conv = chatVM.getConversation(currentUserId, widget.friendId);
     final friendUser = conv?.userOne.userId == currentUserId ? conv?.userTwo : conv?.userOne;

@@ -34,14 +34,12 @@ class MessagesApi {
   }
 
   // Reply to a post (send message referencing a post)
-  Future<bool> replyPost({
-    required String conversationId,
+  Future<Map<String, dynamic>?> replyPost({
     required String postId,
     required String content,
   }) async {
     final uri = ApiConfig.endpoint(ApiConfig.messagesReplyPostPath);
     final body = {
-      'conversationId': conversationId,
       'postId': postId,
       'content': content,
     };
@@ -50,7 +48,14 @@ class MessagesApi {
       headers: _headers,
       body: jsonEncode(body),
     );
-    return resp.statusCode == 200;
+    if (resp.statusCode == 200) {
+      try {
+        return jsonDecode(resp.body) as Map<String, dynamic>;
+      } catch (_) {
+        return null;
+      }
+    }
+    return null;
   }
 
   // Patch: mark a message as read

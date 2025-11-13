@@ -72,12 +72,21 @@ class ChatViewModel extends ChangeNotifier {
         final senderMap = (m['sender'] ?? {}) as Map<String, dynamic>;
         final sender = makeUserFromPublic(senderMap);
         final readFlag = ((m['read'] ?? m['isRead'] ?? m['is_read'] ?? false) == true);
+        Post? replied;
+        final repliedRaw = m['repliedToPost'];
+        if (repliedRaw is Map<String, dynamic>) {
+          try {
+            replied = Post.fromJson(repliedRaw);
+          } catch (_) {
+            replied = null;
+          }
+        }
         return Message(
           messageId: (m['messageId'] ?? '').toString(),
           conversation: conv,
           sender: sender,
           content: (m['content'] ?? '').toString(),
-          repliedToPost: null,
+          repliedToPost: replied,
           sentAt: sentAt,
           read: readFlag,
         );
@@ -328,7 +337,9 @@ class ChatViewModel extends ChangeNotifier {
         conversation: conv,
         sender: sender,
         content: (resp['content'] ?? '').toString(),
-        repliedToPost: null,
+        repliedToPost: (resp['repliedToPost'] is Map<String, dynamic>)
+            ? Post.fromJson(resp['repliedToPost'] as Map<String, dynamic>)
+            : null,
         sentAt: sentAt,
         // Own message should be considered read
         read: true,
@@ -408,7 +419,9 @@ class ChatViewModel extends ChangeNotifier {
               conversation: conv,
               sender: sender,
               content: (mm['content'] ?? '').toString(),
-              repliedToPost: null,
+              repliedToPost: (mm['repliedToPost'] is Map<String, dynamic>)
+                  ? Post.fromJson(mm['repliedToPost'] as Map<String, dynamic>)
+                  : null,
               sentAt: sentAt,
               read: readFlag,
             ),
@@ -455,6 +468,86 @@ class ChatViewModel extends ChangeNotifier {
 
     conv.messages?.add(msg);
     notifyListeners();
+  }
+
+  /// Gửi tin nhắn kèm post lên backend và cập nhật vào hội thoại
+  Future<bool> sendMessageWithPostRemote({
+    required String jwt,
+    required String currentUserId,
+    required Post repliedPost,
+    required String content,
+  }) async {
+    try {
+      // Đảm bảo có conversation theo cặp người dùng, nếu chưa có sẽ tạo local tạm
+      Conversation conv;
+      try {
+        conv = _conversations.values.firstWhere(
+          (c) =>
+              (c.userOne.userId == currentUserId && c.userTwo.userId == repliedPost.user.userId) ||
+              (c.userTwo.userId == currentUserId && c.userOne.userId == repliedPost.user.userId),
+        );
+      } catch (_) {
+        conv = _createConversation(currentUserId, repliedPost.user.userId);
+      }
+
+      final api = MessagesApi(jwt);
+      final resp = await api.replyPost(
+        postId: repliedPost.postId,
+        content: content,
+      );
+      if (resp == null) return false;
+
+      DateTime sentAt;
+      try {
+        sentAt = DateTime.parse((resp['sentAt'] ?? '').toString());
+      } catch (_) {
+        sentAt = DateTime.now();
+      }
+
+      final senderMap = (resp['sender'] ?? {}) as Map<String, dynamic>;
+      final sender = User(
+        userId: (senderMap['userId'] ?? '').toString(),
+        username: (senderMap['username'] ?? '').toString(),
+        fullName: (senderMap['fullName'] ?? '').toString(),
+        phoneNumber: (senderMap['phoneNumber'] ?? '').toString(),
+        email: (senderMap['email'] ?? '').toString(),
+        profilePictureUrl: (senderMap['profilePictureUrl'] ?? '').toString().isNotEmpty
+            ? (senderMap['profilePictureUrl'] as String?)
+            : null,
+        passwordHash: '',
+        subscriptionStatus: SubscriptionStatus.FREE,
+        subscriptionExpiresAt: null,
+        accountStatus: AccountStatus.ACTIVE,
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      );
+
+      // Nếu backend trả về conversationId khác → đồng bộ lại id
+      final serverConvId = (resp['conversationId'] ?? '').toString();
+      if (serverConvId.isNotEmpty && serverConvId != conv.conversationId) {
+        conv = conv.copyWith(conversationId: serverConvId);
+        _conversations[conv.conversationId] = conv;
+      }
+
+      final msg = Message(
+        messageId: (resp['messageId'] ?? '').toString(),
+        conversation: conv,
+        sender: sender,
+        content: (resp['content'] ?? '').toString(),
+        repliedToPost: (resp['repliedToPost'] is Map<String, dynamic>)
+            ? Post.fromJson(resp['repliedToPost'] as Map<String, dynamic>)
+            : null,
+        sentAt: sentAt,
+        read: true,
+      );
+
+      conv.messages?.add(msg);
+      notifyListeners();
+      return true;
+    } catch (e) {
+      debugPrint('sendMessageWithPostRemote error: $e');
+      return false;
+    }
   }
 
   Conversation? getConversation(String currentUserId, String friendId) {

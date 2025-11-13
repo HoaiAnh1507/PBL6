@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:locket_ai/viewmodels/auth_viewmodel.dart';
 import 'package:locket_ai/widgets/base_footer.dart';
 import 'package:locket_ai/core/constants/colors.dart';
 import 'package:locket_ai/widgets/base_header.dart';
@@ -219,6 +220,7 @@ class _FeedViewState extends State<FeedView> {
         onSend: () {
           final feedVm = Provider.of<FeedViewModel>(context, listen: false);
           final chatVm = Provider.of<ChatViewModel>(context, listen: false);
+          final authVm = Provider.of<AuthViewModel>(context, listen: false);
 
           if (feedVm.posts.isEmpty) return;
 
@@ -226,20 +228,33 @@ class _FeedViewState extends State<FeedView> {
           final content = _messageCtrl.text.trim();
           if (content.isEmpty) return;
 
-          chatVm.sendMessageWithPost(
-            widget.currentUser.userId,
-            post.user.userId,
-            content,
-            post,
-          );
-
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-        content: Text('Sent a message to ${post.user.username} with the post'),
-              duration: const Duration(seconds: 2),
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
+          final jwt = authVm.jwtToken;
+          if (jwt != null && jwt.isNotEmpty) {
+            chatVm.sendMessageWithPostRemote(
+              jwt: jwt,
+              currentUserId: widget.currentUser.userId,
+              repliedPost: post,
+              content: content,
+            ).then((ok) {
+              if (ok) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Sent a message to ${post.user.username} with the post'),
+                    duration: const Duration(seconds: 2),
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Failed to send message. Please try again.'),
+                    duration: Duration(seconds: 2),
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+              }
+            });
+          }
 
           _messageCtrl.clear();
           _messageFocus.unfocus();
