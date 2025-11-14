@@ -233,6 +233,7 @@ class _PostItemState extends State<PostItem> {
               ],
             ),
           ),
+
         ],
       ),
     );

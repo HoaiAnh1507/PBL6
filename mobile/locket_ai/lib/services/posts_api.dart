@@ -71,4 +71,50 @@ class PostsApi {
     }
     return [];
   }
+
+  Future<List<String>> addReaction({required String postId, required String emojiType}) async {
+    final uri = ApiConfig.endpoint(ApiConfig.postReactionsPath(postId));
+    try {
+      final resp = await http
+          .post(uri,
+              headers: _headers,
+              body: jsonEncode({
+                'emojiType': emojiType,
+              }))
+          .timeout(const Duration(seconds: 12));
+      if (resp.statusCode >= 200 && resp.statusCode < 300) {
+        try {
+          final decoded = jsonDecode(resp.body);
+          if (decoded is Map && decoded['reaction'] is List) {
+            return List<String>.from((decoded['reaction'] as List).map((e) => e.toString()));
+          }
+        } catch (_) {}
+      } else {
+        debugPrint('[PostsApi] addReaction failed: status=${resp.statusCode} body=${resp.body}');
+      }
+    } catch (e) {
+      debugPrint('[PostsApi] HTTP error (addReaction): $e');
+    }
+    return <String>[];
+  }
+
+  Future<Map<String, dynamic>?> getReactions({required String postId}) async {
+    final uri = ApiConfig.endpoint(ApiConfig.postReactionsPath(postId));
+    try {
+      final resp = await http.get(uri, headers: _headers).timeout(const Duration(seconds: 12));
+      if (resp.statusCode >= 200 && resp.statusCode < 300) {
+        try {
+          final decoded = jsonDecode(resp.body);
+          if (decoded is Map<String, dynamic>) return decoded;
+        } catch (e) {
+          debugPrint('[PostsApi] JSON decode error (getReactions): $e');
+        }
+      } else {
+        debugPrint('[PostsApi] getReactions failed: status=${resp.statusCode} body=${resp.body}');
+      }
+    } catch (e) {
+      debugPrint('[PostsApi] HTTP error (getReactions): $e');
+    }
+    return null;
+  }
 }

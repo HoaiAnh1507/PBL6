@@ -37,6 +37,7 @@ class ApiConfig {
   static const String postsAiCommitPath = '/api/posts/ai/commit';
   static String postDeletePath(String postId) => '/api/posts/$postId';
   static String captionStatusPath(String postId) => '/api/posts/$postId/caption-status';
+  static String postReactionsPath(String postId) => '/api/posts/$postId/reactions';
 
   // Users
   static const String usersBasePath = '/api/users';

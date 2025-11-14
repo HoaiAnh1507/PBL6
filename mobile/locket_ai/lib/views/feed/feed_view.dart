@@ -211,31 +211,35 @@ class _FeedViewState extends State<FeedView> {
     return friends;
   }
 
-  Widget _buildMessageBar() {
+  Widget _buildMessageBar(bool isOwner) {
+    final feedVm = Provider.of<FeedViewModel>(context, listen: false);
+    if (feedVm.posts.isEmpty) return const SizedBox.shrink();
+    final post = feedVm.posts[_currentIndex];
     return Padding(
       padding: const EdgeInsets.only(bottom: 90),
       child: MessageBar(
         controller: _messageCtrl,
-        focusNode:  _messageFocus,
+        focusNode: _messageFocus,
+        postId: post.postId,
+        isOwner: isOwner,
+        ownerUsername: post.user.username,
         onSend: () {
-          final feedVm = Provider.of<FeedViewModel>(context, listen: false);
+          if (isOwner) return; // owner mode has no sending
           final chatVm = Provider.of<ChatViewModel>(context, listen: false);
           final authVm = Provider.of<AuthViewModel>(context, listen: false);
-
-          if (feedVm.posts.isEmpty) return;
-
-          final post = feedVm.posts[_currentIndex];
           final content = _messageCtrl.text.trim();
           if (content.isEmpty) return;
 
           final jwt = authVm.jwtToken;
           if (jwt != null && jwt.isNotEmpty) {
-            chatVm.sendMessageWithPostRemote(
-              jwt: jwt,
-              currentUserId: widget.currentUser.userId,
-              repliedPost: post,
-              content: content,
-            ).then((ok) {
+            chatVm
+                .sendMessageWithPostRemote(
+                  jwt: jwt,
+                  currentUserId: widget.currentUser.userId,
+                  repliedPost: post,
+                  content: content,
+                )
+                .then((ok) {
               if (ok) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
@@ -365,10 +369,10 @@ class _FeedViewState extends State<FeedView> {
                     opacity: animation,
                     child: child,
                   ),
-                  child: (isOwnPost || posts.isEmpty)
+                  child: (posts.isEmpty)
                       ? const SizedBox.shrink()
-                      : _buildMessageBar(),
-                ),
+                      : _buildMessageBar(isOwnPost),
+                  ),
               )
             ),
 
