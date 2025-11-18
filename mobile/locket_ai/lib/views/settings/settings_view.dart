@@ -9,6 +9,7 @@ import '../../viewmodels/chat_viewmodel.dart';
 import '../../core/constants/colors.dart';
 import '../profile/profile_view.dart';
 import 'package:locket_ai/widgets/async_avatar.dart';
+import '../auth/login_view.dart';
 
 class SettingsView extends StatelessWidget {
   const SettingsView({Key? key}) : super(key: key);
@@ -104,6 +105,13 @@ class SettingsView extends StatelessWidget {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('Logged out and cleared local data')),
                   );
+
+                  if (context.mounted) {
+                    Navigator.of(context).pushAndRemoveUntil(
+                      MaterialPageRoute(builder: (_) => const LoginView()),
+                      (route) => false,
+                    );
+                  }
                 },
               ),
             ]),

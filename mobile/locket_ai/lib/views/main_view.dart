@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:locket_ai/viewmodels/feed_viewmodel.dart';
+import 'package:locket_ai/views/auth/login_view.dart';
 import 'package:provider/provider.dart';
 import 'package:locket_ai/views/feed/feed_view.dart';
 import 'package:locket_ai/views/camera/camera_view.dart';
@@ -76,9 +77,7 @@ class _MainViewState extends State<MainView> {
     final isKeyboardOpen = _messageFocus.hasFocus;
 
     if (currentUser == null) {
-      return const Center(
-              child: Text("No user logged in."),
-      );
+      return const LoginView();
     }
 
     return WillPopScope(
