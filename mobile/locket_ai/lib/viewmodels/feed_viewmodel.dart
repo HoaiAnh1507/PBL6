@@ -219,11 +219,17 @@ class FeedViewModel extends ChangeNotifier {
         .whereType<User>()
         .toList();
 
+    bool isAcceptedWithAuthor(String authorId) {
+      return acceptedFriends.any((u) => u.userId == authorId);
+    }
+
     Iterable<Post> filtered;
     switch (_filterType) {
       case FeedFilterType.all:
-        // 'All' không hạn chế theo bạn bè: hiển thị mọi post được backend trả về
-        filtered = posts;
+        // 'All' chỉ hiển thị: bài của tôi hoặc bài của bạn bè đã ACCEPTED
+        filtered = posts.where((p) =>
+          p.user.userId == currentUser.userId || isAcceptedWithAuthor(p.user.userId)
+        );
         break;
       case FeedFilterType.me:
         filtered = posts.where((p) => p.user.userId == currentUser.userId);

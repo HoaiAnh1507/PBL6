@@ -303,6 +303,21 @@ class AuthViewModel extends ChangeNotifier {
     }
   }
 
+  Future<bool> requestOtpForEmail(String email) async {
+    try {
+      final uri = ApiConfig.endpoint(ApiConfig.authForgotPasswordPath);
+      final resp = await http.post(
+        uri,
+        headers: ApiConfig.jsonHeaders(),
+        body: jsonEncode({'email_or_phonenumber': email}),
+      );
+      return resp.statusCode == 200;
+    } catch (e) {
+      _errorMessage = 'Lỗi kết nối: $e';
+      return false;
+    }
+  }
+
   // ✅ Kiểm tra tính khả dụng của email
   Future<bool> checkEmailAvailability(String email) async {
     try {

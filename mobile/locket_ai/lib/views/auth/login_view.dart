@@ -6,6 +6,8 @@ import '../../viewmodels/friendship_viewmodel.dart';
 import '../../viewmodels/chat_viewmodel.dart';
 import '../../viewmodels/user_viewmodel.dart';
 import '../../viewmodels/feed_viewmodel.dart';
+import 'register_view.dart';
+import '../../core/constants/colors.dart';
 
 class LoginView extends StatefulWidget {
   const LoginView({super.key});
@@ -18,12 +20,13 @@ class LoginView extends StatefulWidget {
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
+  bool _signing = false;
 
   @override
   Widget build(BuildContext context) {
   final authVM = Provider.of<AuthViewModel>(context);
   return Scaffold(
-    backgroundColor: Colors.black,
+    backgroundColor: AppColors.background,
     body: SafeArea(
       child: Center(
         child: Padding(
@@ -53,7 +56,7 @@ class LoginView extends StatefulWidget {
                       borderRadius: BorderRadius.circular(12),
                     ),
                     focusedBorder: OutlineInputBorder(
-                      borderSide: const BorderSide(color: Colors.purpleAccent),
+                      borderSide: const BorderSide(color: AppColors.accent),
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
@@ -73,7 +76,7 @@ class LoginView extends StatefulWidget {
                       borderRadius: BorderRadius.circular(12),
                     ),
                     focusedBorder: OutlineInputBorder(
-                      borderSide: const BorderSide(color: Colors.purpleAccent),
+                      borderSide: const BorderSide(color: AppColors.accent),
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
@@ -88,10 +91,11 @@ class LoginView extends StatefulWidget {
                   ),
                 const SizedBox(height: 16),
                 ElevatedButton(
-                  onPressed: authVM.isLoading
+                  onPressed: (authVM.isLoading || _signing)
                       ? null
                       : () async {
                           if (_formKey.currentState!.validate()) {
+                            setState(() { _signing = true; });
                             final success = await authVM.login(
                               _usernameController.text.trim(),
                               _passwordController.text.trim(),
@@ -129,11 +133,13 @@ class LoginView extends StatefulWidget {
                                   builder: (_) => MainView(),
                                 ),
                               );
+                            } else {
+                              if (mounted) setState(() { _signing = false; });
                             }
                           }
                         },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.purpleAccent,
+                    backgroundColor: AppColors.accent,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -142,12 +148,21 @@ class LoginView extends StatefulWidget {
                       horizontal: 40,
                     ),
                   ),
-                  child: authVM.isLoading
+                  child: (authVM.isLoading || _signing)
                       ? const CircularProgressIndicator(color: Colors.white)
                       : const Text(
             "Sign In",
                           style: TextStyle(fontSize: 18, color: Colors.white),
                         ),
+                ),
+                const SizedBox(height: 12),
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const RegisterView()),
+                    );
+                  },
+                  child: const Text('Create an account'),
                 ),
               ],
             ),
