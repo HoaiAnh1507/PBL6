@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:locket_ai/models/message_model.dart';
-import 'package:locket_ai/viewmodels/message.viewmodel.dart';
+import 'package:locket_ai/viewmodels/message_viewmodel.dart';
 import '../models/conversation_model.dart';
 
 class ConversationViewModel extends ChangeNotifier {
