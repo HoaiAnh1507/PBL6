@@ -1,0 +1,119 @@
+suite_path,test_name,result,skipped,duration_ms
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/auth_viewmodel_no_jwt_test.dart","loading D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/auth_viewmodel_no_jwt_test.dart",success,false,3056
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/auth_viewmodel_test.dart","loading D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/auth_viewmodel_test.dart",success,false,3411
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/camera_viewmodel_posting_flag_test.dart","loading D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/camera_viewmodel_posting_flag_test.dart",success,false,3891
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/camera_viewmodel_test.dart","loading D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/camera_viewmodel_test.dart",success,false,4016
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/chat_viewmodel_conversation_creation_test.dart","loading D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/chat_viewmodel_conversation_creation_test.dart",success,false,4786
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/chat_viewmodel_find_user_fallback_test.dart","loading D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/chat_viewmodel_find_user_fallback_test.dart",success,false,6498
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/chat_viewmodel_latest_message_test.dart","loading D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/chat_viewmodel_latest_message_test.dart",success,false,7290
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/chat_viewmodel_message_test.dart","loading D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/chat_viewmodel_message_test.dart",success,false,7410
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/auth_viewmodel_no_jwt_test.dart","AuthViewModel no JWT flows fetchMe returns false and sets error when jwt missing",success,false,44
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/auth_viewmodel_no_jwt_test.dart","AuthViewModel no JWT flows resetPassword returns false when not logged in",success,false,181
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/auth_viewmodel_no_jwt_test.dart","AuthViewModel no JWT flows logout clears currentUser and jwt",success,false,2210
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/auth_viewmodel_test.dart","AuthViewModel updateCurrentUser syncs with UserViewModel",success,false,38
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/auth_viewmodel_test.dart","AuthViewModel setJwtToken stores token",success,false,7
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/camera_viewmodel_posting_flag_test.dart","submitPost guards against concurrent submissions",success,false,1601
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/chat_viewmodel_test.dart","loading D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/chat_viewmodel_test.dart",success,false,4281
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/camera_viewmodel_test.dart","CameraViewModel submitPost and reset",success,false,1475
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/chat_viewmodel_conversation_creation_test.dart","ChatViewModel conversation creation getConversation creates when none exists",success,false,705
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/chat_viewmodel_conversation_creation_test.dart","ChatViewModel conversation creation clearAll resets conversations",success,false,7
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/chat_viewmodel_conversation_creation_test.dart","ChatViewModel conversation creation getLatestMessage returns null when no messages",success,false,3
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/chat_viewmodel_find_user_fallback_test.dart","create conversation using acceptedFriends fallback when friend not in UserVM",success,false,51
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/conversation_viewmodel_test.dart","loading D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/conversation_viewmodel_test.dart",success,false,2391
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/conversation_viewmodel_update_test.dart","loading D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/conversation_viewmodel_update_test.dart",success,false,3145
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/feed_viewmodel_friend_filter_reset_test.dart","loading D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/feed_viewmodel_friend_filter_reset_test.dart",success,false,4074
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/feed_viewmodel_label_fallback_test.dart","loading D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/feed_viewmodel_label_fallback_test.dart",success,false,4991
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/feed_viewmodel_mutation_test.dart","loading D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/feed_viewmodel_mutation_test.dart",success,false,5021
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/chat_viewmodel_latest_message_test.dart","getLatestMessage returns most recent message",success,false,37
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/chat_viewmodel_message_test.dart","sendMessageWithPost creates conversation and adds message with reply",success,false,40
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/feed_viewmodel_no_friend_all_test.dart","loading D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/feed_viewmodel_no_friend_all_test.dart",success,false,4815
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/feed_viewmodel_state_test.dart","loading D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/feed_viewmodel_state_test.dart",success,false,5528
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/chat_viewmodel_test.dart","ChatViewModel getAcceptedFriends returns only accepted friends for current user",success,false,36
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/feed_viewmodel_test.dart","loading D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/feed_viewmodel_test.dart",success,false,5583
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/conversation_viewmodel_test.dart","ConversationViewModel addMessage updates lastMessageAt and messages",success,false,31
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/conversation_viewmodel_update_test.dart","updateLastMessageAt sets time",success,false,34
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/friendship_viewmodel_test.dart","loading D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/friendship_viewmodel_test.dart",success,false,4872
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/feed_viewmodel_friend_filter_reset_test.dart","setFilterAll resets selectedFriend to null",success,false,29
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/message_viewmodel_conversation_test.dart","loading D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/message_viewmodel_conversation_test.dart",success,false,4407
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/feed_viewmodel_label_fallback_test.dart","Friend label shows username when provided",success,false,29
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/message_viewmodel_test.dart","loading D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/message_viewmodel_test.dart",success,false,4133
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/feed_viewmodel_mutation_test.dart","FeedViewModel mutations addPost inserts at start",success,false,31
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/post_recipients_selector_more_test.dart","loading D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/post_recipients_selector_more_test.dart",success,false,3487
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/feed_viewmodel_mutation_test.dart","FeedViewModel mutations removePost removes by id",success,false,4
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/feed_viewmodel_mutation_test.dart","FeedViewModel mutations clearAll resets state",success,false,5
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/feed_viewmodel_no_friend_all_test.dart","All filter shows only own posts when no friendships",success,false,32
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/post_recipients_selector_viewmodel_test.dart","loading D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/post_recipients_selector_viewmodel_test.dart",success,false,4223
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/feed_viewmodel_state_test.dart","FeedViewModel filter label default label is All",success,false,30
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/settings_viewmodel_multi_toggle_test.dart","loading D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/settings_viewmodel_multi_toggle_test.dart",success,false,4139
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/feed_viewmodel_state_test.dart","FeedViewModel filter label label for Me",success,false,5
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/feed_viewmodel_state_test.dart","FeedViewModel filter label label for Friend uses username then fullName",success,false,4
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/feed_viewmodel_test.dart","FeedViewModel visibility filtering All filter shows only own and accepted-friend posts",success,false,36
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/settings_viewmodel_test.dart","loading D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/settings_viewmodel_test.dart",success,false,4092
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/feed_viewmodel_test.dart","FeedViewModel visibility filtering Friend filter hides posts if not accepted",success,false,5
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/feed_viewmodel_test.dart","FeedViewModel visibility filtering Friend filter shows posts for accepted friend",success,false,6
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/feed_viewmodel_test.dart","FeedViewModel visibility filtering Me filter only shows own posts",success,false,3
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/feed_viewmodel_test.dart","FeedViewModel visibility filtering All filter sorts by newest first",success,false,3
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/friendship_viewmodel_test.dart","FriendshipViewModel acceptedFriends returns both ends of accepted relations",success,false,36
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/user_viewmodel_display_url_test.dart","loading D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/user_viewmodel_display_url_test.dart",success,false,3920
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/friendship_viewmodel_test.dart","FriendshipViewModel removeFriendship removes entry from list",success,false,4
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/message_viewmodel_conversation_test.dart","MessageViewModel conversation updates hasConversation true initially",success,false,30
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/user_viewmodel_get_user_after_clear_test.dart","loading D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/user_viewmodel_get_user_after_clear_test.dart",success,false,4045
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/message_viewmodel_conversation_test.dart","MessageViewModel conversation updates updateContent updates message content correctly",success,false,5
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/message_viewmodel_conversation_test.dart","MessageViewModel conversation updates id and sentAt reflect message",success,false,4
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/message_viewmodel_test.dart","MessageViewModel updateContent changes content",success,false,34
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/user_viewmodel_misc_test.dart","loading D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/user_viewmodel_misc_test.dart",success,false,4003
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/post_recipients_selector_more_test.dart","PostRecipientsSelectorViewModel more cases toggleFriend adds when not selected",success,false,29
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/post_recipients_selector_more_test.dart","PostRecipientsSelectorViewModel more cases toggleFriend twice removes back to empty",success,false,5
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/user_viewmodel_multiple_users_test.dart","loading D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/user_viewmodel_multiple_users_test.dart",success,false,3579
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/user_viewmodel_test.dart","loading D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/user_viewmodel_test.dart",success,false,4172
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/post_recipients_selector_viewmodel_test.dart","PostRecipientsSelectorViewModel toggleAll selects all provided friendIds",success,false,29
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/post_recipients_selector_viewmodel_test.dart","PostRecipientsSelectorViewModel toggleAll off clears selection",success,false,4
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/post_recipients_selector_viewmodel_test.dart","PostRecipientsSelectorViewModel toggleFriend disables allSelected and toggles entry",success,false,4
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/widget/app_background_test.dart","loading D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/widget/app_background_test.dart",success,false,3713
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/settings_viewmodel_multi_toggle_test.dart","SettingsViewModel toggles multiple times notifications toggle twice returns original",success,false,35
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/settings_viewmodel_multi_toggle_test.dart","SettingsViewModel toggles multiple times privateAccount toggle switch",success,false,6
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/widget/app_footer_layout_test.dart","loading D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/widget/app_footer_layout_test.dart",success,false,4842
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/settings_viewmodel_test.dart","SettingsViewModel toggles and updates",success,false,33
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/user_viewmodel_display_url_test.dart","resolveDisplayUrl returns original for non-blob URLs",success,false,29
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/widget/app_header_footer_test.dart","loading D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/widget/app_header_footer_test.dart",success,false,5315
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/user_viewmodel_get_user_after_clear_test.dart","getUserById returns null after clearAll",success,false,32
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/widget/app_header_friends_section_test.dart","loading D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/widget/app_header_friends_section_test.dart",success,false,4717
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/user_viewmodel_misc_test.dart","UserViewModel misc logout clears currentUser",success,false,30
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/widget/base_footer_buttons_test.dart","loading D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/widget/base_footer_buttons_test.dart",success,false,6239
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/user_viewmodel_misc_test.dart","UserViewModel misc getUserById returns null when not found",success,false,4
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/user_viewmodel_multiple_users_test.dart","UserViewModel multiple users currentUser equals last set user",success,false,31
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/widget/base_footer_navigation_test.dart","loading D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/widget/base_footer_navigation_test.dart",success,false,5846
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/user_viewmodel_multiple_users_test.dart","UserViewModel multiple users getUserById finds previously set user",success,false,4
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/user_viewmodel_test.dart","UserViewModel setCurrentUser inserts when not exists",success,false,31
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/widget/base_header_friends_button_presence_test.dart","loading D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/widget/base_header_friends_button_presence_test.dart",success,false,6139
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/user_viewmodel_test.dart","UserViewModel setCurrentUser updates when exists",success,false,4
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/user_viewmodel_test.dart","UserViewModel clearAll resets state",success,false,4
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/widget/app_background_test.dart","AppBackground renders child over background",success,false,747
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/widget/base_header_navigation_right_test.dart","loading D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/widget/base_header_navigation_right_test.dart",success,false,6619
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/widget/app_footer_layout_test.dart","AppFooter contains three icons",success,false,901
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/widget/base_header_show_count_test.dart","loading D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/widget/base_header_show_count_test.dart",success,false,5290
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/widget/app_header_friends_section_test.dart","AppHeader renders friendsSection widget",success,false,1099
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/widget/app_header_footer_test.dart","AppHeader Trigger onLeftTap and onRightTap when they are pressed",success,false,1097
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/widget/base_header_test.dart","loading D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/widget/base_header_test.dart",success,false,6232
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/widget/app_header_footer_test.dart","AppFooter Trigger 3 callbacks after the buttons are pressed",success,false,67
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/widget/base_footer_buttons_test.dart","BaseFooter has three tappable GestureDetectors",success,false,920
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/widget/chat_list_view_empty_test.dart","loading D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/widget/chat_list_view_empty_test.dart",success,false,5885
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/widget/feed_view_header_label_updates_test.dart","loading D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/widget/feed_view_header_label_updates_test.dart",success,false,6139
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/widget/base_footer_navigation_test.dart","BaseFooter navigates vertical PageView to page 0 on taps",success,false,1101
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/widget/base_header_friends_button_presence_test.dart","BaseHeader contains FriendsButton",success,false,1145
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/widget/base_header_navigation_right_test.dart","BaseHeader right icon navigates to page 2",success,false,1342
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/widget/friends_button_test.dart","loading D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/widget/friends_button_test.dart",success,false,4430
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/widget/gradient_circle_icon_test.dart","loading D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/widget/gradient_circle_icon_test.dart",success,false,5335
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/widget/base_header_show_count_test.dart","BaseHeader shows count when showCount=true",success,false,1116
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/widget/locket_app_auth_routing_test.dart","loading D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/widget/locket_app_auth_routing_test.dart",success,false,4268
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/widget/locket_app_switch_auth_state_test.dart","loading D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/widget/locket_app_switch_auth_state_test.dart",success,false,3853
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/widget/base_header_test.dart","BaseHeader renders FriendsButton with provided label",success,false,947
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/widget/chat_list_view_empty_test.dart","ChatListView shows title and empty state",success,false,1321
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/widget/base_header_test.dart","BaseHeader navigates to page 0 on left/right tap",success,false,422
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/widget/feed_view_header_label_updates_test.dart","FeedView header label updates when filter changes",success,false,1323
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/widget/friends_button_test.dart","FriendsButton shows count when showCount=true",success,false,1115
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/widget/gradient_circle_icon_test.dart","GradientCircleIcon triggers onTap",success,false,927
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/widget/friends_button_test.dart","FriendsButton hides count when showCount=false",success,false,57
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/widget/locket_app_auth_routing_test.dart","LocketApp routes base on authentication state Show LoginView before log in",success,false,1052
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/widget/locket_app_switch_auth_state_test.dart","Switch from LoginView to MainView when user updates",success,false,1106
+"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/widget/locket_app_auth_routing_test.dart","LocketApp routes base on authentication state Show MainView after logged in",success,false,207

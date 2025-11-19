@@ -1,0 +1,435 @@
+﻿{"protocolVersion":"0.1.1","runnerVersion":null,"pid":572,"type":"start","time":0}
+{"suite":{"id":0,"platform":"vm","path":"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/auth_viewmodel_no_jwt_test.dart"},"type":"suite","time":0}
+{"test":{"id":1,"name":"loading D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/auth_viewmodel_no_jwt_test.dart","suiteID":0,"groupIDs":[],"metadata":{"skip":false,"skipReason":null},"line":null,"column":null,"url":null},"type":"testStart","time":1}
+{"suite":{"id":2,"platform":"vm","path":"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/auth_viewmodel_test.dart"},"type":"suite","time":5}
+{"test":{"id":3,"name":"loading D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/auth_viewmodel_test.dart","suiteID":2,"groupIDs":[],"metadata":{"skip":false,"skipReason":null},"line":null,"column":null,"url":null},"type":"testStart","time":6}
+{"suite":{"id":4,"platform":"vm","path":"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/camera_viewmodel_posting_flag_test.dart"},"type":"suite","time":6}
+{"test":{"id":5,"name":"loading D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/camera_viewmodel_posting_flag_test.dart","suiteID":4,"groupIDs":[],"metadata":{"skip":false,"skipReason":null},"line":null,"column":null,"url":null},"type":"testStart","time":6}
+{"suite":{"id":6,"platform":"vm","path":"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/camera_viewmodel_test.dart"},"type":"suite","time":6}
+{"test":{"id":7,"name":"loading D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/camera_viewmodel_test.dart","suiteID":6,"groupIDs":[],"metadata":{"skip":false,"skipReason":null},"line":null,"column":null,"url":null},"type":"testStart","time":6}
+{"suite":{"id":8,"platform":"vm","path":"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/chat_viewmodel_conversation_creation_test.dart"},"type":"suite","time":6}
+{"test":{"id":9,"name":"loading D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/chat_viewmodel_conversation_creation_test.dart","suiteID":8,"groupIDs":[],"metadata":{"skip":false,"skipReason":null},"line":null,"column":null,"url":null},"type":"testStart","time":6}
+{"suite":{"id":10,"platform":"vm","path":"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/chat_viewmodel_find_user_fallback_test.dart"},"type":"suite","time":7}
+{"test":{"id":11,"name":"loading D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/chat_viewmodel_find_user_fallback_test.dart","suiteID":10,"groupIDs":[],"metadata":{"skip":false,"skipReason":null},"line":null,"column":null,"url":null},"type":"testStart","time":7}
+{"suite":{"id":12,"platform":"vm","path":"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/chat_viewmodel_latest_message_test.dart"},"type":"suite","time":7}
+{"test":{"id":13,"name":"loading D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/chat_viewmodel_latest_message_test.dart","suiteID":12,"groupIDs":[],"metadata":{"skip":false,"skipReason":null},"line":null,"column":null,"url":null},"type":"testStart","time":7}
+{"suite":{"id":14,"platform":"vm","path":"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/chat_viewmodel_message_test.dart"},"type":"suite","time":8}
+{"test":{"id":15,"name":"loading D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/chat_viewmodel_message_test.dart","suiteID":14,"groupIDs":[],"metadata":{"skip":false,"skipReason":null},"line":null,"column":null,"url":null},"type":"testStart","time":8}
+{"count":45,"time":10,"type":"allSuites"}
+
+[{"event":"test.startedProcess","params":{"vmServiceUri":null}}]
+
+[{"event":"test.startedProcess","params":{"vmServiceUri":null}}]
+
+[{"event":"test.startedProcess","params":{"vmServiceUri":null}}]
+{"testID":1,"result":"success","skipped":false,"hidden":true,"type":"testDone","time":3057}
+{"group":{"id":16,"suiteID":0,"parentID":null,"name":"","metadata":{"skip":false,"skipReason":null},"testCount":3,"line":null,"column":null,"url":null},"type":"group","time":3061}
+{"group":{"id":17,"suiteID":0,"parentID":16,"name":"AuthViewModel no JWT flows","metadata":{"skip":false,"skipReason":null},"testCount":3,"line":7,"column":3,"url":"file:///D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/auth_viewmodel_no_jwt_test.dart"},"type":"group","time":3062}
+{"test":{"id":18,"name":"AuthViewModel no JWT flows fetchMe returns false and sets error when jwt missing","suiteID":0,"groupIDs":[16,17],"metadata":{"skip":false,"skipReason":null},"line":8,"column":5,"url":"file:///D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/auth_viewmodel_no_jwt_test.dart"},"type":"testStart","time":3062}
+{"testID":18,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":3106}
+{"test":{"id":19,"name":"AuthViewModel no JWT flows resetPassword returns false when not logged in","suiteID":0,"groupIDs":[16,17],"metadata":{"skip":false,"skipReason":null},"line":16,"column":5,"url":"file:///D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/auth_viewmodel_no_jwt_test.dart"},"type":"testStart","time":3107}
+
+[{"event":"test.startedProcess","params":{"vmServiceUri":null}}]
+{"testID":19,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":3288}
+{"test":{"id":20,"name":"AuthViewModel no JWT flows logout clears currentUser and jwt","suiteID":0,"groupIDs":[16,17],"metadata":{"skip":false,"skipReason":null},"line":24,"column":5,"url":"file:///D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/auth_viewmodel_no_jwt_test.dart"},"type":"testStart","time":3289}
+{"testID":3,"result":"success","skipped":false,"hidden":true,"type":"testDone","time":3417}
+{"group":{"id":21,"suiteID":2,"parentID":null,"name":"","metadata":{"skip":false,"skipReason":null},"testCount":2,"line":null,"column":null,"url":null},"type":"group","time":3417}
+{"test":{"id":22,"name":"AuthViewModel updateCurrentUser syncs with UserViewModel","suiteID":2,"groupIDs":[21],"metadata":{"skip":false,"skipReason":null},"line":7,"column":3,"url":"file:///D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/auth_viewmodel_test.dart"},"type":"testStart","time":3417}
+{"testID":22,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":3455}
+{"test":{"id":23,"name":"AuthViewModel setJwtToken stores token","suiteID":2,"groupIDs":[21],"metadata":{"skip":false,"skipReason":null},"line":24,"column":3,"url":"file:///D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/auth_viewmodel_test.dart"},"type":"testStart","time":3455}
+{"testID":23,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":3462}
+
+[{"event":"test.startedProcess","params":{"vmServiceUri":null}}]
+{"testID":5,"result":"success","skipped":false,"hidden":true,"type":"testDone","time":3897}
+{"group":{"id":24,"suiteID":4,"parentID":null,"name":"","metadata":{"skip":false,"skipReason":null},"testCount":1,"line":null,"column":null,"url":null},"type":"group","time":3897}
+{"test":{"id":25,"name":"submitPost guards against concurrent submissions","suiteID":4,"groupIDs":[24],"metadata":{"skip":false,"skipReason":null},"line":5,"column":3,"url":"file:///D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/camera_viewmodel_posting_flag_test.dart"},"type":"testStart","time":3897}
+{"suite":{"id":26,"platform":"vm","path":"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/chat_viewmodel_test.dart"},"type":"suite","time":3919}
+{"test":{"id":27,"name":"loading D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/chat_viewmodel_test.dart","suiteID":26,"groupIDs":[],"metadata":{"skip":false,"skipReason":null},"line":null,"column":null,"url":null},"type":"testStart","time":3919}
+{"testID":7,"result":"success","skipped":false,"hidden":true,"type":"testDone","time":4022}
+{"group":{"id":28,"suiteID":6,"parentID":null,"name":"","metadata":{"skip":false,"skipReason":null},"testCount":1,"line":null,"column":null,"url":null},"type":"group","time":4022}
+{"test":{"id":29,"name":"CameraViewModel submitPost and reset","suiteID":6,"groupIDs":[28],"metadata":{"skip":false,"skipReason":null},"line":5,"column":3,"url":"file:///D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/camera_viewmodel_test.dart"},"type":"testStart","time":4023}
+
+[{"event":"test.startedProcess","params":{"vmServiceUri":null}}]
+{"testID":9,"result":"success","skipped":false,"hidden":true,"type":"testDone","time":4792}
+{"group":{"id":30,"suiteID":8,"parentID":null,"name":"","metadata":{"skip":false,"skipReason":null},"testCount":3,"line":null,"column":null,"url":null},"type":"group","time":4792}
+{"group":{"id":31,"suiteID":8,"parentID":30,"name":"ChatViewModel conversation creation","metadata":{"skip":false,"skipReason":null},"testCount":3,"line":10,"column":3,"url":"file:///D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/chat_viewmodel_conversation_creation_test.dart"},"type":"group","time":4792}
+{"test":{"id":32,"name":"ChatViewModel conversation creation getConversation creates when none exists","suiteID":8,"groupIDs":[30,31],"metadata":{"skip":false,"skipReason":null},"line":36,"column":5,"url":"file:///D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/chat_viewmodel_conversation_creation_test.dart"},"type":"testStart","time":4792}
+
+[{"event":"test.startedProcess","params":{"vmServiceUri":null}}]
+{"testID":32,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":5497}
+{"test":{"id":33,"name":"ChatViewModel conversation creation clearAll resets conversations","suiteID":8,"groupIDs":[30,31],"metadata":{"skip":false,"skipReason":null},"line":42,"column":5,"url":"file:///D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/chat_viewmodel_conversation_creation_test.dart"},"type":"testStart","time":5497}
+{"testID":25,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":5498}
+{"testID":29,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":5498}
+{"testID":20,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":5499}
+{"testID":33,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":5504}
+{"test":{"id":34,"name":"ChatViewModel conversation creation getLatestMessage returns null when no messages","suiteID":8,"groupIDs":[30,31],"metadata":{"skip":false,"skipReason":null},"line":49,"column":5,"url":"file:///D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/chat_viewmodel_conversation_creation_test.dart"},"type":"testStart","time":5505}
+{"testID":34,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":5508}
+
+[{"event":"test.startedProcess","params":{"vmServiceUri":null}}]
+{"testID":11,"result":"success","skipped":false,"hidden":true,"type":"testDone","time":6505}
+{"group":{"id":35,"suiteID":10,"parentID":null,"name":"","metadata":{"skip":false,"skipReason":null},"testCount":1,"line":null,"column":null,"url":null},"type":"group","time":6505}
+{"test":{"id":36,"name":"create conversation using acceptedFriends fallback when friend not in UserVM","suiteID":10,"groupIDs":[35],"metadata":{"skip":false,"skipReason":null},"line":15,"column":3,"url":"file:///D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/chat_viewmodel_find_user_fallback_test.dart"},"type":"testStart","time":6505}
+{"suite":{"id":37,"platform":"vm","path":"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/conversation_viewmodel_test.dart"},"type":"suite","time":6517}
+{"test":{"id":38,"name":"loading D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/conversation_viewmodel_test.dart","suiteID":37,"groupIDs":[],"metadata":{"skip":false,"skipReason":null},"line":null,"column":null,"url":null},"type":"testStart","time":6517}
+{"suite":{"id":39,"platform":"vm","path":"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/conversation_viewmodel_update_test.dart"},"type":"suite","time":6524}
+{"test":{"id":40,"name":"loading D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/conversation_viewmodel_update_test.dart","suiteID":39,"groupIDs":[],"metadata":{"skip":false,"skipReason":null},"line":null,"column":null,"url":null},"type":"testStart","time":6525}
+{"suite":{"id":41,"platform":"vm","path":"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/feed_viewmodel_friend_filter_reset_test.dart"},"type":"suite","time":6536}
+{"test":{"id":42,"name":"loading D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/feed_viewmodel_friend_filter_reset_test.dart","suiteID":41,"groupIDs":[],"metadata":{"skip":false,"skipReason":null},"line":null,"column":null,"url":null},"type":"testStart","time":6536}
+{"suite":{"id":43,"platform":"vm","path":"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/feed_viewmodel_label_fallback_test.dart"},"type":"suite","time":6547}
+{"test":{"id":44,"name":"loading D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/feed_viewmodel_label_fallback_test.dart","suiteID":43,"groupIDs":[],"metadata":{"skip":false,"skipReason":null},"line":null,"column":null,"url":null},"type":"testStart","time":6547}
+{"testID":36,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":6556}
+
+[{"event":"test.startedProcess","params":{"vmServiceUri":null}}]
+{"suite":{"id":45,"platform":"vm","path":"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/feed_viewmodel_mutation_test.dart"},"type":"suite","time":7295}
+{"test":{"id":46,"name":"loading D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/feed_viewmodel_mutation_test.dart","suiteID":45,"groupIDs":[],"metadata":{"skip":false,"skipReason":null},"line":null,"column":null,"url":null},"type":"testStart","time":7295}
+{"testID":13,"result":"success","skipped":false,"hidden":true,"type":"testDone","time":7297}
+{"group":{"id":47,"suiteID":12,"parentID":null,"name":"","metadata":{"skip":false,"skipReason":null},"testCount":1,"line":null,"column":null,"url":null},"type":"group","time":7297}
+{"test":{"id":48,"name":"getLatestMessage returns most recent message","suiteID":12,"groupIDs":[47],"metadata":{"skip":false,"skipReason":null},"line":17,"column":3,"url":"file:///D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/chat_viewmodel_latest_message_test.dart"},"type":"testStart","time":7297}
+{"testID":48,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":7334}
+{"testID":15,"result":"success","skipped":false,"hidden":true,"type":"testDone","time":7418}
+{"group":{"id":49,"suiteID":14,"parentID":null,"name":"","metadata":{"skip":false,"skipReason":null},"testCount":1,"line":null,"column":null,"url":null},"type":"group","time":7419}
+{"test":{"id":50,"name":"sendMessageWithPost creates conversation and adds message with reply","suiteID":14,"groupIDs":[49],"metadata":{"skip":false,"skipReason":null},"line":17,"column":3,"url":"file:///D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/chat_viewmodel_message_test.dart"},"type":"testStart","time":7419}
+{"testID":50,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":7459}
+
+[{"event":"test.startedProcess","params":{"vmServiceUri":null}}]
+{"suite":{"id":51,"platform":"vm","path":"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/feed_viewmodel_no_friend_all_test.dart"},"type":"suite","time":8098}
+{"test":{"id":52,"name":"loading D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/feed_viewmodel_no_friend_all_test.dart","suiteID":51,"groupIDs":[],"metadata":{"skip":false,"skipReason":null},"line":null,"column":null,"url":null},"type":"testStart","time":8098}
+{"suite":{"id":53,"platform":"vm","path":"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/feed_viewmodel_state_test.dart"},"type":"suite","time":8103}
+{"test":{"id":54,"name":"loading D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/feed_viewmodel_state_test.dart","suiteID":53,"groupIDs":[],"metadata":{"skip":false,"skipReason":null},"line":null,"column":null,"url":null},"type":"testStart","time":8104}
+{"testID":27,"result":"success","skipped":false,"hidden":true,"type":"testDone","time":8200}
+{"group":{"id":55,"suiteID":26,"parentID":null,"name":"","metadata":{"skip":false,"skipReason":null},"testCount":1,"line":null,"column":null,"url":null},"type":"group","time":8200}
+{"test":{"id":56,"name":"ChatViewModel getAcceptedFriends returns only accepted friends for current user","suiteID":26,"groupIDs":[55],"metadata":{"skip":false,"skipReason":null},"line":16,"column":3,"url":"file:///D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/chat_viewmodel_test.dart"},"type":"testStart","time":8201}
+{"testID":56,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":8237}
+
+[{"event":"test.startedProcess","params":{"vmServiceUri":null}}]
+{"suite":{"id":57,"platform":"vm","path":"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/feed_viewmodel_test.dart"},"type":"suite","time":8508}
+{"test":{"id":58,"name":"loading D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/feed_viewmodel_test.dart","suiteID":57,"groupIDs":[],"metadata":{"skip":false,"skipReason":null},"line":null,"column":null,"url":null},"type":"testStart","time":8509}
+
+[{"event":"test.startedProcess","params":{"vmServiceUri":null}}]
+{"testID":38,"result":"success","skipped":false,"hidden":true,"type":"testDone","time":8908}
+{"group":{"id":59,"suiteID":37,"parentID":null,"name":"","metadata":{"skip":false,"skipReason":null},"testCount":1,"line":null,"column":null,"url":null},"type":"group","time":8908}
+{"test":{"id":60,"name":"ConversationViewModel addMessage updates lastMessageAt and messages","suiteID":37,"groupIDs":[59],"metadata":{"skip":false,"skipReason":null},"line":8,"column":3,"url":"file:///D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/conversation_viewmodel_test.dart"},"type":"testStart","time":8908}
+{"testID":60,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":8939}
+
+[{"event":"test.startedProcess","params":{"vmServiceUri":null}}]
+{"testID":40,"result":"success","skipped":false,"hidden":true,"type":"testDone","time":9670}
+{"group":{"id":61,"suiteID":39,"parentID":null,"name":"","metadata":{"skip":false,"skipReason":null},"testCount":1,"line":null,"column":null,"url":null},"type":"group","time":9670}
+{"test":{"id":62,"name":"updateLastMessageAt sets time","suiteID":39,"groupIDs":[61],"metadata":{"skip":false,"skipReason":null},"line":7,"column":3,"url":"file:///D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/conversation_viewmodel_update_test.dart"},"type":"testStart","time":9670}
+{"suite":{"id":63,"platform":"vm","path":"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/friendship_viewmodel_test.dart"},"type":"suite","time":9683}
+{"test":{"id":64,"name":"loading D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/friendship_viewmodel_test.dart","suiteID":63,"groupIDs":[],"metadata":{"skip":false,"skipReason":null},"line":null,"column":null,"url":null},"type":"testStart","time":9684}
+{"testID":62,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":9704}
+
+[{"event":"test.startedProcess","params":{"vmServiceUri":null}}]
+{"testID":42,"result":"success","skipped":false,"hidden":true,"type":"testDone","time":10610}
+{"group":{"id":65,"suiteID":41,"parentID":null,"name":"","metadata":{"skip":false,"skipReason":null},"testCount":1,"line":null,"column":null,"url":null},"type":"group","time":10611}
+{"test":{"id":66,"name":"setFilterAll resets selectedFriend to null","suiteID":41,"groupIDs":[65],"metadata":{"skip":false,"skipReason":null},"line":6,"column":3,"url":"file:///D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/feed_viewmodel_friend_filter_reset_test.dart"},"type":"testStart","time":10611}
+{"suite":{"id":67,"platform":"vm","path":"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/message_viewmodel_conversation_test.dart"},"type":"suite","time":10624}
+{"test":{"id":68,"name":"loading D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/message_viewmodel_conversation_test.dart","suiteID":67,"groupIDs":[],"metadata":{"skip":false,"skipReason":null},"line":null,"column":null,"url":null},"type":"testStart","time":10624}
+{"testID":66,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":10640}
+
+[{"event":"test.startedProcess","params":{"vmServiceUri":null}}]
+{"testID":44,"result":"success","skipped":false,"hidden":true,"type":"testDone","time":11538}
+{"group":{"id":69,"suiteID":43,"parentID":null,"name":"","metadata":{"skip":false,"skipReason":null},"testCount":1,"line":null,"column":null,"url":null},"type":"group","time":11539}
+{"test":{"id":70,"name":"Friend label shows username when provided","suiteID":43,"groupIDs":[69],"metadata":{"skip":false,"skipReason":null},"line":6,"column":3,"url":"file:///D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/feed_viewmodel_label_fallback_test.dart"},"type":"testStart","time":11539}
+{"suite":{"id":71,"platform":"vm","path":"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/message_viewmodel_test.dart"},"type":"suite","time":11551}
+{"test":{"id":72,"name":"loading D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/message_viewmodel_test.dart","suiteID":71,"groupIDs":[],"metadata":{"skip":false,"skipReason":null},"line":null,"column":null,"url":null},"type":"testStart","time":11551}
+{"testID":70,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":11568}
+
+[{"event":"test.startedProcess","params":{"vmServiceUri":null}}]
+{"testID":46,"result":"success","skipped":false,"hidden":true,"type":"testDone","time":12316}
+{"group":{"id":73,"suiteID":45,"parentID":null,"name":"","metadata":{"skip":false,"skipReason":null},"testCount":3,"line":null,"column":null,"url":null},"type":"group","time":12316}
+{"group":{"id":74,"suiteID":45,"parentID":73,"name":"FeedViewModel mutations","metadata":{"skip":false,"skipReason":null},"testCount":3,"line":7,"column":3,"url":"file:///D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/feed_viewmodel_mutation_test.dart"},"type":"group","time":12317}
+{"test":{"id":75,"name":"FeedViewModel mutations addPost inserts at start","suiteID":45,"groupIDs":[73,74],"metadata":{"skip":false,"skipReason":null},"line":21,"column":5,"url":"file:///D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/feed_viewmodel_mutation_test.dart"},"type":"testStart","time":12317}
+{"suite":{"id":76,"platform":"vm","path":"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/post_recipients_selector_more_test.dart"},"type":"suite","time":12334}
+{"test":{"id":77,"name":"loading D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/post_recipients_selector_more_test.dart","suiteID":76,"groupIDs":[],"metadata":{"skip":false,"skipReason":null},"line":null,"column":null,"url":null},"type":"testStart","time":12335}
+{"testID":75,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":12348}
+{"test":{"id":78,"name":"FeedViewModel mutations removePost removes by id","suiteID":45,"groupIDs":[73,74],"metadata":{"skip":false,"skipReason":null},"line":35,"column":5,"url":"file:///D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/feed_viewmodel_mutation_test.dart"},"type":"testStart","time":12349}
+{"testID":78,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":12353}
+{"test":{"id":79,"name":"FeedViewModel mutations clearAll resets state","suiteID":45,"groupIDs":[73,74],"metadata":{"skip":false,"skipReason":null},"line":45,"column":5,"url":"file:///D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/feed_viewmodel_mutation_test.dart"},"type":"testStart","time":12353}
+{"testID":79,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":12358}
+
+[{"event":"test.startedProcess","params":{"vmServiceUri":null}}]
+{"testID":52,"result":"success","skipped":false,"hidden":true,"type":"testDone","time":12913}
+{"group":{"id":80,"suiteID":51,"parentID":null,"name":"","metadata":{"skip":false,"skipReason":null},"testCount":1,"line":null,"column":null,"url":null},"type":"group","time":12913}
+{"test":{"id":81,"name":"All filter shows only own posts when no friendships","suiteID":51,"groupIDs":[80],"metadata":{"skip":false,"skipReason":null},"line":15,"column":3,"url":"file:///D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/feed_viewmodel_no_friend_all_test.dart"},"type":"testStart","time":12913}
+{"suite":{"id":82,"platform":"vm","path":"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/post_recipients_selector_viewmodel_test.dart"},"type":"suite","time":12932}
+{"test":{"id":83,"name":"loading D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/post_recipients_selector_viewmodel_test.dart","suiteID":82,"groupIDs":[],"metadata":{"skip":false,"skipReason":null},"line":null,"column":null,"url":null},"type":"testStart","time":12932}
+{"testID":81,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":12945}
+
+[{"event":"test.startedProcess","params":{"vmServiceUri":null}}]
+{"testID":54,"result":"success","skipped":false,"hidden":true,"type":"testDone","time":13632}
+{"group":{"id":84,"suiteID":53,"parentID":null,"name":"","metadata":{"skip":false,"skipReason":null},"testCount":3,"line":null,"column":null,"url":null},"type":"group","time":13633}
+{"group":{"id":85,"suiteID":53,"parentID":84,"name":"FeedViewModel filter label","metadata":{"skip":false,"skipReason":null},"testCount":3,"line":6,"column":3,"url":"file:///D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/feed_viewmodel_state_test.dart"},"type":"group","time":13633}
+{"test":{"id":86,"name":"FeedViewModel filter label default label is All","suiteID":53,"groupIDs":[84,85],"metadata":{"skip":false,"skipReason":null},"line":7,"column":5,"url":"file:///D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/feed_viewmodel_state_test.dart"},"type":"testStart","time":13633}
+{"suite":{"id":87,"platform":"vm","path":"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/settings_viewmodel_multi_toggle_test.dart"},"type":"suite","time":13648}
+{"test":{"id":88,"name":"loading D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/settings_viewmodel_multi_toggle_test.dart","suiteID":87,"groupIDs":[],"metadata":{"skip":false,"skipReason":null},"line":null,"column":null,"url":null},"type":"testStart","time":13648}
+{"testID":86,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":13663}
+{"test":{"id":89,"name":"FeedViewModel filter label label for Me","suiteID":53,"groupIDs":[84,85],"metadata":{"skip":false,"skipReason":null},"line":12,"column":5,"url":"file:///D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/feed_viewmodel_state_test.dart"},"type":"testStart","time":13663}
+{"testID":89,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":13668}
+{"test":{"id":90,"name":"FeedViewModel filter label label for Friend uses username then fullName","suiteID":53,"groupIDs":[84,85],"metadata":{"skip":false,"skipReason":null},"line":18,"column":5,"url":"file:///D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/feed_viewmodel_state_test.dart"},"type":"testStart","time":13669}
+{"testID":90,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":13673}
+
+[{"event":"test.startedProcess","params":{"vmServiceUri":null}}]
+{"testID":58,"result":"success","skipped":false,"hidden":true,"type":"testDone","time":14092}
+{"group":{"id":91,"suiteID":57,"parentID":null,"name":"","metadata":{"skip":false,"skipReason":null},"testCount":5,"line":null,"column":null,"url":null},"type":"group","time":14092}
+{"group":{"id":92,"suiteID":57,"parentID":91,"name":"FeedViewModel visibility filtering","metadata":{"skip":false,"skipReason":null},"testCount":5,"line":17,"column":3,"url":"file:///D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/feed_viewmodel_test.dart"},"type":"group","time":14092}
+{"test":{"id":93,"name":"FeedViewModel visibility filtering All filter shows only own and accepted-friend posts","suiteID":57,"groupIDs":[91,92],"metadata":{"skip":false,"skipReason":null},"line":111,"column":5,"url":"file:///D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/feed_viewmodel_test.dart"},"type":"testStart","time":14092}
+{"suite":{"id":94,"platform":"vm","path":"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/settings_viewmodel_test.dart"},"type":"suite","time":14105}
+{"test":{"id":95,"name":"loading D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/settings_viewmodel_test.dart","suiteID":94,"groupIDs":[],"metadata":{"skip":false,"skipReason":null},"line":null,"column":null,"url":null},"type":"testStart","time":14105}
+{"testID":93,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":14128}
+{"test":{"id":96,"name":"FeedViewModel visibility filtering Friend filter hides posts if not accepted","suiteID":57,"groupIDs":[91,92],"metadata":{"skip":false,"skipReason":null},"line":118,"column":5,"url":"file:///D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/feed_viewmodel_test.dart"},"type":"testStart","time":14128}
+{"testID":96,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":14133}
+{"test":{"id":97,"name":"FeedViewModel visibility filtering Friend filter shows posts for accepted friend","suiteID":57,"groupIDs":[91,92],"metadata":{"skip":false,"skipReason":null},"line":125,"column":5,"url":"file:///D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/feed_viewmodel_test.dart"},"type":"testStart","time":14134}
+{"testID":97,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":14140}
+{"test":{"id":98,"name":"FeedViewModel visibility filtering Me filter only shows own posts","suiteID":57,"groupIDs":[91,92],"metadata":{"skip":false,"skipReason":null},"line":132,"column":5,"url":"file:///D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/feed_viewmodel_test.dart"},"type":"testStart","time":14140}
+{"testID":98,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":14143}
+{"test":{"id":99,"name":"FeedViewModel visibility filtering All filter sorts by newest first","suiteID":57,"groupIDs":[91,92],"metadata":{"skip":false,"skipReason":null},"line":139,"column":5,"url":"file:///D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/feed_viewmodel_test.dart"},"type":"testStart","time":14144}
+{"testID":99,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":14147}
+
+[{"event":"test.startedProcess","params":{"vmServiceUri":null}}]
+{"testID":64,"result":"success","skipped":false,"hidden":true,"type":"testDone","time":14556}
+{"group":{"id":100,"suiteID":63,"parentID":null,"name":"","metadata":{"skip":false,"skipReason":null},"testCount":2,"line":null,"column":null,"url":null},"type":"group","time":14556}
+{"group":{"id":101,"suiteID":63,"parentID":100,"name":"FriendshipViewModel","metadata":{"skip":false,"skipReason":null},"testCount":2,"line":7,"column":3,"url":"file:///D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/friendship_viewmodel_test.dart"},"type":"group","time":14556}
+{"test":{"id":102,"name":"FriendshipViewModel acceptedFriends returns both ends of accepted relations","suiteID":63,"groupIDs":[100,101],"metadata":{"skip":false,"skipReason":null},"line":40,"column":5,"url":"file:///D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/friendship_viewmodel_test.dart"},"type":"testStart","time":14556}
+{"suite":{"id":103,"platform":"vm","path":"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/user_viewmodel_display_url_test.dart"},"type":"suite","time":14571}
+{"test":{"id":104,"name":"loading D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/user_viewmodel_display_url_test.dart","suiteID":103,"groupIDs":[],"metadata":{"skip":false,"skipReason":null},"line":null,"column":null,"url":null},"type":"testStart","time":14571}
+{"testID":102,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":14592}
+{"test":{"id":105,"name":"FriendshipViewModel removeFriendship removes entry from list","suiteID":63,"groupIDs":[100,101],"metadata":{"skip":false,"skipReason":null},"line":53,"column":5,"url":"file:///D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/friendship_viewmodel_test.dart"},"type":"testStart","time":14592}
+{"testID":105,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":14596}
+
+[{"event":"test.startedProcess","params":{"vmServiceUri":null}}]
+{"testID":68,"result":"success","skipped":false,"hidden":true,"type":"testDone","time":15031}
+{"group":{"id":106,"suiteID":67,"parentID":null,"name":"","metadata":{"skip":false,"skipReason":null},"testCount":3,"line":null,"column":null,"url":null},"type":"group","time":15031}
+{"group":{"id":107,"suiteID":67,"parentID":106,"name":"MessageViewModel conversation updates","metadata":{"skip":false,"skipReason":null},"testCount":3,"line":8,"column":3,"url":"file:///D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/message_viewmodel_conversation_test.dart"},"type":"group","time":15031}
+{"test":{"id":108,"name":"MessageViewModel conversation updates hasConversation true initially","suiteID":67,"groupIDs":[106,107],"metadata":{"skip":false,"skipReason":null},"line":28,"column":5,"url":"file:///D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/message_viewmodel_conversation_test.dart"},"type":"testStart","time":15031}
+{"suite":{"id":109,"platform":"vm","path":"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/user_viewmodel_get_user_after_clear_test.dart"},"type":"suite","time":15048}
+{"test":{"id":110,"name":"loading D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/user_viewmodel_get_user_after_clear_test.dart","suiteID":109,"groupIDs":[],"metadata":{"skip":false,"skipReason":null},"line":null,"column":null,"url":null},"type":"testStart","time":15048}
+{"testID":108,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":15061}
+{"test":{"id":111,"name":"MessageViewModel conversation updates updateContent updates message content correctly","suiteID":67,"groupIDs":[106,107],"metadata":{"skip":false,"skipReason":null},"line":34,"column":5,"url":"file:///D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/message_viewmodel_conversation_test.dart"},"type":"testStart","time":15062}
+{"testID":111,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":15067}
+{"test":{"id":112,"name":"MessageViewModel conversation updates id and sentAt reflect message","suiteID":67,"groupIDs":[106,107],"metadata":{"skip":false,"skipReason":null},"line":41,"column":5,"url":"file:///D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/message_viewmodel_conversation_test.dart"},"type":"testStart","time":15068}
+{"testID":112,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":15072}
+
+[{"event":"test.startedProcess","params":{"vmServiceUri":null}}]
+{"testID":72,"result":"success","skipped":false,"hidden":true,"type":"testDone","time":15684}
+{"group":{"id":113,"suiteID":71,"parentID":null,"name":"","metadata":{"skip":false,"skipReason":null},"testCount":1,"line":null,"column":null,"url":null},"type":"group","time":15685}
+{"test":{"id":114,"name":"MessageViewModel updateContent changes content","suiteID":71,"groupIDs":[113],"metadata":{"skip":false,"skipReason":null},"line":8,"column":3,"url":"file:///D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/message_viewmodel_test.dart"},"type":"testStart","time":15685}
+{"suite":{"id":115,"platform":"vm","path":"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/user_viewmodel_misc_test.dart"},"type":"suite","time":15703}
+{"test":{"id":116,"name":"loading D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/user_viewmodel_misc_test.dart","suiteID":115,"groupIDs":[],"metadata":{"skip":false,"skipReason":null},"line":null,"column":null,"url":null},"type":"testStart","time":15703}
+{"testID":114,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":15719}
+{"testID":77,"result":"success","skipped":false,"hidden":true,"type":"testDone","time":15822}
+{"group":{"id":117,"suiteID":76,"parentID":null,"name":"","metadata":{"skip":false,"skipReason":null},"testCount":2,"line":null,"column":null,"url":null},"type":"group","time":15822}
+{"group":{"id":118,"suiteID":76,"parentID":117,"name":"PostRecipientsSelectorViewModel more cases","metadata":{"skip":false,"skipReason":null},"testCount":2,"line":5,"column":3,"url":"file:///D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/post_recipients_selector_more_test.dart"},"type":"group","time":15823}
+{"test":{"id":119,"name":"PostRecipientsSelectorViewModel more cases toggleFriend adds when not selected","suiteID":76,"groupIDs":[117,118],"metadata":{"skip":false,"skipReason":null},"line":6,"column":5,"url":"file:///D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/post_recipients_selector_more_test.dart"},"type":"testStart","time":15823}
+{"testID":119,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":15852}
+{"test":{"id":120,"name":"PostRecipientsSelectorViewModel more cases toggleFriend twice removes back to empty","suiteID":76,"groupIDs":[117,118],"metadata":{"skip":false,"skipReason":null},"line":12,"column":5,"url":"file:///D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/post_recipients_selector_more_test.dart"},"type":"testStart","time":15853}
+{"testID":120,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":15858}
+
+[{"event":"test.startedProcess","params":{"vmServiceUri":null}}]
+{"suite":{"id":121,"platform":"vm","path":"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/user_viewmodel_multiple_users_test.dart"},"type":"suite","time":16538}
+{"test":{"id":122,"name":"loading D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/user_viewmodel_multiple_users_test.dart","suiteID":121,"groupIDs":[],"metadata":{"skip":false,"skipReason":null},"line":null,"column":null,"url":null},"type":"testStart","time":16538}
+{"suite":{"id":123,"platform":"vm","path":"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/user_viewmodel_test.dart"},"type":"suite","time":16547}
+{"test":{"id":124,"name":"loading D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/user_viewmodel_test.dart","suiteID":123,"groupIDs":[],"metadata":{"skip":false,"skipReason":null},"line":null,"column":null,"url":null},"type":"testStart","time":16548}
+
+[{"event":"test.startedProcess","params":{"vmServiceUri":null}}]
+{"testID":83,"result":"success","skipped":false,"hidden":true,"type":"testDone","time":17155}
+{"group":{"id":125,"suiteID":82,"parentID":null,"name":"","metadata":{"skip":false,"skipReason":null},"testCount":3,"line":null,"column":null,"url":null},"type":"group","time":17155}
+{"group":{"id":126,"suiteID":82,"parentID":125,"name":"PostRecipientsSelectorViewModel","metadata":{"skip":false,"skipReason":null},"testCount":3,"line":5,"column":3,"url":"file:///D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/post_recipients_selector_viewmodel_test.dart"},"type":"group","time":17155}
+{"test":{"id":127,"name":"PostRecipientsSelectorViewModel toggleAll selects all provided friendIds","suiteID":82,"groupIDs":[125,126],"metadata":{"skip":false,"skipReason":null},"line":6,"column":5,"url":"file:///D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/post_recipients_selector_viewmodel_test.dart"},"type":"testStart","time":17155}
+{"testID":127,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":17184}
+{"test":{"id":128,"name":"PostRecipientsSelectorViewModel toggleAll off clears selection","suiteID":82,"groupIDs":[125,126],"metadata":{"skip":false,"skipReason":null},"line":14,"column":5,"url":"file:///D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/post_recipients_selector_viewmodel_test.dart"},"type":"testStart","time":17184}
+{"testID":128,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":17188}
+{"test":{"id":129,"name":"PostRecipientsSelectorViewModel toggleFriend disables allSelected and toggles entry","suiteID":82,"groupIDs":[125,126],"metadata":{"skip":false,"skipReason":null},"line":22,"column":5,"url":"file:///D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/post_recipients_selector_viewmodel_test.dart"},"type":"testStart","time":17188}
+{"testID":129,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":17192}
+
+[{"event":"test.startedProcess","params":{"vmServiceUri":null}}]
+{"suite":{"id":130,"platform":"vm","path":"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/widget/app_background_test.dart"},"type":"suite","time":17671}
+{"test":{"id":131,"name":"loading D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/widget/app_background_test.dart","suiteID":130,"groupIDs":[],"metadata":{"skip":false,"skipReason":null},"line":null,"column":null,"url":null},"type":"testStart","time":17672}
+{"testID":88,"result":"success","skipped":false,"hidden":true,"type":"testDone","time":17787}
+{"group":{"id":132,"suiteID":87,"parentID":null,"name":"","metadata":{"skip":false,"skipReason":null},"testCount":2,"line":null,"column":null,"url":null},"type":"group","time":17787}
+{"group":{"id":133,"suiteID":87,"parentID":132,"name":"SettingsViewModel toggles multiple times","metadata":{"skip":false,"skipReason":null},"testCount":2,"line":5,"column":3,"url":"file:///D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/settings_viewmodel_multi_toggle_test.dart"},"type":"group","time":17788}
+{"test":{"id":134,"name":"SettingsViewModel toggles multiple times notifications toggle twice returns original","suiteID":87,"groupIDs":[132,133],"metadata":{"skip":false,"skipReason":null},"line":6,"column":5,"url":"file:///D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/settings_viewmodel_multi_toggle_test.dart"},"type":"testStart","time":17788}
+{"testID":134,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":17823}
+{"test":{"id":135,"name":"SettingsViewModel toggles multiple times privateAccount toggle switch","suiteID":87,"groupIDs":[132,133],"metadata":{"skip":false,"skipReason":null},"line":14,"column":5,"url":"file:///D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/settings_viewmodel_multi_toggle_test.dart"},"type":"testStart","time":17824}
+{"testID":135,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":17830}
+
+[{"event":"test.startedProcess","params":{"vmServiceUri":null}}]
+{"suite":{"id":136,"platform":"vm","path":"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/widget/app_footer_layout_test.dart"},"type":"suite","time":18088}
+{"test":{"id":137,"name":"loading D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/widget/app_footer_layout_test.dart","suiteID":136,"groupIDs":[],"metadata":{"skip":false,"skipReason":null},"line":null,"column":null,"url":null},"type":"testStart","time":18088}
+{"testID":95,"result":"success","skipped":false,"hidden":true,"type":"testDone","time":18197}
+{"group":{"id":138,"suiteID":94,"parentID":null,"name":"","metadata":{"skip":false,"skipReason":null},"testCount":1,"line":null,"column":null,"url":null},"type":"group","time":18198}
+{"test":{"id":139,"name":"SettingsViewModel toggles and updates","suiteID":94,"groupIDs":[138],"metadata":{"skip":false,"skipReason":null},"line":5,"column":3,"url":"file:///D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/settings_viewmodel_test.dart"},"type":"testStart","time":18198}
+{"testID":139,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":18231}
+
+[{"event":"test.startedProcess","params":{"vmServiceUri":null}}]
+{"testID":104,"result":"success","skipped":false,"hidden":true,"type":"testDone","time":18491}
+{"group":{"id":140,"suiteID":103,"parentID":null,"name":"","metadata":{"skip":false,"skipReason":null},"testCount":1,"line":null,"column":null,"url":null},"type":"group","time":18492}
+{"test":{"id":141,"name":"resolveDisplayUrl returns original for non-blob URLs","suiteID":103,"groupIDs":[140],"metadata":{"skip":false,"skipReason":null},"line":5,"column":3,"url":"file:///D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/user_viewmodel_display_url_test.dart"},"type":"testStart","time":18492}
+{"suite":{"id":142,"platform":"vm","path":"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/widget/app_header_footer_test.dart"},"type":"suite","time":18516}
+{"test":{"id":143,"name":"loading D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/widget/app_header_footer_test.dart","suiteID":142,"groupIDs":[],"metadata":{"skip":false,"skipReason":null},"line":null,"column":null,"url":null},"type":"testStart","time":18516}
+{"testID":141,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":18521}
+
+[{"event":"test.startedProcess","params":{"vmServiceUri":null}}]
+{"testID":110,"result":"success","skipped":false,"hidden":true,"type":"testDone","time":19093}
+{"group":{"id":144,"suiteID":109,"parentID":null,"name":"","metadata":{"skip":false,"skipReason":null},"testCount":1,"line":null,"column":null,"url":null},"type":"group","time":19093}
+{"test":{"id":145,"name":"getUserById returns null after clearAll","suiteID":109,"groupIDs":[144],"metadata":{"skip":false,"skipReason":null},"line":6,"column":3,"url":"file:///D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/user_viewmodel_get_user_after_clear_test.dart"},"type":"testStart","time":19093}
+{"suite":{"id":146,"platform":"vm","path":"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/widget/app_header_friends_section_test.dart"},"type":"suite","time":19111}
+{"test":{"id":147,"name":"loading D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/widget/app_header_friends_section_test.dart","suiteID":146,"groupIDs":[],"metadata":{"skip":false,"skipReason":null},"line":null,"column":null,"url":null},"type":"testStart","time":19111}
+{"testID":145,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":19125}
+
+[{"event":"test.startedProcess","params":{"vmServiceUri":null}}]
+{"testID":116,"result":"success","skipped":false,"hidden":true,"type":"testDone","time":19706}
+{"group":{"id":148,"suiteID":115,"parentID":null,"name":"","metadata":{"skip":false,"skipReason":null},"testCount":2,"line":null,"column":null,"url":null},"type":"group","time":19707}
+{"group":{"id":149,"suiteID":115,"parentID":148,"name":"UserViewModel misc","metadata":{"skip":false,"skipReason":null},"testCount":2,"line":6,"column":3,"url":"file:///D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/user_viewmodel_misc_test.dart"},"type":"group","time":19707}
+{"test":{"id":150,"name":"UserViewModel misc logout clears currentUser","suiteID":115,"groupIDs":[148,149],"metadata":{"skip":false,"skipReason":null},"line":7,"column":5,"url":"file:///D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/user_viewmodel_misc_test.dart"},"type":"testStart","time":19707}
+{"suite":{"id":151,"platform":"vm","path":"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/widget/base_footer_buttons_test.dart"},"type":"suite","time":19720}
+{"test":{"id":152,"name":"loading D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/widget/base_footer_buttons_test.dart","suiteID":151,"groupIDs":[],"metadata":{"skip":false,"skipReason":null},"line":null,"column":null,"url":null},"type":"testStart","time":19720}
+{"testID":150,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":19737}
+{"test":{"id":153,"name":"UserViewModel misc getUserById returns null when not found","suiteID":115,"groupIDs":[148,149],"metadata":{"skip":false,"skipReason":null},"line":20,"column":5,"url":"file:///D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/user_viewmodel_misc_test.dart"},"type":"testStart","time":19737}
+{"testID":153,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":19741}
+
+[{"event":"test.startedProcess","params":{"vmServiceUri":null}}]
+{"testID":122,"result":"success","skipped":false,"hidden":true,"type":"testDone","time":20117}
+{"group":{"id":154,"suiteID":121,"parentID":null,"name":"","metadata":{"skip":false,"skipReason":null},"testCount":2,"line":null,"column":null,"url":null},"type":"group","time":20117}
+{"group":{"id":155,"suiteID":121,"parentID":154,"name":"UserViewModel multiple users","metadata":{"skip":false,"skipReason":null},"testCount":2,"line":6,"column":3,"url":"file:///D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/user_viewmodel_multiple_users_test.dart"},"type":"group","time":20117}
+{"test":{"id":156,"name":"UserViewModel multiple users currentUser equals last set user","suiteID":121,"groupIDs":[154,155],"metadata":{"skip":false,"skipReason":null},"line":7,"column":5,"url":"file:///D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/user_viewmodel_multiple_users_test.dart"},"type":"testStart","time":20117}
+{"suite":{"id":157,"platform":"vm","path":"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/widget/base_footer_navigation_test.dart"},"type":"suite","time":20131}
+{"test":{"id":158,"name":"loading D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/widget/base_footer_navigation_test.dart","suiteID":157,"groupIDs":[],"metadata":{"skip":false,"skipReason":null},"line":null,"column":null,"url":null},"type":"testStart","time":20131}
+{"testID":156,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":20148}
+{"test":{"id":159,"name":"UserViewModel multiple users getUserById finds previously set user","suiteID":121,"groupIDs":[154,155],"metadata":{"skip":false,"skipReason":null},"line":26,"column":5,"url":"file:///D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/user_viewmodel_multiple_users_test.dart"},"type":"testStart","time":20148}
+{"testID":159,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":20152}
+
+[{"event":"test.startedProcess","params":{"vmServiceUri":null}}]
+{"testID":124,"result":"success","skipped":false,"hidden":true,"type":"testDone","time":20720}
+{"group":{"id":160,"suiteID":123,"parentID":null,"name":"","metadata":{"skip":false,"skipReason":null},"testCount":3,"line":null,"column":null,"url":null},"type":"group","time":20720}
+{"group":{"id":161,"suiteID":123,"parentID":160,"name":"UserViewModel","metadata":{"skip":false,"skipReason":null},"testCount":3,"line":6,"column":3,"url":"file:///D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/user_viewmodel_test.dart"},"type":"group","time":20720}
+{"test":{"id":162,"name":"UserViewModel setCurrentUser inserts when not exists","suiteID":123,"groupIDs":[160,161],"metadata":{"skip":false,"skipReason":null},"line":7,"column":5,"url":"file:///D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/user_viewmodel_test.dart"},"type":"testStart","time":20720}
+{"suite":{"id":163,"platform":"vm","path":"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/widget/base_header_friends_button_presence_test.dart"},"type":"suite","time":20737}
+{"test":{"id":164,"name":"loading D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/widget/base_header_friends_button_presence_test.dart","suiteID":163,"groupIDs":[],"metadata":{"skip":false,"skipReason":null},"line":null,"column":null,"url":null},"type":"testStart","time":20738}
+{"testID":162,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":20751}
+{"test":{"id":165,"name":"UserViewModel setCurrentUser updates when exists","suiteID":123,"groupIDs":[160,161],"metadata":{"skip":false,"skipReason":null},"line":20,"column":5,"url":"file:///D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/user_viewmodel_test.dart"},"type":"testStart","time":20751}
+{"testID":165,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":20755}
+{"test":{"id":166,"name":"UserViewModel clearAll resets state","suiteID":123,"groupIDs":[160,161],"metadata":{"skip":false,"skipReason":null},"line":40,"column":5,"url":"file:///D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/unit/user_viewmodel_test.dart"},"type":"testStart","time":20755}
+{"testID":166,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":20759}
+
+[{"event":"test.startedProcess","params":{"vmServiceUri":null}}]
+{"testID":131,"result":"success","skipped":false,"hidden":true,"type":"testDone","time":21385}
+{"group":{"id":167,"suiteID":130,"parentID":null,"name":"","metadata":{"skip":false,"skipReason":null},"testCount":1,"line":null,"column":null,"url":null},"type":"group","time":21385}
+{"test":{"id":168,"name":"AppBackground renders child over background","suiteID":130,"groupIDs":[167],"metadata":{"skip":false,"skipReason":null},"line":174,"column":5,"url":"package:flutter_test/src/widget_tester.dart","root_line":6,"root_column":3,"root_url":"file:///D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/widget/app_background_test.dart"},"type":"testStart","time":21386}
+{"suite":{"id":169,"platform":"vm","path":"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/widget/base_header_navigation_right_test.dart"},"type":"suite","time":21403}
+{"test":{"id":170,"name":"loading D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/widget/base_header_navigation_right_test.dart","suiteID":169,"groupIDs":[],"metadata":{"skip":false,"skipReason":null},"line":null,"column":null,"url":null},"type":"testStart","time":21403}
+
+[{"event":"test.startedProcess","params":{"vmServiceUri":null}}]
+{"testID":168,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":22133}
+
+[{"event":"test.startedProcess","params":{"vmServiceUri":null}}]
+{"testID":137,"result":"success","skipped":false,"hidden":true,"type":"testDone","time":22930}
+{"group":{"id":171,"suiteID":136,"parentID":null,"name":"","metadata":{"skip":false,"skipReason":null},"testCount":1,"line":null,"column":null,"url":null},"type":"group","time":22931}
+{"test":{"id":172,"name":"AppFooter contains three icons","suiteID":136,"groupIDs":[171],"metadata":{"skip":false,"skipReason":null},"line":174,"column":5,"url":"package:flutter_test/src/widget_tester.dart","root_line":6,"root_column":3,"root_url":"file:///D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/widget/app_footer_layout_test.dart"},"type":"testStart","time":22931}
+{"suite":{"id":173,"platform":"vm","path":"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/widget/base_header_show_count_test.dart"},"type":"suite","time":22956}
+{"test":{"id":174,"name":"loading D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/widget/base_header_show_count_test.dart","suiteID":173,"groupIDs":[],"metadata":{"skip":false,"skipReason":null},"line":null,"column":null,"url":null},"type":"testStart","time":22957}
+
+[{"event":"test.startedProcess","params":{"vmServiceUri":null}}]
+{"testID":147,"result":"success","skipped":false,"hidden":true,"type":"testDone","time":23828}
+{"group":{"id":175,"suiteID":146,"parentID":null,"name":"","metadata":{"skip":false,"skipReason":null},"testCount":1,"line":null,"column":null,"url":null},"type":"group","time":23829}
+{"test":{"id":176,"name":"AppHeader renders friendsSection widget","suiteID":146,"groupIDs":[175],"metadata":{"skip":false,"skipReason":null},"line":174,"column":5,"url":"package:flutter_test/src/widget_tester.dart","root_line":6,"root_column":3,"root_url":"file:///D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/widget/app_header_friends_section_test.dart"},"type":"testStart","time":23829}
+{"testID":143,"result":"success","skipped":false,"hidden":true,"type":"testDone","time":23831}
+{"group":{"id":177,"suiteID":142,"parentID":null,"name":"","metadata":{"skip":false,"skipReason":null},"testCount":2,"line":null,"column":null,"url":null},"type":"group","time":23831}
+{"group":{"id":178,"suiteID":142,"parentID":177,"name":"AppHeader","metadata":{"skip":false,"skipReason":null},"testCount":1,"line":8,"column":3,"url":"file:///D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/widget/app_header_footer_test.dart"},"type":"group","time":23831}
+{"test":{"id":179,"name":"AppHeader Trigger onLeftTap and onRightTap when they are pressed","suiteID":142,"groupIDs":[177,178],"metadata":{"skip":false,"skipReason":null},"line":174,"column":5,"url":"package:flutter_test/src/widget_tester.dart","root_line":9,"root_column":5,"root_url":"file:///D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/widget/app_header_footer_test.dart"},"type":"testStart","time":23831}
+{"testID":172,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":23832}
+
+[{"event":"test.startedProcess","params":{"vmServiceUri":null}}]
+{"suite":{"id":180,"platform":"vm","path":"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/widget/base_header_test.dart"},"type":"suite","time":24926}
+{"test":{"id":181,"name":"loading D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/widget/base_header_test.dart","suiteID":180,"groupIDs":[],"metadata":{"skip":false,"skipReason":null},"line":null,"column":null,"url":null},"type":"testStart","time":24927}
+{"testID":176,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":24928}
+{"testID":179,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":24928}
+{"group":{"id":182,"suiteID":142,"parentID":177,"name":"AppFooter","metadata":{"skip":false,"skipReason":null},"testCount":1,"line":50,"column":3,"url":"file:///D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/widget/app_header_footer_test.dart"},"type":"group","time":24933}
+{"test":{"id":183,"name":"AppFooter Trigger 3 callbacks after the buttons are pressed","suiteID":142,"groupIDs":[177,182],"metadata":{"skip":false,"skipReason":null},"line":174,"column":5,"url":"package:flutter_test/src/widget_tester.dart","root_line":51,"root_column":5,"root_url":"file:///D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/widget/app_header_footer_test.dart"},"type":"testStart","time":24933}
+{"testID":183,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":25000}
+
+[{"event":"test.startedProcess","params":{"vmServiceUri":null}}]
+{"testID":152,"result":"success","skipped":false,"hidden":true,"type":"testDone","time":25959}
+{"group":{"id":184,"suiteID":151,"parentID":null,"name":"","metadata":{"skip":false,"skipReason":null},"testCount":1,"line":null,"column":null,"url":null},"type":"group","time":25959}
+{"test":{"id":185,"name":"BaseFooter has three tappable GestureDetectors","suiteID":151,"groupIDs":[184],"metadata":{"skip":false,"skipReason":null},"line":174,"column":5,"url":"package:flutter_test/src/widget_tester.dart","root_line":6,"root_column":3,"root_url":"file:///D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/widget/base_footer_buttons_test.dart"},"type":"testStart","time":25959}
+{"suite":{"id":186,"platform":"vm","path":"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/widget/chat_list_view_empty_test.dart"},"type":"suite","time":25967}
+{"test":{"id":187,"name":"loading D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/widget/chat_list_view_empty_test.dart","suiteID":186,"groupIDs":[],"metadata":{"skip":false,"skipReason":null},"line":null,"column":null,"url":null},"type":"testStart","time":25968}
+{"suite":{"id":188,"platform":"vm","path":"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/widget/feed_view_header_label_updates_test.dart"},"type":"suite","time":25976}
+{"test":{"id":189,"name":"loading D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/widget/feed_view_header_label_updates_test.dart","suiteID":188,"groupIDs":[],"metadata":{"skip":false,"skipReason":null},"line":null,"column":null,"url":null},"type":"testStart","time":25976}
+{"testID":158,"result":"success","skipped":false,"hidden":true,"type":"testDone","time":25977}
+{"group":{"id":190,"suiteID":157,"parentID":null,"name":"","metadata":{"skip":false,"skipReason":null},"testCount":1,"line":null,"column":null,"url":null},"type":"group","time":25978}
+{"test":{"id":191,"name":"BaseFooter navigates vertical PageView to page 0 on taps","suiteID":157,"groupIDs":[190],"metadata":{"skip":false,"skipReason":null},"line":174,"column":5,"url":"package:flutter_test/src/widget_tester.dart","root_line":6,"root_column":3,"root_url":"file:///D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/widget/base_footer_navigation_test.dart"},"type":"testStart","time":25978}
+
+[{"event":"test.startedProcess","params":{"vmServiceUri":null}}]
+{"testID":164,"result":"success","skipped":false,"hidden":true,"type":"testDone","time":26877}
+{"group":{"id":192,"suiteID":163,"parentID":null,"name":"","metadata":{"skip":false,"skipReason":null},"testCount":1,"line":null,"column":null,"url":null},"type":"group","time":26878}
+{"test":{"id":193,"name":"BaseHeader contains FriendsButton","suiteID":163,"groupIDs":[192],"metadata":{"skip":false,"skipReason":null},"line":174,"column":5,"url":"package:flutter_test/src/widget_tester.dart","root_line":7,"root_column":3,"root_url":"file:///D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/widget/base_header_friends_button_presence_test.dart"},"type":"testStart","time":26878}
+{"testID":185,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":26879}
+{"testID":191,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":27079}
+
+[{"event":"test.startedProcess","params":{"vmServiceUri":null}}]
+{"testID":170,"result":"success","skipped":false,"hidden":true,"type":"testDone","time":28022}
+{"group":{"id":194,"suiteID":169,"parentID":null,"name":"","metadata":{"skip":false,"skipReason":null},"testCount":1,"line":null,"column":null,"url":null},"type":"group","time":28022}
+{"test":{"id":195,"name":"BaseHeader right icon navigates to page 2","suiteID":169,"groupIDs":[194],"metadata":{"skip":false,"skipReason":null},"line":174,"column":5,"url":"package:flutter_test/src/widget_tester.dart","root_line":6,"root_column":3,"root_url":"file:///D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/widget/base_header_navigation_right_test.dart"},"type":"testStart","time":28022}
+{"testID":193,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":28023}
+{"suite":{"id":196,"platform":"vm","path":"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/widget/friends_button_test.dart"},"type":"suite","time":28057}
+{"test":{"id":197,"name":"loading D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/widget/friends_button_test.dart","suiteID":196,"groupIDs":[],"metadata":{"skip":false,"skipReason":null},"line":null,"column":null,"url":null},"type":"testStart","time":28057}
+{"suite":{"id":198,"platform":"vm","path":"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/widget/gradient_circle_icon_test.dart"},"type":"suite","time":28068}
+{"test":{"id":199,"name":"loading D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/widget/gradient_circle_icon_test.dart","suiteID":198,"groupIDs":[],"metadata":{"skip":false,"skipReason":null},"line":null,"column":null,"url":null},"type":"testStart","time":28069}
+{"testID":174,"result":"success","skipped":false,"hidden":true,"type":"testDone","time":28247}
+{"group":{"id":200,"suiteID":173,"parentID":null,"name":"","metadata":{"skip":false,"skipReason":null},"testCount":1,"line":null,"column":null,"url":null},"type":"group","time":28247}
+{"test":{"id":201,"name":"BaseHeader shows count when showCount=true","suiteID":173,"groupIDs":[200],"metadata":{"skip":false,"skipReason":null},"line":174,"column":5,"url":"package:flutter_test/src/widget_tester.dart","root_line":6,"root_column":3,"root_url":"file:///D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/widget/base_header_show_count_test.dart"},"type":"testStart","time":28248}
+
+[{"event":"test.startedProcess","params":{"vmServiceUri":null}}]
+{"testID":195,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":29364}
+{"testID":201,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":29364}
+{"suite":{"id":202,"platform":"vm","path":"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/widget/locket_app_auth_routing_test.dart"},"type":"suite","time":29396}
+{"test":{"id":203,"name":"loading D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/widget/locket_app_auth_routing_test.dart","suiteID":202,"groupIDs":[],"metadata":{"skip":false,"skipReason":null},"line":null,"column":null,"url":null},"type":"testStart","time":29396}
+
+[{"event":"test.startedProcess","params":{"vmServiceUri":null}}]
+{"suite":{"id":204,"platform":"vm","path":"D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/widget/locket_app_switch_auth_state_test.dart"},"type":"suite","time":30374}
+{"test":{"id":205,"name":"loading D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/widget/locket_app_switch_auth_state_test.dart","suiteID":204,"groupIDs":[],"metadata":{"skip":false,"skipReason":null},"line":null,"column":null,"url":null},"type":"testStart","time":30375}
+
+[{"event":"test.startedProcess","params":{"vmServiceUri":null}}]
+{"testID":181,"result":"success","skipped":false,"hidden":true,"type":"testDone","time":31159}
+{"group":{"id":206,"suiteID":180,"parentID":null,"name":"","metadata":{"skip":false,"skipReason":null},"testCount":2,"line":null,"column":null,"url":null},"type":"group","time":31159}
+{"test":{"id":207,"name":"BaseHeader renders FriendsButton with provided label","suiteID":180,"groupIDs":[206],"metadata":{"skip":false,"skipReason":null},"line":174,"column":5,"url":"package:flutter_test/src/widget_tester.dart","root_line":6,"root_column":3,"root_url":"file:///D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/widget/base_header_test.dart"},"type":"testStart","time":31159}
+
+[{"event":"test.startedProcess","params":{"vmServiceUri":null}}]
+{"testID":187,"result":"success","skipped":false,"hidden":true,"type":"testDone","time":31853}
+{"group":{"id":208,"suiteID":186,"parentID":null,"name":"","metadata":{"skip":false,"skipReason":null},"testCount":1,"line":null,"column":null,"url":null},"type":"group","time":31853}
+{"test":{"id":209,"name":"ChatListView shows title and empty state","suiteID":186,"groupIDs":[208],"metadata":{"skip":false,"skipReason":null},"line":174,"column":5,"url":"package:flutter_test/src/widget_tester.dart","root_line":11,"root_column":3,"root_url":"file:///D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/widget/chat_list_view_empty_test.dart"},"type":"testStart","time":31853}
+{"testID":207,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":32106}
+{"test":{"id":210,"name":"BaseHeader navigates to page 0 on left/right tap","suiteID":180,"groupIDs":[206],"metadata":{"skip":false,"skipReason":null},"line":174,"column":5,"url":"package:flutter_test/src/widget_tester.dart","root_line":27,"root_column":3,"root_url":"file:///D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/widget/base_header_test.dart"},"type":"testStart","time":32107}
+{"testID":189,"result":"success","skipped":false,"hidden":true,"type":"testDone","time":32115}
+{"group":{"id":211,"suiteID":188,"parentID":null,"name":"","metadata":{"skip":false,"skipReason":null},"testCount":1,"line":null,"column":null,"url":null},"type":"group","time":32116}
+{"test":{"id":212,"name":"FeedView header label updates when filter changes","suiteID":188,"groupIDs":[211],"metadata":{"skip":false,"skipReason":null},"line":174,"column":5,"url":"package:flutter_test/src/widget_tester.dart","root_line":11,"root_column":3,"root_url":"file:///D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/widget/feed_view_header_label_updates_test.dart"},"type":"testStart","time":32116}
+
+[{"event":"test.startedProcess","params":{"vmServiceUri":null}}]
+{"testID":197,"result":"success","skipped":false,"hidden":true,"type":"testDone","time":32487}
+{"group":{"id":213,"suiteID":196,"parentID":null,"name":"","metadata":{"skip":false,"skipReason":null},"testCount":2,"line":null,"column":null,"url":null},"type":"group","time":32488}
+{"test":{"id":214,"name":"FriendsButton shows count when showCount=true","suiteID":196,"groupIDs":[213],"metadata":{"skip":false,"skipReason":null},"line":174,"column":5,"url":"package:flutter_test/src/widget_tester.dart","root_line":6,"root_column":3,"root_url":"file:///D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/widget/friends_button_test.dart"},"type":"testStart","time":32488}
+{"testID":210,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":32529}
+
+[{"event":"test.startedProcess","params":{"vmServiceUri":null}}]
+{"testID":209,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":33174}
+{"testID":199,"result":"success","skipped":false,"hidden":true,"type":"testDone","time":33404}
+{"group":{"id":215,"suiteID":198,"parentID":null,"name":"","metadata":{"skip":false,"skipReason":null},"testCount":1,"line":null,"column":null,"url":null},"type":"group","time":33404}
+{"test":{"id":216,"name":"GradientCircleIcon triggers onTap","suiteID":198,"groupIDs":[215],"metadata":{"skip":false,"skipReason":null},"line":174,"column":5,"url":"package:flutter_test/src/widget_tester.dart","root_line":6,"root_column":3,"root_url":"file:///D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/widget/gradient_circle_icon_test.dart"},"type":"testStart","time":33404}
+{"testID":212,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":33439}
+{"testID":214,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":33603}
+{"test":{"id":217,"name":"FriendsButton hides count when showCount=false","suiteID":196,"groupIDs":[213],"metadata":{"skip":false,"skipReason":null},"line":174,"column":5,"url":"package:flutter_test/src/widget_tester.dart","root_line":24,"root_column":3,"root_url":"file:///D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/widget/friends_button_test.dart"},"type":"testStart","time":33603}
+{"testID":217,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":33660}
+{"testID":203,"result":"success","skipped":false,"hidden":true,"type":"testDone","time":33664}
+{"group":{"id":218,"suiteID":202,"parentID":null,"name":"","metadata":{"skip":false,"skipReason":null},"testCount":2,"line":null,"column":null,"url":null},"type":"group","time":33665}
+{"group":{"id":219,"suiteID":202,"parentID":218,"name":"LocketApp routes base on authentication state","metadata":{"skip":false,"skipReason":null},"testCount":2,"line":14,"column":3,"url":"file:///D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/widget/locket_app_auth_routing_test.dart"},"type":"group","time":33665}
+{"test":{"id":220,"name":"LocketApp routes base on authentication state Show LoginView before log in","suiteID":202,"groupIDs":[218,219],"metadata":{"skip":false,"skipReason":null},"line":174,"column":5,"url":"package:flutter_test/src/widget_tester.dart","root_line":15,"root_column":5,"root_url":"file:///D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/widget/locket_app_auth_routing_test.dart"},"type":"testStart","time":33665}
+{"testID":205,"result":"success","skipped":false,"hidden":true,"type":"testDone","time":34228}
+{"group":{"id":221,"suiteID":204,"parentID":null,"name":"","metadata":{"skip":false,"skipReason":null},"testCount":1,"line":null,"column":null,"url":null},"type":"group","time":34228}
+{"test":{"id":222,"name":"Switch from LoginView to MainView when user updates","suiteID":204,"groupIDs":[221],"metadata":{"skip":false,"skipReason":null},"line":174,"column":5,"url":"package:flutter_test/src/widget_tester.dart","root_line":15,"root_column":3,"root_url":"file:///D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/widget/locket_app_switch_auth_state_test.dart"},"type":"testStart","time":34228}
+{"testID":216,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":34331}
+{"testID":220,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":34717}
+{"test":{"id":223,"name":"LocketApp routes base on authentication state Show MainView after logged in","suiteID":202,"groupIDs":[218,219],"metadata":{"skip":false,"skipReason":null},"line":174,"column":5,"url":"package:flutter_test/src/widget_tester.dart","root_line":39,"root_column":5,"root_url":"file:///D:/K22_DUT/HK7/PBL6/PBL6/PBL6/mobile/locket_ai/test/widget/locket_app_auth_routing_test.dart"},"type":"testStart","time":34717}
+{"testID":223,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":34924}
+{"testID":222,"result":"success","skipped":false,"hidden":false,"type":"testDone","time":35334}
+{"success":true,"type":"done","time":35521}
