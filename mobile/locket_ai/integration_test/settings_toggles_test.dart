@@ -1,9 +1,8 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:locket_ai/views/settings/settings_view.dart';
-import 'package:locket_ai/views/auth/login_view.dart';
 import 'package:locket_ai/viewmodels/auth_viewmodel.dart';
 import 'package:locket_ai/viewmodels/user_viewmodel.dart';
 import 'package:locket_ai/viewmodels/feed_viewmodel.dart';
@@ -12,37 +11,27 @@ import 'package:locket_ai/viewmodels/chat_viewmodel.dart';
 import 'package:locket_ai/viewmodels/settings_viewmodel.dart';
 import 'package:locket_ai/models/user_model.dart';
 
-class TestAuthVM extends AuthViewModel {
-  TestAuthVM() : super(userViewModel: UserViewModel());
-}
-
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
-  testWidgets('Logout navigates immediately to LoginView', (tester) async {
-    final authVM = TestAuthVM();
-    final userVM = UserViewModel();
+  testWidgets('toggle Notifications thay đổi trạng thái', (tester) async {
+    final authVM = AuthViewModel(userViewModel: UserViewModel());
+    final userVM = authVM.userViewModel;
     final feedVM = FeedViewModel();
     final friendshipVM = FriendshipViewModel();
     final chatVM = ChatViewModel();
+    final sVM = SettingsViewModel();
 
-    final u = User(
-      userId: 'u1',
-      phoneNumber: '',
-      username: 'tester',
-      email: 't@example.com',
-      fullName: 'Tester',
-      profilePictureUrl: null,
-      passwordHash: '',
-      subscriptionStatus: SubscriptionStatus.FREE,
-      subscriptionExpiresAt: null,
-      accountStatus: AccountStatus.ACTIVE,
-      createdAt: DateTime.now(),
-      updatedAt: DateTime.now(),
+    final user = User(
+      userId: 'u1', phoneNumber: '0', username: 'tester', email: 't@e.com', fullName: 'Tester',
+      profilePictureUrl: null, passwordHash: '', subscriptionStatus: SubscriptionStatus.FREE,
+      subscriptionExpiresAt: null, accountStatus: AccountStatus.ACTIVE,
+      createdAt: DateTime.now(), updatedAt: DateTime.now(),
     );
-    authVM.updateCurrentUser(u);
-    authVM.setJwtToken('jwt');
+    authVM.updateCurrentUser(user);
     feedVM.setDependencies(userVM, friendshipVM);
+
+    expect(sVM.notificationsEnabled, isFalse);
 
     await tester.pumpWidget(
       MultiProvider(
@@ -52,17 +41,14 @@ void main() {
           ChangeNotifierProvider<FeedViewModel>.value(value: feedVM),
           ChangeNotifierProvider<FriendshipViewModel>.value(value: friendshipVM),
           ChangeNotifierProvider<ChatViewModel>.value(value: chatVM),
-          ChangeNotifierProvider<SettingsViewModel>(create: (_) => SettingsViewModel()),
+          ChangeNotifierProvider<SettingsViewModel>.value(value: sVM),
         ],
         child: const MaterialApp(home: SettingsView()),
       ),
     );
 
-    expect(find.text('Log Out'), findsOneWidget);
-    await tester.tap(find.text('Log Out'));
-    await tester.pump(const Duration(seconds: 9));
+    await tester.tap(find.byIcon(Icons.notifications_active_outlined));
     await tester.pumpAndSettle();
-
-    expect(find.text('Sign In'), findsWidgets);
+    expect(sVM.notificationsEnabled, isTrue);
   });
 }
