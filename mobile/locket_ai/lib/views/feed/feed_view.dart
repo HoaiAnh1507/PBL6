@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:locket_ai/viewmodels/auth_viewmodel.dart';
+import 'package:locket_ai/viewmodels/ai_caption_viewmodel.dart';
 import 'package:locket_ai/widgets/base_footer.dart';
 import 'package:locket_ai/core/constants/colors.dart';
 import 'package:locket_ai/widgets/base_header.dart';
 import 'package:locket_ai/widgets/message_bar.dart';
+import 'package:locket_ai/widgets/ai_caption_progress_banner.dart';
 import 'package:provider/provider.dart';
 import '../../viewmodels/feed_viewmodel.dart';
 import '../../viewmodels/chat_viewmodel.dart';
@@ -351,6 +353,30 @@ class _FeedViewState extends State<FeedView> {
             Align(
               alignment: Alignment.topCenter,
               child: _buildHeader(),
+            ),
+
+            // ✨ AI Caption Progress Banner
+            Consumer<AICaptionViewModel>(
+              builder: (context, aiCaptionVM, _) {
+                if (!aiCaptionVM.hasActiveJob) {
+                  return const SizedBox.shrink();
+                }
+                
+                final job = aiCaptionVM.currentJob!;
+                
+                return Positioned(
+                  top: 110, // Below header
+                  left: 0,
+                  right: 0,
+                  child: AICaptionProgressBanner(
+                    status: job.status,
+                    onTap: () {
+                      // ✨ Simply pop to return to CapturePreviewPage underneath
+                      Navigator.of(context).pop();
+                    },
+                  ),
+                );
+              },
             ),
 
             Align(

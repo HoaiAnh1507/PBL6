@@ -10,11 +10,13 @@ import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import '../../viewmodels/auth_viewmodel.dart';
 import '../../viewmodels/friendship_viewmodel.dart';
+import '../../viewmodels/ai_caption_viewmodel.dart';
 import '../../core/constants/colors.dart';
 import '../../widgets/gradient_icon.dart';
 import '../../core/config/api_config.dart';
 import '../post/post_recipients_selector.dart';
 import '../../viewmodels/post_recipients_selector_viewmodel.dart';
+import '../feed/feed_view.dart';
 
 class CapturePreviewPage extends StatefulWidget {
   final String imagePath;
@@ -377,6 +379,18 @@ bool _aiGenerating = false;
       final String postId = initResp['postId'] as String;
       // Lưu lại postId để nếu người dùng bấm cancel (không đăng) thì gọi delete
       _pendingPostId = postId;
+      
+      // ✨ Register job with AI Caption ViewModel for background tracking
+      if (mounted) {
+        final aiCaptionVM = Provider.of<AICaptionViewModel>(context, listen: false);
+        aiCaptionVM.startJob(
+          postId: postId,
+          mediaPath: widget.imagePath,
+          isVideo: widget.isVideo,
+          mood: moodEn,
+        );
+      }
+      
       // Bắt đầu vòng thinking chạy liên tục cho đến khi polling kết thúc
       _aiPhaseFallback = ' ';
       _aiCurrentPhrase = 'AI is thinking...';
@@ -400,12 +414,25 @@ bool _aiGenerating = false;
         _captionController.text = '';
         await _typeText(caption, (s) => _captionController.text = s, genId: genId);
         if (!mounted || genId != _aiGenerationId || _aiCancelRequested) return;
+        
+        // ✨ Mark job as completed (don't clear - keep banner visible)
+        if (mounted) {
+          final aiCaptionVM = Provider.of<AICaptionViewModel>(context, listen: false);
+          aiCaptionVM.markJobCompleted();
+        }
+        
         setState(() {
           _aiGenerating = false;
           _aiCurrentPhrase = '';
         });
       } else {
-        // Không có kết quả sau 3 lần
+        // Không có kết quả sau polling attempts
+        // ✨ Mark job as failed (keep banner visible)
+        if (mounted) {
+          final aiCaptionVM = Provider.of<AICaptionViewModel>(context, listen: false);
+          aiCaptionVM.markJobFailed(errorMessage: 'AI timeout or no response');
+        }
+        
         setState(() {
           _aiPhaseText = 'AI is tired now :(';
           _aiGenerating = false;
@@ -413,6 +440,12 @@ bool _aiGenerating = false;
         });
       }
     } catch (e) {
+      // ✨ Mark job as failed on error (keep banner visible)
+      if (mounted) {
+        final aiCaptionVM = Provider.of<AICaptionViewModel>(context, listen: false);
+        aiCaptionVM.markJobFailed(errorMessage: e.toString());
+      }
+      
       if (!mounted) return;
       setState(() {
         _aiPhaseText = 'AI is tired now :(';
@@ -712,19 +745,6 @@ bool _aiGenerating = false;
     }
   }
 
-  void _cancelAIGeneration() {
-    _typingTimer?.cancel();
-    _aiCancelRequested = true;
-    _aiGenerationId++;
-    setState(() {
-      _aiGenerating = false;
-      _aiPhaseText = '';
-      _aiCurrentPhrase = '';
-    });
-    _captionController.clear();
-    FocusScope.of(context).unfocus();
-  }
-
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size.width;
@@ -739,6 +759,43 @@ bool _aiGenerating = false;
           context: context,
           child: Stack(
           children: [
+        // ✨ Back button (only visible during AI generation)
+        if (_aiGenerating)
+          Positioned(
+            top: 60,
+            left: 30,
+            child: GestureDetector(
+              onTap: () {
+                // ✨ Push a transparent route to show feed without destroying this page
+                // This keeps CapturePreviewPage alive and AI continues running
+                Navigator.of(context).push(
+                  PageRouteBuilder(
+                    opaque: false,
+                    pageBuilder: (context, _, __) => const _FeedViewWrapper(),
+                    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                      return FadeTransition(
+                        opacity: animation,
+                        child: child,
+                      );
+                    },
+                  ),
+                );
+              },
+              child: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.3),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.arrow_back,
+                  color: Colors.white,
+                  size: 24,
+                ),
+              ),
+            ),
+          ),
+
         Positioned(
           top: 60,
           left: 30,
@@ -746,7 +803,7 @@ bool _aiGenerating = false;
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const SizedBox(width: 40),
+              SizedBox(width: _aiGenerating ? 40 : 0),
               Text(
                 'Send to...',
                 style: GoogleFonts.poppins(
@@ -979,13 +1036,41 @@ bool _aiGenerating = false;
               GestureDetector(
                 onTap: () async {
                   if (_aiGenerating) {
-                    _cancelAIGeneration();
+                    // ✨ Cancel AI generation and delete pending post
+                    _aiCancelRequested = true;
+                    _aiGenerationId++;
+                    setState(() {
+                      _aiGenerating = false;
+                      _aiPhaseText = '';
+                      _aiCurrentPhrase = '';
+                    });
+                    _captionController.clear();
+                    
+                    // Clear job from viewmodel
+                    if (mounted) {
+                      final aiCaptionVM = Provider.of<AICaptionViewModel>(context, listen: false);
+                      aiCaptionVM.clearJob();
+                    }
+                    
+                    // Delete pending post on server
+                    await _deletePendingPostIfAny();
+                    
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('AI caption cancelled')),
+                    );
                   } else if (_posting) {
                     // đang đăng, không cho thoát để hiển thị loading
                     return;
                   } else {
                     // Người dùng cancel khi không dùng AI → gọi delete nếu có postId pending
                     await _deletePendingPostIfAny();
+                    
+                    // ✨ Clear job when user cancels (not posting)
+                    if (mounted) {
+                      final aiCaptionVM = Provider.of<AICaptionViewModel>(context, listen: false);
+                      aiCaptionVM.clearJob();
+                    }
+                    
                     Navigator.pop(context);
                   }
                 },
@@ -1005,6 +1090,13 @@ bool _aiGenerating = false;
                           _pendingPostId!, _captionController.text, recipientIds);
                       if (resp != null) {
                         _pendingPostId = null; // tránh xóa nhầm khi quay lại
+                        
+                        // ✨ Clear job after successful post
+                        if (mounted) {
+                          final aiCaptionVM = Provider.of<AICaptionViewModel>(context, listen: false);
+                          aiCaptionVM.clearJob();
+                        }
+                        
                         try {
                           widget.onPost(_captionController.text, widget.imagePath, widget.isVideo);
                         } catch (_) {}
@@ -1090,6 +1182,39 @@ bool _aiGenerating = false;
         )
       ),
       )
+    );
+  }
+}
+
+/// Wrapper widget to show FeedView on top of CapturePreviewPage
+/// while keeping CapturePreviewPage alive in background
+class _FeedViewWrapper extends StatelessWidget {
+  const _FeedViewWrapper();
+
+  @override
+  Widget build(BuildContext context) {
+    final authVM = Provider.of<AuthViewModel>(context, listen: false);
+    final currentUser = authVM.currentUser;
+
+    if (currentUser == null) {
+      return const Scaffold(
+        backgroundColor: Colors.black,
+        body: Center(
+          child: Text('User not found', style: TextStyle(color: Colors.white)),
+        ),
+      );
+    }
+
+    // Create a simple PageController for the feed view
+    final vCtrl = PageController(initialPage: 0);
+    final hCtrl = PageController(initialPage: 1);
+    final messageFocus = FocusNode();
+
+    return FeedView(
+      horizontalController: hCtrl,
+      verticalController: vCtrl,
+      currentUser: currentUser,
+      messageFocus: messageFocus,
     );
   }
 }

@@ -8,6 +8,7 @@ import 'viewmodels/settings_viewmodel.dart';
 import 'viewmodels/user_viewmodel.dart';
 import 'viewmodels/friendship_viewmodel.dart';
 import 'viewmodels/auth_viewmodel.dart';
+import 'viewmodels/ai_caption_viewmodel.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -19,6 +20,7 @@ void main() async {
         ChangeNotifierProvider(create: (_) => UserViewModel()),
         ChangeNotifierProvider(create: (_) => SettingsViewModel()),
         ChangeNotifierProvider(create: (_) => FriendshipViewModel()),
+        ChangeNotifierProvider(create: (_) => AICaptionViewModel()),
 
         // ✅ FeedViewModel phụ thuộc vào UserViewModel
         ChangeNotifierProxyProvider2<UserViewModel, FriendshipViewModel, FeedViewModel>(

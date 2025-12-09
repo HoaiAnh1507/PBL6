@@ -6,7 +6,7 @@ class ApiConfig {
   // Default aligns with your current LAN IP setup
   static String _baseUrl = const String.fromEnvironment(
     'BACKEND_BASE_URL',
-    defaultValue: 'http://10.0.0.40:8080',
+    defaultValue: 'http://192.168.1.4:8080',
   );
 
   static String get baseUrl => _baseUrl;

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:locket_ai/viewmodels/feed_viewmodel.dart';
+import 'package:locket_ai/viewmodels/ai_caption_viewmodel.dart';
 import 'package:locket_ai/views/auth/login_view.dart';
 import 'package:provider/provider.dart';
 import 'package:locket_ai/views/feed/feed_view.dart';
@@ -35,6 +36,7 @@ class _MainViewState extends State<MainView> {
       final friendshipVM = Provider.of<FriendshipViewModel>(context, listen: false);
       final chatVM = Provider.of<ChatViewModel>(context, listen: false);
       final feedVM = Provider.of<FeedViewModel>(context, listen: false);
+      final aiCaptionVM = Provider.of<AICaptionViewModel>(context, listen: false);
 
       final current = authVM.currentUser;
       final jwt = authVM.jwtToken;
@@ -58,12 +60,32 @@ class _MainViewState extends State<MainView> {
         }
       }
 
+      // ✨ Listen for navigation requests from AI Caption ViewModel
+      aiCaptionVM.addListener(_handleAICaptionNavigation);
+
       _bootstrapped = true;
     });
   }
 
+  void _handleAICaptionNavigation() {
+    final aiCaptionVM = Provider.of<AICaptionViewModel>(context, listen: false);
+    if (aiCaptionVM.shouldNavigateToCapture) {
+      // Switch to feed view when user wants to return to capture preview
+      if (_vCtrl.hasClients) {
+        _vCtrl.animateToPage(
+          1, // FeedView
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
+      aiCaptionVM.acknowledgeNavigation();
+    }
+  }
+
   @override
   void dispose() {
+    final aiCaptionVM = Provider.of<AICaptionViewModel>(context, listen: false);
+    aiCaptionVM.removeListener(_handleAICaptionNavigation);
     _hCtrl.dispose();
     _vCtrl.dispose();
     _messageFocus.dispose();
