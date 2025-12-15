@@ -52,4 +52,6 @@ public interface ModerationReportRepository extends JpaRepository<ModerationRepo
     
     @Query("SELECT COUNT(mr) FROM ModerationReport mr WHERE mr.resolvedByAdmin = :admin")
     long countByResolvedByAdmin(@Param("admin") Admin admin);
+    
+    Page<ModerationReport> findByReporter(User reporter, Pageable pageable);
 }

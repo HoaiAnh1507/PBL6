@@ -15,6 +15,10 @@ import java.util.List;
 @Repository
 public interface PostRepository extends JpaRepository<Post, String> {
     
+    List<Post> findByUserAndIsDeletedFalse(User user);
+    
+    Page<Post> findByUserAndIsDeletedFalse(User user, Pageable pageable);
+    
     List<Post> findByUser(User user);
     
     Page<Post> findByUser(User user, Pageable pageable);
@@ -43,4 +47,10 @@ public interface PostRepository extends JpaRepository<Post, String> {
     
     @Query("SELECT COUNT(p) FROM Post p WHERE p.mediaType = :mediaType")
     long countByMediaType(@Param("mediaType") Post.MediaType mediaType);
+    
+    @Query("SELECT COUNT(p) FROM Post p WHERE p.captionStatus = :status")
+    long countByCaptionStatus(@Param("status") Post.CaptionStatus status);
+    
+    @Query("SELECT DATE(p.createdAt) as date, COUNT(p) as count FROM Post p WHERE p.createdAt BETWEEN :startDate AND :endDate GROUP BY DATE(p.createdAt) ORDER BY date")
+    List<java.util.Map<String, Object>> findPostCountByDateRange(@Param("startDate") java.time.LocalDateTime startDate, @Param("endDate") java.time.LocalDateTime endDate);
 }

@@ -1,5 +1,6 @@
 package com.pbl6.backend.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import org.hibernate.annotations.GenericGenerator;
 import java.time.LocalDateTime;
@@ -23,6 +24,7 @@ public class Post {
     
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "posts", "friendshipsAsUserOne", "friendshipsAsUserTwo", "passwordHash"})
     private User user;
     
     @Enumerated(EnumType.STRING)
@@ -42,20 +44,30 @@ public class Post {
     @Column(name = "final_caption", columnDefinition = "TEXT")
     private String finalCaption;
     
+    @Column(name = "is_deleted", nullable = false)
+    private Boolean isDeleted = false;
+    
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
+    
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
     
     // Relationships
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private List<PostRecipient> recipients;
     
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private List<PostReaction> reactions;
     
     @OneToMany(mappedBy = "repliedToPost", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private List<Message> repliedMessages;
     
     @OneToMany(mappedBy = "reportedPost", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private List<ModerationReport> reports;
     
     public enum MediaType {
@@ -175,5 +187,21 @@ public class Post {
     
     public void setReports(List<ModerationReport> reports) {
         this.reports = reports;
+    }
+    
+    public Boolean getIsDeleted() {
+        return isDeleted;
+    }
+    
+    public void setIsDeleted(Boolean isDeleted) {
+        this.isDeleted = isDeleted;
+    }
+    
+    public LocalDateTime getDeletedAt() {
+        return deletedAt;
+    }
+    
+    public void setDeletedAt(LocalDateTime deletedAt) {
+        this.deletedAt = deletedAt;
     }
 }

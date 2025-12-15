@@ -22,6 +22,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private UserDetailsService userDetailsService;
     
     @Autowired
+    private AdminDetailsService adminDetailsService;
+    
+    @Autowired
     private JwtUtil jwtUtil;
 
     @Autowired
@@ -54,7 +57,20 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         // Once we get the token validate it.
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             
-            UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
+            // Check if this is an admin token or user token
+            String role = null;
+            try {
+                role = jwtUtil.extractRole(jwtToken);
+            } catch (Exception e) {
+                logger.error("Unable to extract role from token", e);
+            }
+            
+            UserDetails userDetails;
+            if ("ADMIN".equals(role)) {
+                userDetails = this.adminDetailsService.loadAdminByAdminId(username);
+            } else {
+                userDetails = this.userDetailsService.loadUserByUsername(username);
+            }
             
             // if token is valid configure Spring Security to manually set authentication
             if (jwtUtil.validateToken(jwtToken, username)) {
