@@ -1,5 +1,6 @@
 package com.pbl6.backend.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import org.hibernate.annotations.GenericGenerator;
 import java.time.LocalDateTime;
@@ -37,6 +38,7 @@ public class User {
     @Column(name = "profile_picture_url", columnDefinition = "TEXT")
     private String profilePictureUrl;
     
+    @JsonIgnore
     @Column(name = "password_hash", columnDefinition = "TEXT", nullable = false)
     private String passwordHash;
     
@@ -58,12 +60,15 @@ public class User {
     private LocalDateTime updatedAt;
     
     // Relationships
+    @JsonIgnore
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Post> posts;
     
+    @JsonIgnore
     @OneToMany(mappedBy = "userOne", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Friendship> friendshipsAsUserOne;
     
+    @JsonIgnore
     @OneToMany(mappedBy = "userTwo", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Friendship> friendshipsAsUserTwo;
     

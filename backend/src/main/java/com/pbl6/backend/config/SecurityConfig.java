@@ -59,6 +59,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(authz -> authz
                 // Cho phép truy cập public endpoints
                 .requestMatchers("/api/auth/**").permitAll()
+                .requestMatchers("/api/admin/auth/login").permitAll()
                 .requestMatchers("/api/public/**").permitAll()
                 .requestMatchers("/error").permitAll()
                 .requestMatchers("/actuator/health").permitAll()
@@ -71,8 +72,9 @@ public class SecurityConfig {
                 .requestMatchers("/api/conversations/**").authenticated()
                 .requestMatchers("/api/messages/**").authenticated()
                 .requestMatchers("/api/friendships/**").authenticated()
+                .requestMatchers("/api/reports/**").authenticated()
                 
-                // Admin endpoints
+                // Admin endpoints require ADMIN role
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
                 
                 // Tất cả các endpoint khác cần authentication

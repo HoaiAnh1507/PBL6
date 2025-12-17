@@ -1,5 +1,6 @@
 package com.pbl6.backend.response;
 
+import com.pbl6.backend.model.Post;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -32,6 +33,26 @@ public class PostResponse {
         this.recipients = recipients;
         this.reactions = reactions;
         this.totalReactions = totalReactions;
+    }
+    
+    // Constructor from Post entity (simplified for admin usage)
+    public PostResponse(Post post) {
+        this.postId = post.getPostId();
+        if (post.getUser() != null) {
+            this.user = new UserResponse();
+            this.user.setUserId(post.getUser().getUserId());
+            this.user.setUsername(post.getUser().getUsername());
+            this.user.setFullName(post.getUser().getFullName());
+            this.user.setProfilePictureUrl(post.getUser().getProfilePictureUrl());
+        }
+        this.caption = post.getGeneratedCaption();
+        this.mediaType = post.getMediaType() != null ? post.getMediaType().name() : null;
+        this.mediaUrl = post.getMediaUrl();
+        this.captionStatus = post.getCaptionStatus() != null ? post.getCaptionStatus().name() : null;
+        this.createdAt = post.getCreatedAt();
+        this.recipients = null; // Not loaded for admin view
+        this.reactions = null; // Not loaded for admin view
+        this.totalReactions = 0;
     }
     
     // Getters and Setters

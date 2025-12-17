@@ -46,4 +46,7 @@ public interface UserRepository extends JpaRepository<User, String> {
     
     @Query("SELECT COUNT(u) FROM User u WHERE u.accountStatus = :status")
     long countByAccountStatus(@Param("status") User.AccountStatus status);
+    
+    @Query("SELECT DATE(u.createdAt) as date, COUNT(u) as count FROM User u WHERE u.createdAt BETWEEN :startDate AND :endDate GROUP BY DATE(u.createdAt) ORDER BY date")
+    List<java.util.Map<String, Object>> findUserCountByDateRange(@Param("startDate") java.time.LocalDateTime startDate, @Param("endDate") java.time.LocalDateTime endDate);
 }
