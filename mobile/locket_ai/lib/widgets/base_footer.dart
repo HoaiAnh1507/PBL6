@@ -5,12 +5,14 @@ class BaseFooter extends StatelessWidget {
   final PageController verticalController;
   final TextEditingController messageController;
   final VoidCallback onSend;
+  final VoidCallback? onMenuTap; // Optional menu handler
 
   const BaseFooter({
     super.key,
     required this.verticalController,
     required this.messageController,
     required this.onSend,
+    this.onMenuTap,
   });
 
   void _navigateToPage(int index) {
@@ -36,6 +38,7 @@ class BaseFooter extends StatelessWidget {
             onLeftTap: () => _navigateToPage(0),
             onButtonTap: () => _navigateToPage(0),
             onRightTap: () => _navigateToPage(0),
+            onMenuTap: onMenuTap,
           ),
         // ],
       // ),

@@ -6,12 +6,14 @@ class AppFooter extends StatelessWidget {
   final VoidCallback onLeftTap;
   final VoidCallback onButtonTap;
   final VoidCallback onRightTap;
+  final VoidCallback? onMenuTap; // Optional menu handler
 
   const AppFooter({
     super.key,
     required this.onLeftTap,
     required this.onButtonTap,
     required this.onRightTap,
+    this.onMenuTap,
   });
 
   @override
@@ -47,7 +49,7 @@ class AppFooter extends StatelessWidget {
             ),
           ),
           GestureDetector(
-            onTap: onRightTap,
+            onTap: onMenuTap ?? onRightTap,
             child: const GradientIcon(icon: Icons.more_horiz_outlined, size: 40),
           ),
         ],

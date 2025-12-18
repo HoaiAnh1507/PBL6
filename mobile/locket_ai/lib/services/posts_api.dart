@@ -117,4 +117,21 @@ class PostsApi {
     }
     return null;
   }
+
+  /// DELETE /api/posts/{postId} → Xóa post của chính mình
+  Future<bool> deletePost({required String postId}) async {
+    final uri = ApiConfig.endpoint(ApiConfig.postDeletePath(postId));
+    try {
+      final resp = await http.delete(uri, headers: _headers).timeout(const Duration(seconds: 15));
+      if (resp.statusCode >= 200 && resp.statusCode < 300) {
+        debugPrint('[PostsApi] deletePost success: ${resp.body}');
+        return true;
+      } else {
+        debugPrint('[PostsApi] deletePost failed: status=${resp.statusCode} body=${resp.body}');
+      }
+    } catch (e) {
+      debugPrint('[PostsApi] HTTP error (deletePost): $e');
+    }
+    return false;
+  }
 }
