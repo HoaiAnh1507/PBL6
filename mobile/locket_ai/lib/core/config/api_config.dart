@@ -6,7 +6,7 @@ class ApiConfig {
   // Default aligns with your current LAN IP setup
   static String _baseUrl = const String.fromEnvironment(
     'BACKEND_BASE_URL',
-    defaultValue: 'http://10.0.0.40:8080',
+    defaultValue: 'http://10.0.0.57:8080',
   );
 
   static String get baseUrl => _baseUrl;
@@ -56,6 +56,9 @@ class ApiConfig {
   static String friendshipsUnblockPath(String targetUsername) => '/api/friendships/unblock/$targetUsername';
   static String friendshipsUnfriendPath(String targetUsername) => '/api/friendships/unfriend/$targetUsername';
   static const String friendshipsRequestsPath = '/api/friendships/requests';
+
+  // Reports
+  static const String reportsBasePath = '/api/reports';
 
   // Conversations & Messages
   static const String conversationsBasePath = '/api/conversations';

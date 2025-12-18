@@ -13,6 +13,7 @@ import '../../models/friendship_model.dart';
 import '../../widgets/async_avatar.dart';
 import '../feed/post_item.dart';
 import '../../models/user_model.dart';
+import '../../services/reports_api.dart';
 
 class FeedView extends StatefulWidget {
   final PageController horizontalController;
@@ -211,6 +212,176 @@ class _FeedViewState extends State<FeedView> {
     return friends;
   }
 
+  void _showPostMenu() {
+    final feedVm = Provider.of<FeedViewModel>(context, listen: false);
+    if (feedVm.posts.isEmpty || _currentIndex < 0 || _currentIndex >= feedVm.posts.length) return;
+    
+    final post = feedVm.posts[_currentIndex];
+    final isOwnPost = post.user.userId == widget.currentUser.userId;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.black.withOpacity(0.9),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => Container(
+        padding: const EdgeInsets.symmetric(vertical: 20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (!isOwnPost)
+              ListTile(
+                leading: const Icon(Icons.flag_outlined, color: Colors.redAccent),
+                title: Text(
+                  'Report Post',
+                  style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w500),
+                ),
+                onTap: () {
+                  Navigator.pop(context);
+                  _showReportDialog(post.postId);
+                },
+              ),
+            ListTile(
+              leading: const Icon(Icons.cancel_outlined, color: Colors.white70),
+              title: Text(
+                'Cancel',
+                style: GoogleFonts.poppins(color: Colors.white70),
+              ),
+              onTap: () => Navigator.pop(context),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showReportDialog(String postId) {
+    final reasonController = TextEditingController();
+    final reportReasons = [
+      'Spam or misleading',
+      'Harassment or bullying',
+      'Hate speech',
+      'Violence or dangerous content',
+      'Nudity or sexual content',
+      'False information',
+      'Other',
+    ];
+    
+    String selectedReason = reportReasons[0];
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          backgroundColor: Colors.grey[900],
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: Text(
+            'Report Post',
+            style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w600),
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Why are you reporting this post?',
+                  style: GoogleFonts.poppins(color: Colors.white70, fontSize: 14),
+                ),
+                const SizedBox(height: 16),
+                ...reportReasons.map((reason) => RadioListTile<String>(
+                  title: Text(reason, style: GoogleFonts.poppins(color: Colors.white, fontSize: 14)),
+                  value: reason,
+                  groupValue: selectedReason,
+                  activeColor: Colors.pinkAccent,
+                  onChanged: (value) {
+                    setState(() => selectedReason = value!);
+                  },
+                )).toList(),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: reasonController,
+                  maxLines: 3,
+                  style: GoogleFonts.poppins(color: Colors.white),
+                  decoration: InputDecoration(
+                    hintText: 'Additional details (optional)',
+                    hintStyle: GoogleFonts.poppins(color: Colors.white38),
+                    filled: true,
+                    fillColor: Colors.grey[800],
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text('Cancel', style: GoogleFonts.poppins(color: Colors.white54)),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                Navigator.pop(context);
+                await _submitReport(postId, selectedReason, reasonController.text);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.redAccent,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              child: Text('Submit Report', style: GoogleFonts.poppins(color: Colors.white)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _submitReport(String postId, String reason, String additionalDetails) async {
+    final authVm = Provider.of<AuthViewModel>(context, listen: false);
+    final jwt = authVm.jwtToken;
+    
+    if (jwt == null || jwt.isEmpty) {
+      _showMessage('You must be logged in to report posts', isError: true);
+      return;
+    }
+
+    try {
+      final reportsApi = ReportsApi(jwt: jwt);
+      final fullReason = additionalDetails.isNotEmpty 
+          ? '$reason - $additionalDetails' 
+          : reason;
+      
+      final result = await reportsApi.createReport(
+        postId: postId,
+        reason: fullReason,
+      );
+
+      if (result != null) {
+        _showMessage('Report submitted successfully. Thank you for helping keep our community safe.');
+      } else {
+        _showMessage('Failed to submit report. Please try again.', isError: true);
+      }
+    } catch (e) {
+      _showMessage('Error submitting report: ${e.toString()}', isError: true);
+    }
+  }
+
+  void _showMessage(String message, {bool isError = false}) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message, style: GoogleFonts.poppins()),
+        backgroundColor: isError ? Colors.red[700] : Colors.green[700],
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 3),
+      ),
+    );
+  }
+
   Widget _buildMessageBar(bool isOwner) {
     final feedVm = Provider.of<FeedViewModel>(context, listen: false);
     if (feedVm.posts.isEmpty) return const SizedBox.shrink();
@@ -271,7 +442,8 @@ class _FeedViewState extends State<FeedView> {
     return BaseFooter(
       verticalController: widget.verticalController,
       messageController: _messageCtrl,
-      onSend: () {}
+      onSend: () {},
+      onMenuTap: _showPostMenu,
     );
   }
 
