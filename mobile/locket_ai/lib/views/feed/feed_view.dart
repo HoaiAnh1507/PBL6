@@ -14,6 +14,7 @@ import '../../widgets/async_avatar.dart';
 import '../feed/post_item.dart';
 import '../../models/user_model.dart';
 import '../../services/reports_api.dart';
+import '../../services/posts_api.dart';
 
 class FeedView extends StatefulWidget {
   final PageController horizontalController;
@@ -242,6 +243,18 @@ class _FeedViewState extends State<FeedView> {
                   _showReportDialog(post.postId);
                 },
               ),
+            if (isOwnPost)
+              ListTile(
+                leading: const Icon(Icons.delete_outline, color: Colors.redAccent),
+                title: Text(
+                  'Delete Post',
+                  style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w500),
+                ),
+                onTap: () {
+                  Navigator.pop(context);
+                  _showDeleteConfirmDialog(post.postId);
+                },
+              ),
             ListTile(
               leading: const Icon(Icons.cancel_outlined, color: Colors.white70),
               title: Text(
@@ -254,6 +267,93 @@ class _FeedViewState extends State<FeedView> {
         ),
       ),
     );
+  }
+
+  void _showDeleteConfirmDialog(String postId) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.grey[900],
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text(
+          'Delete Post',
+          style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w600),
+        ),
+        content: Text(
+          'Are you sure you want to delete this post? This action cannot be undone.',
+          style: GoogleFonts.poppins(color: Colors.white70, fontSize: 14),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Cancel', style: GoogleFonts.poppins(color: Colors.white54)),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              await _deletePost(postId);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.redAccent,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            child: Text('Delete', style: GoogleFonts.poppins(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _deletePost(String postId) async {
+    final authVm = Provider.of<AuthViewModel>(context, listen: false);
+    final feedVm = Provider.of<FeedViewModel>(context, listen: false);
+    final jwt = authVm.jwtToken;
+    
+    if (jwt == null || jwt.isEmpty) {
+      _showMessage('You must be logged in to delete posts', isError: true);
+      return;
+    }
+
+    // Show loading indicator
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => Center(
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.black87,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: const CircularProgressIndicator(color: Colors.pinkAccent),
+        ),
+      ),
+    );
+
+    try {
+      final postsApi = PostsApi(jwt: jwt);
+      final success = await postsApi.deletePost(postId: postId);
+
+      // Close loading dialog
+      if (mounted) Navigator.pop(context);
+
+      if (success) {
+        _showMessage('Post deleted successfully');
+        // Refresh feed để cập nhật danh sách posts
+        await feedVm.loadRemoteFeed(jwt: jwt, current: widget.currentUser);
+        // Reset về index 0 nếu cần
+        if (_currentIndex >= feedVm.posts.length && feedVm.posts.isNotEmpty) {
+          _pageCtrl.jumpToPage(0);
+          setState(() => _currentIndex = 0);
+        }
+      } else {
+        _showMessage('Failed to delete post. Please try again.', isError: true);
+      }
+    } catch (e) {
+      // Close loading dialog if still open
+      if (mounted) Navigator.pop(context);
+      _showMessage('Error deleting post: ${e.toString()}', isError: true);
+    }
   }
 
   void _showReportDialog(String postId) {
