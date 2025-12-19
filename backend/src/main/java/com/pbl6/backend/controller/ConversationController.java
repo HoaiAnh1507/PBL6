@@ -45,12 +45,42 @@ public class ConversationController {
         return ResponseEntity.ok(res);
     }
 
-    // GET /api/conversations/{conversationId}: xem hội thoại của tôi với người bạn cụ thể
+    // GET /api/conversations/{conversationId}: xem thông tin hội thoại (không bao gồm messages)
     @GetMapping("/{conversationId}")
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     public ResponseEntity<ConversationResponse> getMyConversation(@PathVariable String conversationId) {
         var principal = getCurrentPrincipal();
         ConversationResponse res = conversationService.getMyConversation(principal.getUser(), conversationId);
         return ResponseEntity.ok(res);
+    }
+
+    /**
+     * GET /api/conversations/{conversationId}/messages: lấy tin nhắn với pagination
+     * Query params:
+     * - beforeMessageId (optional): load tin nhắn cũ hơn tin này (dùng khi scroll lên)
+     * - limit (optional): số lượng tin (default 25, max 100)
+     * 
+     * Response: List<MessageResponse> sắp xếp tăng dần theo thời gian (cũ → mới)
+     * 
+     * Cách sử dụng:
+     * 1. Lần đầu load: GET /messages (không có params) → 25 tin mới nhất
+     * 2. Scroll lên load cũ hơn: GET /messages?beforeMessageId=<id_tin_cu_nhat>&limit=25
+     */
+    @GetMapping("/{conversationId}/messages")
+    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
+    public ResponseEntity<?> getConversationMessages(
+            @PathVariable String conversationId,
+            @RequestParam(required = false) String beforeMessageId,
+            @RequestParam(required = false) Integer limit) {
+        try {
+            var principal = getCurrentPrincipal();
+            var messages = conversationService.getConversationMessages(
+                    principal.getUser(), conversationId, beforeMessageId, limit);
+            return ResponseEntity.ok(messages);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(new java.util.HashMap<String, String>() {{
+                put("error", e.getMessage());
+            }});
+        }
     }
 }

@@ -53,4 +53,19 @@ public interface PostRepository extends JpaRepository<Post, String> {
     
     @Query("SELECT DATE(p.createdAt) as date, COUNT(p) as count FROM Post p WHERE p.createdAt BETWEEN :startDate AND :endDate GROUP BY DATE(p.createdAt) ORDER BY date")
     List<java.util.Map<String, Object>> findPostCountByDateRange(@Param("startDate") java.time.LocalDateTime startDate, @Param("endDate") java.time.LocalDateTime endDate);
+    
+    // Cursor-based pagination methods for Feed (efficient infinite scrolling)
+    // Lấy feed = bài của mình + bài được share (UNION)
+    @Query("SELECT DISTINCT p FROM Post p LEFT JOIN p.recipients pr " +
+           "WHERE (p.user = :user OR pr.recipient = :user) " +
+           "AND p.isDeleted = false AND p.captionStatus = 'COMPLETED' " +
+           "ORDER BY p.createdAt DESC LIMIT :limit")
+    List<Post> findTopNPostsForUser(@Param("user") User user, @Param("limit") int limit);
+    
+    @Query("SELECT DISTINCT p FROM Post p LEFT JOIN p.recipients pr " +
+           "WHERE (p.user = :user OR pr.recipient = :user) " +
+           "AND p.isDeleted = false AND p.captionStatus = 'COMPLETED' " +
+           "AND p.createdAt < :beforeTime " +
+           "ORDER BY p.createdAt DESC LIMIT :limit")
+    List<Post> findPostsForUserBeforeTime(@Param("user") User user, @Param("beforeTime") LocalDateTime beforeTime, @Param("limit") int limit);
 }

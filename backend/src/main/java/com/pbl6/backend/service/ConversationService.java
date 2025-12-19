@@ -59,7 +59,69 @@ public class ConversationService {
             !c.getUserTwo().getUserId().equals(currentUser.getUserId())) {
             throw new RuntimeException("Bạn không có quyền xem hội thoại này");
         }
-        return toConversationResponse(c, true);
+        // Không load messages ở đây nữa, client sẽ gọi API riêng để load messages
+        return toConversationResponse(c, false);
+    }
+
+    /**
+     * Lấy tin nhắn của conversation với pagination (cursor-based)
+     * Load 25 tin nhắn gần nhất, hoặc 25 tin trước messageId cho trước
+     * @param currentUser user hiện tại
+     * @param conversationId id cuộc hội thoại
+     * @param beforeMessageId (optional) load tin nhắn trước tin này (dùng khi scroll lên)
+     * @param limit số lượng tin nhắn (default 25, max 100)
+     * @return danh sách tin nhắn, sắp xếp tăng dần theo thời gian
+     */
+    @Transactional(readOnly = true)
+    public List<MessageResponse> getConversationMessages(User currentUser, String conversationId, 
+                                                         String beforeMessageId, Integer limit) {
+        Conversation c = conversationRepository.findById(conversationId)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy hội thoại với id=" + conversationId));
+        
+        // Kiểm tra quyền truy cập
+        if (!c.getUserOne().getUserId().equals(currentUser.getUserId()) &&
+            !c.getUserTwo().getUserId().equals(currentUser.getUserId())) {
+            throw new RuntimeException("Bạn không có quyền xem hội thoại này");
+        }
+
+        // Validate và set default limit
+        int pageSize = (limit == null || limit <= 0) ? 2 : Math.min(limit, 100);
+
+        List<Message> messages;
+        if (beforeMessageId != null && !beforeMessageId.isBlank()) {
+            // Load tin nhắn cũ hơn (scroll lên)
+            Message beforeMessage = messageRepository.findById(beforeMessageId)
+                    .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy tin nhắn với id=" + beforeMessageId));
+            messages = messageRepository.findByConversationAndSentAtBeforeOrderBySentAtDesc(
+                    c, beforeMessage.getSentAt(), pageSize);
+        } else {
+            // Load tin nhắn mới nhất
+            messages = messageRepository.findTopNByConversationOrderBySentAtDesc(c, pageSize);
+        }
+
+        // Reverse để sắp xếp tăng dần (cũ → mới) cho UI chat
+        Collections.reverse(messages);
+
+        // Convert to response
+        List<MessageResponse> responses = new ArrayList<>();
+        for (Message m : messages) {
+            UserResponse sender = authService.toUserResponse(m.getSender());
+            PostResponse replied = null;
+            if (m.getRepliedToPost() != null) {
+                replied = postService.toResponse(m.getRepliedToPost());
+            }
+            responses.add(new MessageResponse(
+                    m.getMessageId(),
+                    c.getConversationId(),
+                    sender,
+                    m.getContent(),
+                    replied,
+                    m.getSentAt(),
+                    m.isRead()
+            ));
+        }
+
+        return responses;
     }
 
     private ConversationResponse toConversationResponse(Conversation c, boolean includeMessages) {
