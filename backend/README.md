@@ -1,6 +1,18 @@
-# PBL6 Backend - Social Media Application
+---
+title: LocketAI Backend
+emoji: 🚀
+colorFrom: blue
+colorTo: green
+sdk: docker
+app_port: 7860
+pinned: false
+---
 
-A Spring Boot backend application for a social media platform with messaging functionality.
+# PBL6 Backend - LocketAI Social Media Application
+
+A Spring Boot backend application for a social media platform with AI-powered video caption generation and messaging functionality.
+
+**🚀 Deployed on Hugging Face Spaces**
 
 ## Features
 
