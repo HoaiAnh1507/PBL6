@@ -10,7 +10,9 @@ public class DotenvApplicationListener implements ApplicationListener<Applicatio
 
     @Override
     public void onApplicationEvent(ApplicationEnvironmentPreparedEvent event) {
-        Dotenv dotenv = Dotenv.load();
+        Dotenv dotenv = Dotenv.configure()
+                .ignoreIfMissing()
+                .load();
 
         // Database credentials
         String dbUrl = dotenv.get("DB_URL");
