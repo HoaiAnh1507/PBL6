@@ -29,4 +29,35 @@ class ConversationsApi {
     }
     return null;
   }
+
+  /// GET /api/conversations/{conversationId}/messages with pagination
+  /// Returns list of messages sorted from old to new
+  Future<List<dynamic>> getConversationMessages(
+    String conversationId, {
+    String? beforeMessageId,
+    int limit = 25,
+  }) async {
+    final queryParams = <String, String>{
+      'limit': limit.toString(),
+    };
+    if (beforeMessageId != null && beforeMessageId.isNotEmpty) {
+      queryParams['beforeMessageId'] = beforeMessageId;
+    }
+    final path = '/api/conversations/$conversationId/messages';
+    final uri = ApiConfig.endpoint(path)
+        .replace(queryParameters: queryParams);
+    try {
+      final resp = await http.get(uri, headers: _headers).timeout(const Duration(seconds: 20));
+      if (resp.statusCode == 200) {
+        try {
+          final decoded = jsonDecode(resp.body);
+          if (decoded is List) return decoded;
+          return [];
+        } catch (_) {
+          return [];
+        }
+      }
+    } catch (_) {}
+    return [];
+  }
 }

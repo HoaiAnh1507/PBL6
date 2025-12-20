@@ -10,8 +10,19 @@ class PostsApi {
   Map<String, String> get _headers => ApiConfig.jsonHeaders(jwt: jwt);
 
   /// GET /api/posts/feed → Danh sách bài đăng tôi đăng + người khác chia sẻ cho tôi
-  Future<List<dynamic>> listFeed() async {
-    final uri = ApiConfig.endpoint(ApiConfig.postsFeedPath);
+  /// Supports pagination: beforePostId (cursor) and limit
+  Future<List<dynamic>> listFeed({
+    String? beforePostId,
+    int limit = 20,
+  }) async {
+    final queryParams = <String, String>{
+      'limit': limit.toString(),
+    };
+    if (beforePostId != null && beforePostId.isNotEmpty) {
+      queryParams['beforePostId'] = beforePostId;
+    }
+    final uri = ApiConfig.endpoint(ApiConfig.postsFeedPath)
+        .replace(queryParameters: queryParams);
     try {
       final resp = await http.get(uri, headers: _headers).timeout(const Duration(seconds: 20));
       if (resp.statusCode >= 200 && resp.statusCode < 300) {

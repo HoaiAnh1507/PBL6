@@ -278,6 +278,7 @@ class _FeedViewState extends State<FeedView> {
   @override
   Widget build(BuildContext context) {
     final feedVm = Provider.of<FeedViewModel>(context);
+    final authVm = Provider.of<AuthViewModel>(context, listen: false);
     final posts = feedVm.getVisiblePosts(currentUser: widget.currentUser);
     final bool isOwnPost = posts.isNotEmpty &&
         _currentIndex >= 0 &&
@@ -310,12 +311,22 @@ class _FeedViewState extends State<FeedView> {
               PageView.builder(
                 controller: _pageCtrl,
                 scrollDirection: Axis.vertical,
-                itemCount: posts.length,
+                itemCount: posts.length + (feedVm.isLoadingMore ? 1 : 0), // Add loading indicator
                 physics: _messageFocus.hasFocus
                   ? const NeverScrollableScrollPhysics() 
                   : const BouncingScrollPhysics(), 
                 onPageChanged: (index) {
                   setState(() => _currentIndex = index);
+                  
+                  // ✅ Trigger load more when approaching the end (within last 3 items)
+                  if (index >= posts.length - 3 && 
+                      !feedVm.isLoadingMore && 
+                      feedVm.hasMorePosts &&
+                      authVm.jwtToken != null) {
+                    debugPrint('[FeedView] 📍 Approaching end, loading more posts...');
+                    feedVm.loadMorePostsWithJwt(authVm.jwtToken!);
+                  }
+                  
                   // Nếu lướt tới bài của chính mình thì ẩn và hạ input
                   if (index >= 0 && index < posts.length) {
                     final post = posts[index];
@@ -325,6 +336,16 @@ class _FeedViewState extends State<FeedView> {
                   }
                 },
                 itemBuilder: (_, index) {
+                  // ✅ Show loading indicator at the end
+                  if (index == posts.length) {
+                    return Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: CircularProgressIndicator(color: Colors.pinkAccent),
+                      ),
+                    );
+                  }
+                  
                   final post = posts[index];
                   
                   return GestureDetector(
