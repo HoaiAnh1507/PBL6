@@ -27,9 +27,10 @@ class LoginView extends StatefulWidget {
   final authVM = Provider.of<AuthViewModel>(context);
   return Scaffold(
     backgroundColor: AppColors.background,
+    resizeToAvoidBottomInset: true,
     body: SafeArea(
       child: Center(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
           child: Form(
             key: _formKey,

@@ -77,6 +77,7 @@ class _RegisterViewState extends State<RegisterView> {
     final authVM = Provider.of<AuthViewModel>(context);
     return Scaffold(
       backgroundColor: AppColors.background,
+      resizeToAvoidBottomInset: true,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -89,7 +90,7 @@ class _RegisterViewState extends State<RegisterView> {
       ),
       body: SafeArea(
         child: Center(
-          child: Padding(
+          child: SingleChildScrollView(
             padding: const EdgeInsets.all(24.0),
             child: _stepOtp
                 ? Column(
