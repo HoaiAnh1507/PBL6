@@ -12,6 +12,12 @@ class FeedViewModel extends ChangeNotifier {
   
   List<Post> posts = [];
   bool loading = false;
+  
+  // ✅ Infinite scrolling state
+  bool isLoadingMore = false;
+  bool hasMorePosts = true;
+  String? oldestPostId; // Cursor = ID của post CŨ NHẤT
+  final ScrollController scrollController = ScrollController();
 
   // Filter state for FeedView
   FeedFilterType _filterType = FeedFilterType.all;
@@ -49,7 +55,37 @@ class FeedViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  FeedViewModel();
+  FeedViewModel() {
+    _setupScrollListener();
+  }
+
+  @override
+  void dispose() {
+    scrollController.dispose();
+    super.dispose();
+  }
+
+  /// Setup scroll listener for infinite scrolling (scroll DOWN to load older posts)
+  void _setupScrollListener() {
+    scrollController.addListener(() {
+      if (!scrollController.hasClients) return;
+      
+      final currentPosition = scrollController.position.pixels;
+      final maxScroll = scrollController.position.maxScrollExtent;
+      
+      // Threshold: Load when 300px from bottom
+      const threshold = 300.0;
+      
+      // Trigger load more: near bottom + not loading + has more posts
+      if (maxScroll - currentPosition < threshold && 
+          !isLoadingMore && 
+          !loading &&
+          hasMorePosts) {
+        debugPrint('[FeedVM] 📍 Triggered load more at $currentPosition/$maxScroll');
+        _loadMorePosts();
+      }
+    });
+  }
 
   /// Gán dependencies
   void setDependencies(UserViewModel userVM, FriendshipViewModel friendshipVM) {
@@ -59,58 +95,226 @@ class FeedViewModel extends ChangeNotifier {
 
   // Sample feed đã bị loại bỏ.
 
-  /// Kiểm tra một item post từ API có hiển thị cho người dùng hay không,
-  /// dựa trên các trường recipients phổ biến. Nếu không có trường recipients → coi là public.
-  bool _isVisibleToUser(Map<String, dynamic> item, String currentUserId) {
-    // Tác giả luôn thấy bài của chính mình
-    final authorId = (item['user'] is Map && (item['user']['userId'] != null))
-        ? item['user']['userId'].toString()
-        : (item['authorId']?.toString());
-    if (authorId != null && authorId == currentUserId) return true;
-
-    // 1) recipientIds: ["id1", "id2"]
-    if (item['recipientIds'] is List) {
-      final ids = (item['recipientIds'] as List).map((e) => e.toString()).toList();
-      if (ids.isEmpty) return true; // rỗng → public
-      return ids.contains(currentUserId);
-    }
-
-    // 2) postRecipients: [{ recipient: { userId: "..." } }, ...]
-    if (item['postRecipients'] is List) {
-      final list = (item['postRecipients'] as List)
-          .whereType<Map>()
-          .map((e) => e['recipient'])
-          .whereType<Map>()
-          .map((r) => r['userId']?.toString())
-          .whereType<String>()
-          .toList();
-      if (list.isEmpty) return true; // rỗng → public
-      return list.contains(currentUserId);
-    }
-
-    // 3) recipients: có thể là list id hoặc list user
-    if (item['recipients'] is List) {
-      final rec = item['recipients'] as List;
-      if (rec.isEmpty) return true; // rỗng → public
-      // nếu là list id
-      final ids = rec.where((e) => e is String || e is num).map((e) => e.toString()).toList();
-      if (ids.isNotEmpty) return ids.contains(currentUserId);
-      // nếu là list user
-      final userIds = rec
-          .whereType<Map>()
-          .map((u) => u['userId']?.toString())
-          .whereType<String>()
-          .toList();
-      if (userIds.isNotEmpty) return userIds.contains(currentUserId);
-    }
-
-    // Không có trường recipients → coi là public
-    return true;
-  }
-
   /// Tải feed từ backend và gán vào `posts`
   /// All: bài tôi đăng + bài người khác chia sẻ cho tôi (do backend lọc theo recipients)
+  /// ✅ Load initial posts (without cursor)
   Future<void> loadRemoteFeed({required String jwt, required User current}) async {
+    if (loading) return;
+    
+    loading = true;
+    hasMorePosts = true;
+    oldestPostId = null;
+    notifyListeners();
+
+    try {
+      final api = PostsApi(jwt: jwt);
+      final raw = await api.listFeed(limit: 20); // Load 20 posts initially
+      debugPrint('[FeedVM] listFeed returned ${raw.length} items for user=${current.userId}');
+
+      final mapped = <Post>[];
+      for (final item in raw) {
+        if (item is Map<String, dynamic>) {
+          try {
+            // Ưu tiên parse theo Post.fromJson nếu cấu trúc chuẩn
+            if (item.containsKey('postId') && item.containsKey('user')) {
+              // Chuẩn hóa caption key: backend dùng 'caption'
+              final normalized = Map<String, dynamic>.from(item);
+              if (!normalized.containsKey('generatedCaption') && normalized['caption'] != null) {
+                normalized['generatedCaption'] = normalized['caption'];
+              }
+              mapped.add(Post.fromJson(normalized));
+              debugPrint('[FeedVM] Mapped post ${normalized['postId']} by ${normalized['user']?['username'] ?? normalized['user']?['userId']}');
+              continue;
+            }
+
+            // Fallback: map thủ công với các khóa phổ biến
+            final userJson = (item['user'] ?? item['author'] ?? {}) as Map<String, dynamic>;
+            Map<String, dynamic> normalizedUser = {
+              'userId': userJson['userId'] ?? userJson['id'] ?? (item['userId'] ?? item['authorId'] ?? 'unknown'),
+              'phoneNumber': userJson['phoneNumber'] ?? '',
+              'username': userJson['username'] ?? userJson['name'] ?? 'unknown',
+              'email': userJson['email'] ?? '',
+              'fullName': userJson['fullName'] ?? userJson['username'] ?? 'unknown',
+              'profilePictureUrl': userJson['profilePictureUrl'] ?? userJson['avatarUrl'] ?? userJson['avatar'],
+              'passwordHash': userJson['passwordHash'] ?? '',
+              'subscriptionStatus': userJson['subscriptionStatus'] ?? 'FREE',
+              'subscriptionExpiresAt': userJson['subscriptionExpiresAt'],
+              'accountStatus': userJson['accountStatus'] ?? 'ACTIVE',
+              'createdAt': userJson['createdAt'] ?? DateTime.now().toIso8601String(),
+              'updatedAt': userJson['updatedAt'] ?? DateTime.now().toIso8601String(),
+            };
+
+            final typeStr = (item['mediaType'] ?? item['type'] ?? 'PHOTO').toString().toUpperCase();
+            final statusStr = (item['captionStatus'] ?? item['status'] ?? 'PENDING').toString().toUpperCase();
+            final createdStr = item['createdAt'] ?? item['created_at'] ?? DateTime.now().toIso8601String();
+
+            final post = Post(
+              postId: item['postId']?.toString() ?? item['id']?.toString() ?? 'unknown',
+              user: User.fromJson(normalizedUser),
+              mediaType: MediaType.values.firstWhere(
+                (e) => e.name == typeStr,
+                orElse: () => MediaType.PHOTO,
+              ),
+              mediaUrl: item['mediaUrl']?.toString() ?? item['url']?.toString() ?? item['contentUrl']?.toString() ?? '',
+              generatedCaption: item['generatedCaption']?.toString() ?? item['caption']?.toString(),
+              captionStatus: CaptionStatus.values.firstWhere(
+                (e) => e.name == statusStr,
+                orElse: () => CaptionStatus.PENDING,
+              ),
+              userEditedCaption: item['userEditedCaption']?.toString(),
+              createdAt: DateTime.tryParse(createdStr) ?? DateTime.now(),
+            );
+            mapped.add(post);
+            debugPrint('[FeedVM] Fallback mapped post ${post.postId} by ${post.user.username}');
+          } catch (e) {
+            debugPrint('[FeedVM] Error mapping post: $e');
+          }
+        }
+      }
+
+      posts = mapped;
+      
+      // Set cursor to oldest post ID (last in list)
+      if (posts.isNotEmpty) {
+        oldestPostId = posts.last.postId;
+      }
+      
+      // Check if there might be more posts
+      hasMorePosts = posts.length >= 20;
+      
+      debugPrint('[FeedVM] ✅ Loaded ${posts.length} initial posts, hasMore=$hasMorePosts, cursor=$oldestPostId');
+    } catch (e) {
+      debugPrint('[FeedVM] ❌ Error loading feed: $e');
+    } finally {
+      loading = false;
+      notifyListeners();
+    }
+  }
+
+  /// ✅ Load more posts (when scrolling down) - private method called by scroll listener
+  Future<void> _loadMorePosts() async {
+    if (isLoadingMore || !hasMorePosts || oldestPostId == null) return;
+    
+    isLoadingMore = true;
+    notifyListeners();
+
+    try {
+      // Note: We need JWT token here - should be passed from caller or stored
+      // For now, this is a placeholder - you'll need to get JWT from AuthViewModel
+      debugPrint('[FeedVM] ⚠️ _loadMorePosts needs JWT token - implement JWT access');
+      
+      // TODO: Implement proper JWT access
+      // final api = PostsApi(jwt: jwt);
+      // final raw = await api.listFeed(beforePostId: oldestPostId, limit: 20);
+      // ... process and append posts
+      
+    } catch (e) {
+      debugPrint('[FeedVM] ❌ Error loading more posts: $e');
+    } finally {
+      isLoadingMore = false;
+      notifyListeners();
+    }
+  }
+
+  /// ✅ Public method to load more posts (can be called with JWT)
+  Future<void> loadMorePostsWithJwt(String jwt) async {
+    if (isLoadingMore || !hasMorePosts || oldestPostId == null) return;
+    
+    isLoadingMore = true;
+    notifyListeners();
+
+    try {
+      final api = PostsApi(jwt: jwt);
+      final raw = await api.listFeed(beforePostId: oldestPostId, limit: 20);
+      debugPrint('[FeedVM] loadMorePosts returned ${raw.length} items');
+
+      if (raw.isEmpty) {
+        hasMorePosts = false;
+        debugPrint('[FeedVM] 🏁 No more posts to load');
+        return;
+      }
+
+      final mapped = <Post>[];
+      for (final item in raw) {
+        if (item is Map<String, dynamic>) {
+          try {
+            if (item.containsKey('postId') && item.containsKey('user')) {
+              final normalized = Map<String, dynamic>.from(item);
+              if (!normalized.containsKey('generatedCaption') && normalized['caption'] != null) {
+                normalized['generatedCaption'] = normalized['caption'];
+              }
+              mapped.add(Post.fromJson(normalized));
+              continue;
+            }
+
+            // Fallback mapping (same as above)
+            final userJson = (item['user'] ?? item['author'] ?? {}) as Map<String, dynamic>;
+            Map<String, dynamic> normalizedUser = {
+              'userId': userJson['userId'] ?? userJson['id'] ?? (item['userId'] ?? item['authorId'] ?? 'unknown'),
+              'phoneNumber': userJson['phoneNumber'] ?? '',
+              'username': userJson['username'] ?? userJson['name'] ?? 'unknown',
+              'email': userJson['email'] ?? '',
+              'fullName': userJson['fullName'] ?? userJson['username'] ?? 'unknown',
+              'profilePictureUrl': userJson['profilePictureUrl'] ?? userJson['avatarUrl'] ?? userJson['avatar'],
+              'passwordHash': userJson['passwordHash'] ?? '',
+              'subscriptionStatus': userJson['subscriptionStatus'] ?? 'FREE',
+              'subscriptionExpiresAt': userJson['subscriptionExpiresAt'],
+              'accountStatus': userJson['accountStatus'] ?? 'ACTIVE',
+              'createdAt': userJson['createdAt'] ?? DateTime.now().toIso8601String(),
+              'updatedAt': userJson['updatedAt'] ?? DateTime.now().toIso8601String(),
+            };
+
+            final typeStr = (item['mediaType'] ?? item['type'] ?? 'PHOTO').toString().toUpperCase();
+            final statusStr = (item['captionStatus'] ?? item['status'] ?? 'PENDING').toString().toUpperCase();
+            final createdStr = item['createdAt'] ?? item['created_at'] ?? DateTime.now().toIso8601String();
+
+            final post = Post(
+              postId: item['postId']?.toString() ?? item['id']?.toString() ?? 'unknown',
+              user: User.fromJson(normalizedUser),
+              mediaType: MediaType.values.firstWhere(
+                (e) => e.name == typeStr,
+                orElse: () => MediaType.PHOTO,
+              ),
+              mediaUrl: item['mediaUrl']?.toString() ?? item['url']?.toString() ?? item['contentUrl']?.toString() ?? '',
+              generatedCaption: item['generatedCaption']?.toString() ?? item['caption']?.toString(),
+              captionStatus: CaptionStatus.values.firstWhere(
+                (e) => e.name == statusStr,
+                orElse: () => CaptionStatus.PENDING,
+              ),
+              userEditedCaption: item['userEditedCaption']?.toString(),
+              createdAt: DateTime.tryParse(createdStr) ?? DateTime.now(),
+            );
+            mapped.add(post);
+          } catch (e) {
+            debugPrint('[FeedVM] Error mapping post in loadMore: $e');
+          }
+        }
+      }
+
+      // ✅ MERGE: Add older posts to END of list
+      posts.addAll(mapped);
+      
+      // Update cursor to new oldest post
+      if (mapped.isNotEmpty) {
+        oldestPostId = mapped.last.postId;
+      }
+      
+      // Check if there might be more
+      hasMorePosts = mapped.length >= 20;
+      
+      debugPrint('[FeedVM] ✅ Loaded ${mapped.length} more posts. Total: ${posts.length}, hasMore=$hasMorePosts');
+    } catch (e) {
+      debugPrint('[FeedVM] ❌ Error loading more posts: $e');
+    } finally {
+      isLoadingMore = false;
+      notifyListeners();
+    }
+  }
+
+  /// OLD implementation - kept for reference only
+  /// @deprecated Use loadRemoteFeed instead
+  // ignore: unused_element
+  Future<void> _loadRemoteFeedOld_reference({required String jwt, required User current}) async {
     loading = true;
     notifyListeners();
 
@@ -199,10 +403,13 @@ class FeedViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ✅ Xóa toàn bộ dữ liệu đã fetch cho feed (posts + trạng thái filter)
+  // ✅ Xóa toàn bộ dữ liệu đã fetch cho feed (posts + trạng thái filter + pagination state)
   void clearAll() {
     posts.clear();
     loading = false;
+    isLoadingMore = false;
+    hasMorePosts = true;
+    oldestPostId = null;
     _filterType = FeedFilterType.all;
     _selectedFriend = null;
     notifyListeners();
@@ -236,11 +443,15 @@ class FeedViewModel extends ChangeNotifier {
         break;
       case FeedFilterType.friend:
         final friendId = _selectedFriend?.userId;
-        final isAccepted = friendId != null && acceptedFriends.any((u) => u.userId == friendId);
-        if (!isAccepted || friendId == null) {
+        if (friendId == null) {
           filtered = const [];
         } else {
-          filtered = posts.where((p) => p.user.userId == friendId);
+          final isAccepted = acceptedFriends.any((u) => u.userId == friendId);
+          if (!isAccepted) {
+            filtered = const [];
+          } else {
+            filtered = posts.where((p) => p.user.userId == friendId);
+          }
         }
         break;
     }

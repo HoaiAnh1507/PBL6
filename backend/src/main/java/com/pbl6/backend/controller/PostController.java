@@ -138,13 +138,32 @@ public class PostController {
         }
     }
 
-    // 3. Feed của tôi: bài tôi đăng + bài người khác chia sẻ cho tôi
+    /**
+     * GET /api/posts/feed: lấy feed với pagination (Lazy Loading + Infinite Scrolling)
+     * Feed bao gồm: bài đăng của bản thân + bài người khác chia sẻ cho mình.
+     * Query params:
+     * - beforePostId (optional): load posts cũ hơn post này (dùng khi scroll xuống)
+     * - limit (optional): số lượng posts (default 20, max 50)
+     * 
+     * Response: List<PostResponse> sắp xếp giảm dần theo thời gian (mới → cũ)
+     * 
+     * Cách sử dụng:
+     * 1. Lần đầu load: GET /feed (không có params) → 20 posts mới nhất (cả của mình + được share)
+     * 2. Scroll xuống load cũ hơn: GET /feed?beforePostId=<id_post_cu_nhat>&limit=20
+     */
     @GetMapping("/feed")
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
-    public ResponseEntity<List<PostResponse>> myFeed() {
-        var principal = getCurrentPrincipal();
-        List<PostResponse> feed = postService.listMyFeed(principal.getUser());
-        return ResponseEntity.ok(feed);
+    public ResponseEntity<?> myFeed(
+            @RequestParam(required = false) String beforePostId,
+            @RequestParam(required = false) Integer limit) {
+        try {
+            var principal = getCurrentPrincipal();
+            List<PostResponse> feed = postService.getFeedWithPagination(
+                    principal.getUser(), beforePostId, limit);
+            return ResponseEntity.ok(feed);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
     }
 
     // 4. Các bài được chia sẻ cho tôi từ một người dùng cụ thể

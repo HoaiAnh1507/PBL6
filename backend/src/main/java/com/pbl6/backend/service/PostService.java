@@ -232,8 +232,40 @@ public class PostService {
     }
 
     /**
-     * Lấy feed cho người dùng: gồm bài tôi đăng và bài người khác chia sẻ cho tôi.
+     * Lấy feed với cursor-based pagination (Lazy Loading + Infinite Scrolling).
+     * Feed bao gồm: bài đăng của bản thân + bài được chia sẻ cho mình.
+     * @param me người dùng hiện tại
+     * @param beforePostId ID của post cũ nhất trong list hiện tại (cursor)
+     * @param limit số lượng posts (default 20, max 50)
+     * @return danh sách posts (cả của mình và được share), sắp xếp giảm dần theo thời gian (mới → cũ)
      */
+    @Transactional(readOnly = true)
+    public List<PostResponse> getFeedWithPagination(User me, String beforePostId, Integer limit) {
+        // Validate và set default limit
+        int pageSize = (limit == null || limit <= 0) ? 20 : Math.min(limit, 50);
+
+        List<Post> posts;
+        if (beforePostId != null && !beforePostId.isBlank()) {
+            // Load posts cũ hơn (scroll xuống)
+            Post beforePost = postRepository.findById(beforePostId)
+                    .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy post với id=" + beforePostId));
+            posts = postRepository.findPostsForUserBeforeTime(me, beforePost.getCreatedAt(), pageSize);
+        } else {
+            // Load posts mới nhất
+            posts = postRepository.findTopNPostsForUser(me, pageSize);
+        }
+
+        // Convert to response
+        return posts.stream()
+                .map(this::toResponse)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Lấy feed cho người dùng: gồm bài tôi đăng và bài người khác chia sẻ cho tôi.
+     * @deprecated Sử dụng getFeedWithPagination() thay thế để tối ưu hiệu năng
+     */
+    @Deprecated
     @Transactional(readOnly = true)
     public List<PostResponse> listMyFeed(User me) {
         List<Post> myPosts = postRepository.findByUserOrderByCreatedAtDesc(me);

@@ -46,4 +46,14 @@ public interface MessageRepository extends JpaRepository<Message, String> {
     
     @Query("SELECT COUNT(m) FROM Message m WHERE m.repliedToPost = :post")
     long countByRepliedToPost(@Param("post") Post post);
+    
+    // Cursor-based pagination methods for efficient message loading
+    @Query("SELECT m FROM Message m WHERE m.conversation = :conversation ORDER BY m.sentAt DESC LIMIT :limit")
+    List<Message> findTopNByConversationOrderBySentAtDesc(@Param("conversation") Conversation conversation, 
+                                                           @Param("limit") int limit);
+    
+    @Query("SELECT m FROM Message m WHERE m.conversation = :conversation AND m.sentAt < :beforeTime ORDER BY m.sentAt DESC LIMIT :limit")
+    List<Message> findByConversationAndSentAtBeforeOrderBySentAtDesc(@Param("conversation") Conversation conversation,
+                                                                      @Param("beforeTime") LocalDateTime beforeTime,
+                                                                      @Param("limit") int limit);
 }

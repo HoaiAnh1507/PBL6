@@ -355,10 +355,13 @@ class ChatViewModel extends ChangeNotifier {
   }
 
   /// Nạp danh sách message từ backend cho cặp (currentUserId, friendId)
+  /// ✅ Updated to support cursor-based pagination
   Future<void> loadRemoteMessagesForPair({
     required String jwt,
     required String currentUserId,
     required String friendId,
+    String? beforeMessageId, // ✅ Cursor for pagination
+    int limit = 25,
   }) async {
     try {
       var conv = _conversations.values.firstWhere(
@@ -366,26 +369,33 @@ class ChatViewModel extends ChangeNotifier {
             (c.userOne.userId == currentUserId && c.userTwo.userId == friendId) ||
             (c.userTwo.userId == currentUserId && c.userOne.userId == friendId),
       );
+      
       final api = ConversationsApi(jwt);
-      final j = await api.getConversationById(conv.conversationId);
-      if (j == null) return;
-
-      DateTime? lastMessageAt;
-      try {
-        final lm = (j['lastMessageAt'] ?? '').toString();
-        lastMessageAt = lm.isNotEmpty ? DateTime.parse(lm) : null;
-      } catch (_) {
-        lastMessageAt = null;
+      
+      // ✅ Use new pagination API method
+      List<dynamic> msgsRaw;
+      if (beforeMessageId != null) {
+        // Load older messages using pagination endpoint
+        msgsRaw = await api.getConversationMessages(
+          conv.conversationId,
+          beforeMessageId: beforeMessageId,
+          limit: limit,
+        );
+      } else {
+        // Initial load - use pagination endpoint for latest messages
+        msgsRaw = await api.getConversationMessages(
+          conv.conversationId,
+          limit: limit,
+        );
+        
+        // Only clear messages if this is truly an initial load (conversation has no messages yet)
+        if (conv.messages == null || conv.messages!.isEmpty) {
+          conv = conv.copyWith(messages: []);
+          _conversations[conv.conversationId] = conv;
+        }
       }
-      // messages là field final → không thể gán trực tiếp.
-      // Tạo bản sao conversation với danh sách messages rỗng và cập nhật vào map.
-      conv = conv.copyWith(messages: []);
-      _conversations[conv.conversationId] = conv;
-
-      List<dynamic> msgsRaw = [];
-      try {
-        msgsRaw = (j['messages'] ?? []) as List<dynamic>;
-      } catch (_) {}
+      
+      // Parse and add messages
       for (final m in msgsRaw) {
         try {
           final mm = m as Map<String, dynamic>;
@@ -413,27 +423,30 @@ class ChatViewModel extends ChangeNotifier {
             updatedAt: DateTime.now(),
           );
           final readFlag = ((mm['read'] ?? mm['isRead'] ?? mm['is_read'] ?? false) == true);
-          conv.messages!.add(
-            Message(
-              messageId: (mm['messageId'] ?? '').toString(),
-              conversation: conv,
-              sender: sender,
-              content: (mm['content'] ?? '').toString(),
-              repliedToPost: (mm['repliedToPost'] is Map<String, dynamic>)
-                  ? Post.fromJson(mm['repliedToPost'] as Map<String, dynamic>)
-                  : null,
-              sentAt: sentAt,
-              read: readFlag,
-            ),
+          
+          final newMessage = Message(
+            messageId: (mm['messageId'] ?? '').toString(),
+            conversation: conv,
+            sender: sender,
+            content: (mm['content'] ?? '').toString(),
+            repliedToPost: (mm['repliedToPost'] is Map<String, dynamic>)
+                ? Post.fromJson(mm['repliedToPost'] as Map<String, dynamic>)
+                : null,
+            sentAt: sentAt,
+            read: readFlag,
           );
-        } catch (_) {}
+          
+          // ✅ For pagination: insert at beginning (older messages go before current messages)
+          if (beforeMessageId != null) {
+            conv.messages!.insert(0, newMessage);
+          } else {
+            conv.messages!.add(newMessage);
+          }
+        } catch (e) {
+          debugPrint('[ChatVM] Error parsing message: $e');
+        }
       }
-      // Cập nhật lastMessageAt nếu có
-      if (lastMessageAt != null) {
-        _conversations[conv.conversationId] = conv.copyWith(
-          lastMessageAt: lastMessageAt,
-        );
-      }
+      
       notifyListeners();
     } catch (e) {
       debugPrint('loadRemoteMessagesForPair error: $e');

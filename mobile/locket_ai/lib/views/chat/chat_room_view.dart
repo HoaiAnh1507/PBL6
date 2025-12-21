@@ -26,6 +26,10 @@ class ChatRoomView extends StatefulWidget {
 
 class _ChatRoomViewState extends State<ChatRoomView> {
   final TextEditingController _controller = TextEditingController();
+  final ScrollController _scrollController = ScrollController(); // ✅ Add ScrollController
+  bool _isLoadingMore = false; // ✅ Loading state for pagination
+  bool _hasMoreMessages = true; // ✅ Flag to check if there are more messages
+  
   static const double _avatarLift = 3; // nhích lên nhẹ để hở đáy
   static const double _avatarInset = 3; // thu nhỏ đường kính để hở đỉnh
 
@@ -38,6 +42,10 @@ class _ChatRoomViewState extends State<ChatRoomView> {
   @override
   void initState() {
     super.initState();
+    
+    // ✅ Setup scroll listener for infinite scrolling
+    _scrollController.addListener(_onScroll);
+    
     // After first frame, mark latest incoming unread message as read
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       try {
@@ -57,6 +65,87 @@ class _ChatRoomViewState extends State<ChatRoomView> {
         }
       } catch (_) {}
     });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  /// ✅ Scroll listener to trigger load more when scrolling UP (reverse list)
+  void _onScroll() {
+    if (!_scrollController.hasClients) return;
+    
+    final currentPosition = _scrollController.position.pixels;
+    final maxScroll = _scrollController.position.maxScrollExtent;
+    
+    // Threshold: Load when 300px from TOP (because list is reversed)
+    const threshold = 300.0;
+    
+    // Trigger when scrolling UP and near the top
+    if (maxScroll - currentPosition < threshold && 
+        !_isLoadingMore && 
+        _hasMoreMessages) {
+      debugPrint('[ChatRoom] 📍 Triggered load more messages at $currentPosition/$maxScroll');
+      _loadMoreMessages();
+    }
+  }
+
+  /// ✅ Load older messages
+  Future<void> _loadMoreMessages() async {
+    if (_isLoadingMore || !_hasMoreMessages) return;
+    
+    setState(() => _isLoadingMore = true);
+
+    try {
+      final chatVM = Provider.of<ChatViewModel>(context, listen: false);
+      final authVM = Provider.of<AuthViewModel>(context, listen: false);
+      final currentUserId = _currentUserId(context);
+      final jwt = authVM.jwtToken;
+      
+      if (jwt == null || jwt.isEmpty) {
+        debugPrint('[ChatRoom] No JWT token available');
+        return;
+      }
+
+      // Get current messages and find oldest message ID (cursor)
+      final messages = chatVM.getMessagesWith(currentUserId, widget.friendId);
+      if (messages.isEmpty) {
+        debugPrint('[ChatRoom] No messages to paginate from');
+        return;
+      }
+
+      // Sort by time to find oldest
+      final sorted = List.of(messages)..sort((a, b) => a.sentAt.compareTo(b.sentAt));
+      final oldestMessageId = sorted.first.messageId;
+
+      debugPrint('[ChatRoom] Loading more messages before: $oldestMessageId');
+
+      // Load older messages
+      await chatVM.loadRemoteMessagesForPair(
+        jwt: jwt,
+        currentUserId: currentUserId,
+        friendId: widget.friendId,
+        beforeMessageId: oldestMessageId,
+        limit: 25,
+      );
+
+      // Check if we got new messages
+      final newMessages = chatVM.getMessagesWith(currentUserId, widget.friendId);
+      if (newMessages.length == messages.length) {
+        // No new messages loaded
+        _hasMoreMessages = false;
+        debugPrint('[ChatRoom] 🏁 No more messages to load');
+      } else {
+        debugPrint('[ChatRoom] ✅ Loaded ${newMessages.length - messages.length} more messages');
+      }
+    } catch (e) {
+      debugPrint('[ChatRoom] ❌ Error loading more messages: $e');
+    } finally {
+      setState(() => _isLoadingMore = false);
+    }
   }
 
   bool _isSameDay(DateTime a, DateTime b) {
@@ -104,7 +193,6 @@ class _ChatRoomViewState extends State<ChatRoomView> {
     }
     // Sắp xếp tin nhắn theo thời gian tăng dần (cũ → mới)
     final messages = List.of(initialMessages)..sort((a, b) => a.sentAt.compareTo(b.sentAt));
-    final messes = messages;
     // Lấy thông tin bạn bè để hiển thị username dưới fullname
     final conv = chatVM.getConversation(currentUserId, widget.friendId);
     final friendUser = conv?.userOne.userId == currentUserId ? conv?.userTwo : conv?.userOne;
@@ -167,12 +255,26 @@ class _ChatRoomViewState extends State<ChatRoomView> {
                       ),
                     )
                   : ListView.builder(
+                      controller: _scrollController, // ✅ Add controller
                       // Neo danh sách ở dưới, trôi từ dưới lên
                       reverse: true,
                       padding: const EdgeInsets.symmetric(
                           horizontal: 12, vertical: 8),
-                      itemCount: messages.length,
+                      itemCount: messages.length + (_isLoadingMore ? 1 : 0), // ✅ Add loading indicator
                       itemBuilder: (context, i) {
+                        // ✅ Show loading indicator at the top (index 0 when reversed)
+                        if (i == messages.length) {
+                          return Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Center(
+                              child: CircularProgressIndicator(
+                                color: Colors.pinkAccent,
+                                strokeWidth: 2,
+                              ),
+                            ),
+                          );
+                        }
+                        
                         // Chỉ số theo thứ tự thời gian
                         final idx = messages.length - 1 - i;
                         final msg = messages[idx];
