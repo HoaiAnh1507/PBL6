@@ -53,11 +53,8 @@ public class OtpService {
         otpStore.put(identifier, record);
         lastSent.put(identifier, now);
 
-        try {
-            emailService.sendOtpEmail(identifier, code);
-        } catch (Exception e) {
-            throw new RuntimeException("Không thể gửi OTP: " + e.getMessage());
-        }
+        // Async email sending - không block request
+        emailService.sendOtpEmail(identifier, code);
     }
 
     public boolean verifyOtp(String identifier, String code) {

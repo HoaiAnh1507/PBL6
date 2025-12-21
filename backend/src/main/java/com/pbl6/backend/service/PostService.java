@@ -246,13 +246,19 @@ public class PostService {
 
         List<Post> posts;
         if (beforePostId != null && !beforePostId.isBlank()) {
-            // Load posts cũ hơn (scroll xuống)
+            // Load posts cũ hơn (scroll xuống) - Cursor-based
             Post beforePost = postRepository.findById(beforePostId)
                     .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy post với id=" + beforePostId));
-            posts = postRepository.findPostsForUserBeforeTime(me, beforePost.getCreatedAt(), pageSize);
+            posts = postRepository.findPostsForUserBeforeTime(me, beforePost.getCreatedAt())
+                    .stream()
+                    .limit(pageSize)
+                    .collect(Collectors.toList());
         } else {
-            // Load posts mới nhất
-            posts = postRepository.findTopNPostsForUser(me, pageSize);
+            // Load posts mới nhất - Initial load
+            posts = postRepository.findTopNPostsForUser(me)
+                    .stream()
+                    .limit(pageSize)
+                    .collect(Collectors.toList());
         }
 
         // Convert to response

@@ -15,6 +15,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.stream.Collectors;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -84,19 +86,25 @@ public class ConversationService {
             throw new RuntimeException("Bạn không có quyền xem hội thoại này");
         }
 
-        // Validate và set default limit
-        int pageSize = (limit == null || limit <= 0) ? 2 : Math.min(limit, 100);
+        // Validate và set default limit (50 messages per load for chat)
+        int pageSize = (limit == null || limit <= 0) ? 25 : Math.min(limit, 100);
 
         List<Message> messages;
         if (beforeMessageId != null && !beforeMessageId.isBlank()) {
-            // Load tin nhắn cũ hơn (scroll lên)
+            // Load tin nhắn cũ hơn (scroll lên) - Cursor-based
             Message beforeMessage = messageRepository.findById(beforeMessageId)
                     .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy tin nhắn với id=" + beforeMessageId));
             messages = messageRepository.findByConversationAndSentAtBeforeOrderBySentAtDesc(
-                    c, beforeMessage.getSentAt(), pageSize);
+                    c, beforeMessage.getSentAt())
+                    .stream()
+                    .limit(pageSize)
+                    .collect(Collectors.toList());
         } else {
-            // Load tin nhắn mới nhất
-            messages = messageRepository.findTopNByConversationOrderBySentAtDesc(c, pageSize);
+            // Load tin nhắn mới nhất - Initial load
+            messages = messageRepository.findTopNByConversationOrderBySentAtDesc(c)
+                    .stream()
+                    .limit(pageSize)
+                    .collect(Collectors.toList());
         }
 
         // Reverse để sắp xếp tăng dần (cũ → mới) cho UI chat

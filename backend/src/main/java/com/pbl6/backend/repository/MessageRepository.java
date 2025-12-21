@@ -30,7 +30,7 @@ public interface MessageRepository extends JpaRepository<Message, String> {
     
     List<Message> findByRepliedToPost(Post repliedToPost);
     
-    @Query("SELECT m FROM Message m WHERE m.conversation = :conversation ORDER BY m.sentAt DESC LIMIT 1")
+    @Query("SELECT m FROM Message m LEFT JOIN FETCH m.sender WHERE m.conversation = :conversation ORDER BY m.sentAt DESC LIMIT 1")
     Optional<Message> findLatestMessageByConversation(@Param("conversation") Conversation conversation);
     
     @Query("SELECT m FROM Message m WHERE m.conversation = :conversation AND m.sentAt BETWEEN :startDate AND :endDate")
@@ -48,12 +48,10 @@ public interface MessageRepository extends JpaRepository<Message, String> {
     long countByRepliedToPost(@Param("post") Post post);
     
     // Cursor-based pagination methods for efficient message loading
-    @Query("SELECT m FROM Message m WHERE m.conversation = :conversation ORDER BY m.sentAt DESC LIMIT :limit")
-    List<Message> findTopNByConversationOrderBySentAtDesc(@Param("conversation") Conversation conversation, 
-                                                           @Param("limit") int limit);
+    @Query("SELECT m FROM Message m LEFT JOIN FETCH m.sender LEFT JOIN FETCH m.repliedToPost WHERE m.conversation = :conversation ORDER BY m.sentAt DESC")
+    List<Message> findTopNByConversationOrderBySentAtDesc(@Param("conversation") Conversation conversation);
     
-    @Query("SELECT m FROM Message m WHERE m.conversation = :conversation AND m.sentAt < :beforeTime ORDER BY m.sentAt DESC LIMIT :limit")
+    @Query("SELECT m FROM Message m LEFT JOIN FETCH m.sender LEFT JOIN FETCH m.repliedToPost WHERE m.conversation = :conversation AND m.sentAt < :beforeTime ORDER BY m.sentAt DESC")
     List<Message> findByConversationAndSentAtBeforeOrderBySentAtDesc(@Param("conversation") Conversation conversation,
-                                                                      @Param("beforeTime") LocalDateTime beforeTime,
-                                                                      @Param("limit") int limit);
+                                                                      @Param("beforeTime") LocalDateTime beforeTime);
 }

@@ -13,13 +13,13 @@ import java.util.Optional;
 @Repository
 public interface ConversationRepository extends JpaRepository<Conversation, String> {
     
-    @Query("SELECT c FROM Conversation c WHERE (c.userOne = :user1 AND c.userTwo = :user2) OR (c.userOne = :user2 AND c.userTwo = :user1)")
+    @Query("SELECT c FROM Conversation c LEFT JOIN FETCH c.userOne LEFT JOIN FETCH c.userTwo WHERE (c.userOne = :user1 AND c.userTwo = :user2) OR (c.userOne = :user2 AND c.userTwo = :user1)")
     Optional<Conversation> findByUsers(@Param("user1") User user1, @Param("user2") User user2);
     
-    @Query("SELECT c FROM Conversation c WHERE c.userOne = :user OR c.userTwo = :user ORDER BY c.lastMessageAt DESC")
+    @Query("SELECT DISTINCT c FROM Conversation c LEFT JOIN FETCH c.userOne LEFT JOIN FETCH c.userTwo WHERE c.userOne = :user OR c.userTwo = :user ORDER BY c.lastMessageAt DESC")
     List<Conversation> findByUserOrderByLastMessageAtDesc(@Param("user") User user);
     
-    @Query("SELECT c FROM Conversation c WHERE (c.userOne = :user OR c.userTwo = :user) AND c.lastMessageAt IS NOT NULL ORDER BY c.lastMessageAt DESC")
+    @Query("SELECT DISTINCT c FROM Conversation c LEFT JOIN FETCH c.userOne LEFT JOIN FETCH c.userTwo WHERE (c.userOne = :user OR c.userTwo = :user) AND c.lastMessageAt IS NOT NULL ORDER BY c.lastMessageAt DESC")
     List<Conversation> findActiveConversationsByUser(@Param("user") User user);
     
     @Query("SELECT COUNT(c) FROM Conversation c WHERE c.userOne = :user OR c.userTwo = :user")

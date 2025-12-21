@@ -27,19 +27,19 @@ public interface PostRepository extends JpaRepository<Post, String> {
     
     List<Post> findByCaptionStatus(Post.CaptionStatus captionStatus);
     
-    @Query("SELECT p FROM Post p WHERE p.user = :user ORDER BY p.createdAt DESC")
+    @Query("SELECT p FROM Post p LEFT JOIN FETCH p.user WHERE p.user = :user ORDER BY p.createdAt DESC")
     List<Post> findByUserOrderByCreatedAtDesc(@Param("user") User user);
     
     @Query("SELECT p FROM Post p WHERE p.createdAt BETWEEN :startDate AND :endDate")
     List<Post> findByCreatedAtBetween(@Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
     
-    @Query("SELECT p FROM Post p JOIN p.recipients pr WHERE pr.recipient = :user ORDER BY p.createdAt DESC")
+    @Query("SELECT DISTINCT p FROM Post p LEFT JOIN FETCH p.user LEFT JOIN FETCH p.recipients pr WHERE pr.recipient = :user ORDER BY p.createdAt DESC")
     List<Post> findPostsForUser(@Param("user") User user);
     
-    @Query("SELECT p FROM Post p JOIN p.recipients pr WHERE pr.recipient = :user ORDER BY p.createdAt DESC")
+    @Query("SELECT DISTINCT p FROM Post p LEFT JOIN FETCH p.user LEFT JOIN FETCH p.recipients pr WHERE pr.recipient = :user ORDER BY p.createdAt DESC")
     Page<Post> findPostsForUser(@Param("user") User user, Pageable pageable);
 
-    @Query("SELECT p FROM Post p JOIN p.recipients pr WHERE pr.recipient = :recipient AND p.user = :sender ORDER BY p.createdAt DESC")
+    @Query("SELECT DISTINCT p FROM Post p LEFT JOIN FETCH p.user LEFT JOIN FETCH p.recipients pr WHERE pr.recipient = :recipient AND p.user = :sender ORDER BY p.createdAt DESC")
     List<Post> findPostsForRecipientFromSender(@Param("recipient") User recipient, @Param("sender") User sender);
     
     @Query("SELECT COUNT(p) FROM Post p WHERE p.user = :user")
@@ -56,16 +56,16 @@ public interface PostRepository extends JpaRepository<Post, String> {
     
     // Cursor-based pagination methods for Feed (efficient infinite scrolling)
     // Lấy feed = bài của mình + bài được share (UNION)
-    @Query("SELECT DISTINCT p FROM Post p LEFT JOIN p.recipients pr " +
+    @Query("SELECT DISTINCT p FROM Post p LEFT JOIN FETCH p.user LEFT JOIN FETCH p.recipients pr " +
            "WHERE (p.user = :user OR pr.recipient = :user) " +
            "AND p.isDeleted = false AND p.captionStatus = 'COMPLETED' " +
-           "ORDER BY p.createdAt DESC LIMIT :limit")
-    List<Post> findTopNPostsForUser(@Param("user") User user, @Param("limit") int limit);
+           "ORDER BY p.createdAt DESC")
+    List<Post> findTopNPostsForUser(@Param("user") User user);
     
-    @Query("SELECT DISTINCT p FROM Post p LEFT JOIN p.recipients pr " +
+    @Query("SELECT DISTINCT p FROM Post p LEFT JOIN FETCH p.user LEFT JOIN FETCH p.recipients pr " +
            "WHERE (p.user = :user OR pr.recipient = :user) " +
            "AND p.isDeleted = false AND p.captionStatus = 'COMPLETED' " +
            "AND p.createdAt < :beforeTime " +
-           "ORDER BY p.createdAt DESC LIMIT :limit")
-    List<Post> findPostsForUserBeforeTime(@Param("user") User user, @Param("beforeTime") LocalDateTime beforeTime, @Param("limit") int limit);
+           "ORDER BY p.createdAt DESC")
+    List<Post> findPostsForUserBeforeTime(@Param("user") User user, @Param("beforeTime") LocalDateTime beforeTime);
 }
