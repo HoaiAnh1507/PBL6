@@ -436,11 +436,15 @@ class ChatViewModel extends ChangeNotifier {
             read: readFlag,
           );
           
-          // ✅ For pagination: insert at beginning (older messages go before current messages)
-          if (beforeMessageId != null) {
-            conv.messages!.insert(0, newMessage);
-          } else {
-            conv.messages!.add(newMessage);
+          // ✅ Check for duplicate before adding
+          final isDuplicate = conv.messages!.any((msg) => msg.messageId == newMessage.messageId);
+          if (!isDuplicate) {
+            // ✅ For pagination: insert at beginning (older messages go before current messages)
+            if (beforeMessageId != null) {
+              conv.messages!.insert(0, newMessage);
+            } else {
+              conv.messages!.add(newMessage);
+            }
           }
         } catch (e) {
           debugPrint('[ChatVM] Error parsing message: $e');

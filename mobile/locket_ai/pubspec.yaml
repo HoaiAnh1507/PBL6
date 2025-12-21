@@ -27,6 +27,14 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.14.2
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/icon/locket_ai_icon.jpg"
+  adaptive_icon_background: "#000000"
+  adaptive_icon_foreground: "assets/icon/locket_ai_icon.jpg"
 
 flutter:
   uses-material-design: true
@@ -36,3 +44,4 @@ flutter:
     - assets/videos/video3.mp4
     - assets/images/image1.png
     - assets/images/image2.png
+    - assets/icon/locket_ai_icon.jpg

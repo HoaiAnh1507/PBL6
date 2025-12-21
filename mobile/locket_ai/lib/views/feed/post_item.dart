@@ -21,14 +21,28 @@ class PostItem extends StatefulWidget {
   State<PostItem> createState() => _PostItemState();
 }
 
-class _PostItemState extends State<PostItem> {
+class _PostItemState extends State<PostItem> with WidgetsBindingObserver {
   VideoPlayerController? _v;
   ChewieController? _chewie;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     if (widget.post.mediaType == MediaType.VIDEO) _initVideo();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Pause video khi app goes to background
+    if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
+      _v?.pause();
+    } else if (state == AppLifecycleState.resumed) {
+      // Resume video khi app quay lại và widget đang visible
+      if (mounted && _v != null && _v!.value.isInitialized) {
+        _v!.play();
+      }
+    }
   }
 
   Future<void> _initVideo() async {
@@ -61,7 +75,15 @@ class _PostItemState extends State<PostItem> {
   }
 
   @override
+  void deactivate() {
+    // Pause video khi widget không còn visible (chuyển page hoặc rời screen)
+    _v?.pause();
+    super.deactivate();
+  }
+
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _chewie?.dispose();
     _v?.dispose();
     super.dispose();

@@ -6,7 +6,7 @@ class ApiConfig {
   // Default aligns with your current LAN IP setup
   static String _baseUrl = const String.fromEnvironment(
     'BACKEND_BASE_URL',
-    defaultValue: 'http://10.0.0.57:8080',
+    defaultValue: 'https://hoaianh-pbl6-backend-prod.hf.space',
   );
 
   static String get baseUrl => _baseUrl;
